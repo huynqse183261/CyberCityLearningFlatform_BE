@@ -10,11 +10,13 @@ namespace CyberCity.Application.Implement
 	{
 		private readonly UserRepo _userRepo;
 		private readonly IMapper _mapper;
+		private readonly IJwtTokenService _jwtTokenService;
 
-		public AuthService(UserRepo userRepo, IMapper mapper)
+		public AuthService(UserRepo userRepo, IMapper mapper, IJwtTokenService jwtTokenService)
 		{
 			_userRepo = userRepo;
 			_mapper = mapper;
+			_jwtTokenService = jwtTokenService;
 		}
 
 		public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
@@ -36,7 +38,9 @@ namespace CyberCity.Application.Implement
 				return null;
 			}
 
-            return _mapper.Map<LoginResponseDto>(user);
+            var response = _mapper.Map<LoginResponseDto>(user);
+            response.Token = _jwtTokenService.GenerateToken(user);
+            return response;
         }
 
 		public async Task<LoginResponseDto?> RegisterAsync(RegisterRequestDto request)
@@ -65,7 +69,9 @@ namespace CyberCity.Application.Implement
 			};
 
 			await _userRepo.CreateAsync(newUser);
-			return _mapper.Map<LoginResponseDto>(newUser);
+            var created = _mapper.Map<LoginResponseDto>(newUser);
+            created.Token = _jwtTokenService.GenerateToken(newUser);
+            return created;
 		}
 
     }

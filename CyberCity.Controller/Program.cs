@@ -4,6 +4,9 @@ using CyberCity.Doman.DBcontext;
 using CyberCity.Infrastructure;
 using CyberCity_AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,9 +26,31 @@ builder.Services.AddScoped<UserRepo>();
 
 //services
 builder.Services.AddScoped<IAuthService,AuthService>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
+
+// JWT Auth
+var jwtKey = builder.Configuration["Jwt:Key"];
+var keyBytes = Encoding.UTF8.GetBytes(jwtKey ?? "");
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+    };
+});
 
 
 var app = builder.Build();
@@ -39,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

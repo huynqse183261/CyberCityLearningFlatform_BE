@@ -30,7 +30,8 @@ namespace CyberCity.Infrastructure
         }
         public IQueryable<User> GetAllAsync()
         {
-            return _context.Users;
+            return _context.Users.Include(u => u.Uid)
+                .OrderByDescending(u => u.CreatedAt);
         }
     }
 }
