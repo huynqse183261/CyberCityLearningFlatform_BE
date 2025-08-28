@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CyberCity.Application\CyberCity.Application.csproj" />
+    <ProjectReference Include="..\CyberCity.DTOs\CyberCity.DTOs.csproj" />
+    <ProjectReference Include="..\CyberCity.Infrastructure\CyberCity.Infrastructure.csproj" />
+    <ProjectReference Include="..\CyberCity_AutoMapper\CyberCity.AutoMapper.csproj" />
+  </ItemGroup>
+
+</Project>

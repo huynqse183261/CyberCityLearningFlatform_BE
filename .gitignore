@@ -1,0 +1,62 @@
+## Build results
+bin/
+obj/
+[Bb]uild/
+[Bb]uild[Ll]og.*
+
+## User-specific files (VS settings)
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+## Rider IDE
+.idea/
+*.sln.iml
+
+## VS Code
+.vscode/
+
+## ASP.NET Publish Output
+wwwroot/dist/
+wwwroot/node_modules/
+
+## Logs
+*.log
+
+## Secret configs (RẤT QUAN TRỌNG để bảo mật)
+appsettings.Development.json
+appsettings.*.local.json
+secrets.json
+appsettings
+appsettings.json
+## NuGet Packages
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.snupkg
+
+## .NET Core Generated Files
+project.assets.json
+project.lock.json
+*.deps.json
+
+## Database related
+*.dbmdl
+*.mdf
+*.ldf
+
+## Temp & Misc
+~$*
+*.tmp
+*.bak
+*.orig
+*.rej
+
+## OS Specific
+.DS_Store
+Thumbs.db
+ehthumbs.db

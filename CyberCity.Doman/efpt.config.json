@@ -1,0 +1,138 @@
+﻿{
+   "CodeGenerationMode": 4,
+   "ContextClassName": "CyberCityLearningFlatFormDBContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": true,
+   "MinimumProductVersion": "2.6.0",
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models",
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "CyberCity.Doman",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "cybercity.approval_logs",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.assignments",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.certificates",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.conversation_members",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.conversations",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.course_enrollments",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.course_grades",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.course_progress",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.courses",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.lesson_progress",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.lessons",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.messages",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.notifications",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.orders",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.org_members",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.organizations",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.payments",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.pricing_plans",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.submissions",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.subtopics",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.teacher_student",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.topics",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.users",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": false
+}
