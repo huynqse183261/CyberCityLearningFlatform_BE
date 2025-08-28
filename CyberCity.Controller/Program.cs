@@ -1,4 +1,8 @@
+using CyberCity.Application.Implement;
+using CyberCity.Application.Interface;
 using CyberCity.Doman.DBcontext;
+using CyberCity.Infrastructure;
+using CyberCity_AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +16,17 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<CyberCityLearningFlatFormDBContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+//repos
+builder.Services.AddScoped<UserRepo>();
+
+//services
+builder.Services.AddScoped<IAuthService,AuthService>();
+
+//mapper
+builder.Services.AddAutoMapper(typeof(UserProfile));
+
 
 var app = builder.Build();
 

@@ -10,5 +10,7 @@
     <ProjectReference Include="..\CyberCity.Doman\CyberCity.Doman.csproj" />
     <ProjectReference Include="..\CyberCity.DTOs\CyberCity.DTOs.csproj" />
   </ItemGroup>
-
+	<ItemGroup>
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+	</ItemGroup>
 </Project>
