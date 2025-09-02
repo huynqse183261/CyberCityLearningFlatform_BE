@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,18 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Add Cookie Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/auth/login";
+        options.LogoutPath = "/auth/logout";
+        options.Cookie.Name = "CyberCityAuth";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 

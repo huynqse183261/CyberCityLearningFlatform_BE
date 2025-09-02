@@ -1,6 +1,10 @@
 using CyberCity.Application.Interface;
 using CyberCity.DTOs.UserAccount;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace CyberCity.Controller.Controllers
@@ -19,18 +23,31 @@ namespace CyberCity.Controller.Controllers
 		[HttpPost("login")]
 		public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
 		{
-			if (request == null || string.IsNullOrWhiteSpace(request.UsernameOrEmail) || string.IsNullOrWhiteSpace(request.Password))
-			{
-				return BadRequest("Invalid credentials");
-			}
+			var result = await _authService.LoginAsync(request);
+			if (result == null)
+				return Unauthorized();
 
-			var response = await _authService.LoginAsync(request);
-			if (response == null)
+			var claims = new List<Claim>
 			{
-				return Unauthorized("Username or password is incorrect");
-			}
+				new Claim(ClaimTypes.NameIdentifier, result.Uid.ToString()),
+				new Claim(ClaimTypes.Name, result.Username),
+				new Claim(ClaimTypes.Email, result.Email),
+				new Claim(ClaimTypes.Role, result.Role)
+			};
 
-			return Ok(response);
+			var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+			var authProperties = new AuthenticationProperties
+			{
+				IsPersistent = true,
+				ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+			};
+
+			await HttpContext.SignInAsync(
+				CookieAuthenticationDefaults.AuthenticationScheme,
+				new ClaimsPrincipal(claimsIdentity),
+				authProperties);
+
+			return Ok(result);
 		}
 
 		[HttpPost("register")]
@@ -42,6 +59,13 @@ namespace CyberCity.Controller.Controllers
 				return BadRequest("Cannot register user. Username or Email may exist, or invalid input.");
 			}
 			return Ok(response);
+		}
+
+		[HttpPost("logout")]
+		public async Task<IActionResult> Logout()
+		{
+			await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+			return Ok();
 		}
 	}
 }

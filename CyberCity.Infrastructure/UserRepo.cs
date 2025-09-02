@@ -1,6 +1,6 @@
-﻿using BloodDonation.Repositories.NhanNB.Basic;
-using CyberCity.Doman.DBcontext;
+﻿using CyberCity.Doman.DBcontext;
 using CyberCity.Doman.Models;
+using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -28,10 +28,14 @@ namespace CyberCity.Infrastructure
             var key = usernameOrEmail.Trim();
             return await _context.Users.FirstOrDefaultAsync(u => u.Username == key || u.Email == key);
         }
-        public IQueryable<User> GetAllAsync()
+        public IQueryable<User> GetAllAsync(bool descending = true)
         {
-            return _context.Users.Include(u => u.Uid)
-                .OrderByDescending(u => u.CreatedAt);
+            var query = _context.Users.AsQueryable();
+
+            return descending
+                ? query.OrderByDescending(u => u.CreatedAt)
+                : query.OrderBy(u => u.CreatedAt);
         }
+
     }
 }

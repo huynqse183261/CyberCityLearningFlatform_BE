@@ -3,10 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CyberCity.Doman.DBcontext;
+using CyberCity.Doman.Models;
+using CyberCity.Infrastructure.Basic;
 
 namespace CyberCity.Infrastructure
 {
-    public class LessonRepo
+    public class LessonRepo: GenericRepository<Lesson>
     {
+        public LessonRepo() { }
+        public LessonRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
+        public IQueryable<Lesson> GetAllAsync(bool descending = true)
+        {
+            var query = _context.Lessons.AsQueryable();
+            return descending
+                ? query.OrderByDescending(c => c.CreatedAt)
+                : query.OrderBy(c => c.CreatedAt);
+        }
     }
 }
