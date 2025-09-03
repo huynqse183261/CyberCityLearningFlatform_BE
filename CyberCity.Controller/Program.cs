@@ -67,6 +67,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -75,7 +77,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.Urls.Add($"http://*:{port}");
+app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
