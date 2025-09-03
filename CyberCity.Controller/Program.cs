@@ -28,6 +28,7 @@ builder.Services.AddScoped<UserRepo>();
 //services
 builder.Services.AddScoped<IAuthService,AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));

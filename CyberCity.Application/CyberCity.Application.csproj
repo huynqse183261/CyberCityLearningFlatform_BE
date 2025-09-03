@@ -11,10 +11,6 @@
     <ProjectReference Include="..\CyberCity_AutoMapper\CyberCity.AutoMapper.csproj" />
     <ProjectReference Include="..\CyberCity.DTOs\CyberCity.DTOs.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Implement\" />
-  </ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
