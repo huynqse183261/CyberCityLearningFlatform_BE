@@ -64,12 +64,14 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    //        => optionsBuilder.UseNpgsql("Persist Security Info=True;Password=12345;Username=postgres;Database=CyberCityLearningFlatFormDB;Host=localhost");
+//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+//        => optionsBuilder.UseNpgsql("Password=12345;Username=postgres;Database=CyberCityLearningFlatFormDB;Host=localhost");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("pgcrypto");
+
         modelBuilder.Entity<ApprovalLog>(entity =>
         {
             entity.HasKey(e => e.Uid).HasName("approval_logs_pkey");
@@ -109,7 +111,7 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("uid");
             entity.Property(e => e.AssignmentType)
-                .HasMaxLength(50)
+                .HasMaxLength(20)
                 .HasColumnName("assignment_type");
             entity.Property(e => e.CourseUid).HasColumnName("course_uid");
             entity.Property(e => e.CreatedAt)
@@ -732,12 +734,12 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
             entity.Property(e => e.Uid)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("uid");
-            entity.Property(e => e.CourseUid).HasColumnName("course_uid");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.LessonUid).HasColumnName("lesson_uid");
             entity.Property(e => e.OrderIndex)
                 .HasDefaultValue(0)
                 .HasColumnName("order_index");
@@ -747,9 +749,9 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("title");
 
-            entity.HasOne(d => d.CourseU).WithMany(p => p.Topics)
-                .HasForeignKey(d => d.CourseUid)
-                .HasConstraintName("topics_course_uid_fkey");
+            entity.HasOne(d => d.LessonU).WithMany(p => p.Topics)
+                .HasForeignKey(d => d.LessonUid)
+                .HasConstraintName("topics_lesson_uid_fkey");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -777,6 +779,7 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .IsRequired()
                 .HasMaxLength(255)
                 .HasColumnName("full_name");
+            entity.Property(e => e.Image).HasColumnName("image");
             entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(255)
@@ -786,18 +789,14 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasMaxLength(50)
                 .HasDefaultValueSql("'student'::character varying")
                 .HasColumnName("role");
-            entity.Property(e => e.Username)
-                .IsRequired()
-                .HasMaxLength(100)
-                .HasColumnName("username");
-            entity.Property(e => e.Image)
-                .HasMaxLength(500)
-                .HasColumnName("image");
-
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasDefaultValueSql("'Active'::character varying")
                 .HasColumnName("status");
+            entity.Property(e => e.Username)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("username");
         });
 
         OnModelCreatingPartial(modelBuilder);

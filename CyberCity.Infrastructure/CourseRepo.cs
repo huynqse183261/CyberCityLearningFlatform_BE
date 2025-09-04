@@ -21,5 +21,6 @@ namespace CyberCity.Infrastructure
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);
         }
+
     }
 }

@@ -9,7 +9,7 @@ public partial class Topic
 {
     public Guid Uid { get; set; }
 
-    public Guid CourseUid { get; set; }
+    public Guid LessonUid { get; set; }
 
     public string Title { get; set; }
 
@@ -21,7 +21,7 @@ public partial class Topic
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual Course CourseU { get; set; }
+    public virtual Lesson LessonU { get; set; }
 
     public virtual ICollection<Subtopic> Subtopics { get; set; } = new List<Subtopic>();
 }

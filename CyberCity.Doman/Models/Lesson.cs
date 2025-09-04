@@ -26,4 +26,6 @@ public partial class Lesson
     public virtual Course CourseU { get; set; }
 
     public virtual ICollection<LessonProgress> LessonProgresses { get; set; } = new List<LessonProgress>();
+
+    public virtual ICollection<Topic> Topics { get; set; } = new List<Topic>();
 }

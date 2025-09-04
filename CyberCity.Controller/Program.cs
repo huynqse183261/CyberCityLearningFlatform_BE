@@ -25,13 +25,17 @@ builder.Services.AddDbContext<CyberCityLearningFlatFormDBContext>(options =>
 
 //repos
 builder.Services.AddScoped<UserRepo>();
+builder.Services.AddScoped<CourseRepo>();
+builder.Services.AddScoped<TopicRepo>();
+builder.Services.AddScoped<SubtopicRepo>();
+builder.Services.AddScoped<LessonRepo>();
 
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-
+builder.Services.AddScoped<ICourseService, CourseService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 
