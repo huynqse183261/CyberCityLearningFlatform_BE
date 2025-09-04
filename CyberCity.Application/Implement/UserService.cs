@@ -67,5 +67,22 @@ namespace CyberCity.Application.Implement
         {
             return await _userRepository.UpdateAsync(user);
         }
+        public async Task<bool> UpdatePasswordAsync(Guid userId, string currentPassword, string newPassword)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) return false;
+
+            if (!string.IsNullOrEmpty(user.PasswordHash))
+            {
+                var valid = BCrypt.Net.BCrypt.Verify(currentPassword ?? string.Empty, user.PasswordHash);
+                if (!valid) return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8) return false;
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            var updated = await _userRepository.UpdateAsync(user);
+            return updated > 0;
+        }
     }
 }

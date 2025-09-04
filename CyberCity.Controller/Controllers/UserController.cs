@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CyberCity.Controller.Controllers
 {
@@ -16,10 +17,13 @@ namespace CyberCity.Controller.Controllers
     {
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
-        public UserController(IUserService userService, IMapper mapper)
+        private readonly ICloudinaryService _cloudinaryService; // Thêm CloudinaryService
+
+        public UserController(IUserService userService, IMapper mapper, ICloudinaryService cloudinaryService)
         {
             _userService = userService;
             _mapper = mapper;
+            _cloudinaryService = cloudinaryService;
         }
 
         [HttpGet]
@@ -58,6 +62,7 @@ namespace CyberCity.Controller.Controllers
             return Ok(_mapper.Map<UserAccountDTO>(user));
         }
 
+        //[Authorize(Roles = "admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(Guid id, [FromBody] UpdateUserRequestDto request)
         {
@@ -69,5 +74,81 @@ namespace CyberCity.Controller.Controllers
             if (updated <= 0) return BadRequest("Cannot update user");
             return NoContent();
         }
+
+        [HttpPost("admin")]
+        public async Task<ActionResult<UserAccountDTO>> CreateByAdmin([FromBody] CreateUserRequestDto request)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+            var user = _mapper.Map<User>(request);
+            user.CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+            var created = await _userService.CreateAccountByAdmin(user);
+            if (created <= 0) return BadRequest("Cannot create user");
+            return Ok(_mapper.Map<UserAccountDTO>(user));
+        }
+
+        [HttpPut("{id}/password")]
+        public async Task<ActionResult> UpdatePassword(Guid id, [FromBody] UpdatePasswordDto request)
+        {
+            if (id == Guid.Empty) return BadRequest("Invalid id");
+            var ok = await _userService.UpdatePasswordAsync(id, request?.CurrentPassword, request?.NewPassword);
+            if (!ok) return BadRequest("Invalid password or update failed");
+            return NoContent();
+        }
+
+        //[Authorize(Roles = "admin")]
+        [HttpPut("{id}/role")]
+        public async Task<ActionResult> UpdateRole(Guid id, [FromBody] UpdateRoleDto request)
+        {
+            if (id == Guid.Empty) return BadRequest("Invalid id");
+            var user = await _userService.GetByIdAsync(id);
+            if (user == null) return NotFound();
+            user.Role = request?.Role;
+            var updated = await _userService.UpdateAccount(user);
+            if (updated <= 0) return BadRequest("Cannot update role");
+            return NoContent();
+        }
+
+        //[Authorize(Roles = "admin")]
+        [HttpPut("{id}/status")]
+        public async Task<ActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusDto request)
+        {
+            if (id == Guid.Empty) return BadRequest("Invalid id");
+            var user = await _userService.GetByIdAsync(id);
+            if (user == null) return NotFound();
+            user.Status = request?.Status;
+            var updated = await _userService.UpdateAccount(user);
+            if (updated <= 0) return BadRequest("Cannot update status");
+            return NoContent();
+        }
+
+        [HttpPut("{id}/avatar")]
+        public async Task<ActionResult> UpdateAvatar(Guid id, [FromForm] UpdateAvatarDto dto)
+        {
+            if (id == Guid.Empty)
+                return BadRequest("Invalid user id");
+
+            if (dto?.Avatar == null || dto.Avatar.Length == 0)
+                return BadRequest("Missing avatar file");
+
+            var user = await _userService.GetByIdAsync(id);
+            if (user == null)
+                return NotFound("User not found");
+
+            // Upload ảnh lên Cloudinary
+            var imageUrl = await _cloudinaryService.UploadImageAsync(dto.Avatar);
+            if (string.IsNullOrEmpty(imageUrl))
+                return BadRequest("Avatar upload failed");
+
+            // Cập nhật avatar mới
+            user.Image = imageUrl;
+            var updated = await _userService.UpdateAccount(user);
+
+            if (updated <= 0)
+                return StatusCode(500, "Failed to update avatar");
+
+            return Ok(new { avatarUrl = imageUrl });
+        }
+
+
     }
 }

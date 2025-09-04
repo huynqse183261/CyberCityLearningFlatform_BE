@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -26,9 +27,10 @@ builder.Services.AddDbContext<CyberCityLearningFlatFormDBContext>(options =>
 builder.Services.AddScoped<UserRepo>();
 
 //services
-builder.Services.AddScoped<IAuthService,AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
@@ -61,14 +63,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/auth/login";
         options.LogoutPath = "/auth/logout";
         options.Cookie.Name = "CyberCityAuth";
-        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.ExpireTimeSpan = TimeSpan.FromDays(2);
         options.SlidingExpiration = true;
     });
 
 builder.Services.AddAuthorization();
-
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -77,7 +76,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.Urls.Add($"http://*:{port}");
+
 app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
 
