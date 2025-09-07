@@ -1,6 +1,8 @@
-﻿using CyberCity.Application.Interface;
+﻿using AutoMapper;
+using CyberCity.Application.Interface;
 using CyberCity.Doman.Models;
 using CyberCity.DTOs;
+using CyberCity.DTOs.Courses;
 using CyberCity.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -16,16 +18,18 @@ namespace CyberCity.Application.Implement
         private readonly TopicRepo _topicRepo;
         private readonly SubtopicRepo _subtopicRepo;
         private readonly LessonRepo _lessonRepo;
+        private readonly IMapper _mapper;
 
-        public CourseService(CourseRepo courseRepo, TopicRepo topicRepo, SubtopicRepo subtopicRepo, LessonRepo lessonRepo)
+        public CourseService(CourseRepo courseRepo, TopicRepo topicRepo, SubtopicRepo subtopicRepo, LessonRepo lessonRepo, IMapper mapper)
         {
             _courseRepo = courseRepo;
             _topicRepo = topicRepo;
             _subtopicRepo = subtopicRepo;
             _lessonRepo = lessonRepo;
+            _mapper = mapper;
         }
 
-        public async Task<PagedResult<Course>> GetCoursesAsync(int pageNumber, int pageSize, string level = null, bool descending = true)
+        public async Task<PagedResult<Course>> GetCoursesAsync(int pageNumber, int pageSize, string? level = null, bool descending = true)
         {
             var query = _courseRepo.GetAllAsync(descending);
             if (!string.IsNullOrWhiteSpace(level))
@@ -50,6 +54,28 @@ namespace CyberCity.Application.Implement
                 TotalPages = totalPages
             };
         }
+        public async Task<PagedResult<CourseOutlineResponseDto>> GetAllOutline(int page, int pageSize)
+        {
+            var query = _courseRepo.GetAllCourseAsync();
+            var totalItems = await query.CountAsync();
+
+            var courses = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var mappedCourses = courses.Select(course => _mapper.Map<CourseOutlineResponseDto>(course)).ToList();
+
+            return new PagedResult<CourseOutlineResponseDto>
+            {
+                Items = mappedCourses,
+                TotalItems = totalItems,
+                PageNumber = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
+            };
+        }
+        
 
         public async Task<Course> GetByIdAsync(Guid uid)
         {
@@ -59,7 +85,7 @@ namespace CyberCity.Application.Implement
         public async Task<Guid> CreateAsync(Course course)
         {
             course.Uid = Guid.NewGuid();
-            course.CreatedAt = DateTime.UtcNow;
+            course.CreatedAt = DateTime.Now;
             var result = await _courseRepo.CreateAsync(course);
             return result > 0 ? course.Uid : Guid.Empty;
         }

@@ -31,7 +31,7 @@ public partial class Course
 
     public virtual User CreatedByNavigation { get; set; }
 
-    public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+    public virtual ICollection<Module> Modules { get; set; } = new List<Module>();
 
     public virtual ICollection<TeacherStudent> TeacherStudents { get; set; } = new List<TeacherStudent>();
 }

@@ -4,3 +4,9 @@ GET {{CyberCity.Controller_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# Test GetAllOutline API
+GET {{CyberCity.Controller_HostAddress}}/api/courses/outline?page=1&pageSize=10
+Accept: application/json
+
+###

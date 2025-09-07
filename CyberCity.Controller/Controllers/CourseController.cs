@@ -3,7 +3,6 @@ using CyberCity.Application.Interface;
 using CyberCity.Doman.Models;
 using CyberCity.DTOs;
 using CyberCity.DTOs.Courses;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
@@ -40,6 +39,14 @@ namespace CyberCity.Controller.Controllers
             return Ok(mapped);
         }
 
+        [HttpGet("outline")]
+        public async Task<IActionResult> GetAllOutline([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var result = await _courseService.GetAllOutline(page, pageSize);
+            return Ok(result);
+        }
+
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -49,7 +56,6 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "admin,teacher")]
         public async Task<IActionResult> Create([FromBody] CourseCreateUpdateDto request)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst(ClaimTypes.Name);
@@ -66,7 +72,6 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "admin,teacher")]
         public async Task<IActionResult> Update(Guid id, [FromBody] CourseCreateUpdateDto request)
         {
             var existing = await _courseService.GetByIdAsync(id);
@@ -81,7 +86,6 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "admin,teacher")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var ok = await _courseService.DeleteAsync(id);

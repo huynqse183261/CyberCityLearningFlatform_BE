@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CyberCity.Infrastructure
 {
-    public class CourseRepo: GenericRepository<Course>
+    public class CourseRepo : GenericRepository<Course>
     {
         public CourseRepo() { }
         public CourseRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
@@ -21,6 +21,14 @@ namespace CyberCity.Infrastructure
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);
         }
-
+        public IQueryable<Course> GetAllCourseAsync()
+        {
+            return _context.Courses
+                .Include(c => c.Modules)
+                .ThenInclude(t => t.Lessons)
+                .ThenInclude(s => s.Topics)
+                .ThenInclude(st => st.Subtopics)
+                .AsQueryable();
+        }
     }
 }

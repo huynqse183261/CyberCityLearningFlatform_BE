@@ -20,5 +20,9 @@ namespace CyberCity.Infrastructure
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);
         }
+        public async Task<Topic> GetByIdAsync(Guid uid)
+        {
+            return await _context.Topics.FindAsync(uid);
+        }
     }
 }

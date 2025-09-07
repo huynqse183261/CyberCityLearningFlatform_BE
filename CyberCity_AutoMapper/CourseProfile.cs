@@ -16,6 +16,13 @@ namespace CyberCity.AutoMapper
             CreateMap<Course, CourseListItemDto>();
             CreateMap<Course, CourseDetailDto>();
             CreateMap<CourseCreateUpdateDto, Course>();
+            
+            // Mapping for Course Outline
+            CreateMap<Course, CourseOutlineResponseDto>();
+            CreateMap<Module, ModuleOutlineDto>();
+            CreateMap<Lesson, LessonOutlineDto>();
+            CreateMap<Topic, TopicOutlineDto>();
+            CreateMap<Subtopic, SubtopicOutlineDto>();
         }
     }
 }
