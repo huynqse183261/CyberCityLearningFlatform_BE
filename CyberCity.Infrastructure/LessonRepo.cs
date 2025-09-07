@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CyberCity.Doman.DBcontext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
+using Microsoft.EntityFrameworkCore;
 
 namespace CyberCity.Infrastructure
 {
@@ -15,7 +16,9 @@ namespace CyberCity.Infrastructure
         public LessonRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
         public IQueryable<Lesson> GetAllAsync(bool descending = true)
         {
-            var query = _context.Lessons.AsQueryable();
+           var query = _context.Lessons
+                .Include(l => l.ModuleU)
+                .AsQueryable();
             return descending
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);

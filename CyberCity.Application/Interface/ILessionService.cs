@@ -1,4 +1,9 @@
-﻿using System;
+﻿using CyberCity.Doman.Models;
+using CyberCity.DTOs;
+using CyberCity.DTOs.Courses;
+using CyberCity.DTOs.Lessons;
+using CyberCity.DTOs.Modules;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,5 +13,10 @@ namespace CyberCity.Application.Interface
 {
     public interface ILessionService
     {
+        Task<PagedResult<LessonDetailDto>> GetModuleAsync(int pageNumber, int pageSize);
+        Task<Lesson> GetByIdAsync(Guid uid);
+        Task<Guid> CreateAsync(Lesson lesson);
+        Task<bool> UpdateAsync(Lesson lesson);
+        Task<bool> DeleteAsync(Guid uid);
     }
 }
