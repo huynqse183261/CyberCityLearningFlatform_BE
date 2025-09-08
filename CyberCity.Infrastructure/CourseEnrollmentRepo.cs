@@ -14,16 +14,12 @@ namespace CyberCity.Infrastructure
     {
         public CourseEnrollmentRepo() { }
         public CourseEnrollmentRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
-        public IQueryable<CourseEnrollment> GetAllAsync(bool descending = true)
+        public IQueryable<CourseEnrollment> GetAll() => _context.CourseEnrollments.AsQueryable();
+
+        public async Task<CourseEnrollment?> GetByUserAndCourseAsync(Guid userId, Guid courseId)
         {
-            var query = _context.CourseEnrollments.AsQueryable();
-            return descending
-                ? query.OrderByDescending(c => c.EnrolledAt)
-                : query.OrderBy(c => c.EnrolledAt);
-        }
-        public async Task<List<CourseEnrollment>> GetByCourseUidAsync(Guid courseUid)
-        {
-            return await _context.CourseEnrollments.Where(c => c.CourseUid == courseUid).ToListAsync();
+            return await _context.CourseEnrollments
+                .FirstOrDefaultAsync(e => e.UserUid == userId && e.CourseUid == courseId);
         }
     }
 }
