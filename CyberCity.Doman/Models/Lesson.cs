@@ -9,7 +9,7 @@ public partial class Lesson
 {
     public Guid Uid { get; set; }
 
-    public Guid CourseUid { get; set; }
+    public Guid ModuleUid { get; set; }
 
     public string Title { get; set; }
 
@@ -23,7 +23,9 @@ public partial class Lesson
 
     public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
 
-    public virtual Course CourseU { get; set; }
-
     public virtual ICollection<LessonProgress> LessonProgresses { get; set; } = new List<LessonProgress>();
+
+    public virtual Module ModuleU { get; set; }
+
+    public virtual ICollection<Topic> Topics { get; set; } = new List<Topic>();
 }

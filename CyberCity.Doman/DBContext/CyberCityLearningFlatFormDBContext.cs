@@ -42,6 +42,8 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
     public virtual DbSet<Message> Messages { get; set; }
 
+    public virtual DbSet<Module> Modules { get; set; }
+
     public virtual DbSet<Notification> Notifications { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
@@ -70,6 +72,8 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("pgcrypto");
+
         modelBuilder.Entity<ApprovalLog>(entity =>
         {
             entity.HasKey(e => e.Uid).HasName("approval_logs_pkey");
@@ -109,7 +113,7 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("uid");
             entity.Property(e => e.AssignmentType)
-                .HasMaxLength(50)
+                .HasMaxLength(20)
                 .HasColumnName("assignment_type");
             entity.Property(e => e.CourseUid).HasColumnName("course_uid");
             entity.Property(e => e.CreatedAt)
@@ -352,27 +356,33 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
             entity.ToTable("lessons", "cybercity");
 
+            entity.HasIndex(e => new { e.ModuleUid, e.OrderIndex }, "ix_lessons_module_order");
+
             entity.Property(e => e.Uid)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("uid");
             entity.Property(e => e.Content).HasColumnName("content");
-            entity.Property(e => e.CourseUid).HasColumnName("course_uid");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.LessonType)
-                .HasMaxLength(50)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValueSql("'theory'::character varying")
                 .HasColumnName("lesson_type");
-            entity.Property(e => e.OrderIndex).HasColumnName("order_index");
+            entity.Property(e => e.ModuleUid).HasColumnName("module_uid");
+            entity.Property(e => e.OrderIndex)
+                .HasDefaultValue(0)
+                .HasColumnName("order_index");
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasMaxLength(255)
                 .HasColumnName("title");
 
-            entity.HasOne(d => d.CourseU).WithMany(p => p.Lessons)
-                .HasForeignKey(d => d.CourseUid)
-                .HasConstraintName("lessons_course_uid_fkey");
+            entity.HasOne(d => d.ModuleU).WithMany(p => p.Lessons)
+                .HasForeignKey(d => d.ModuleUid)
+                .HasConstraintName("lessons_module_uid_fkey");
         });
 
         modelBuilder.Entity<LessonProgress>(entity =>
@@ -430,6 +440,36 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasForeignKey(d => d.SenderUid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("messages_sender_uid_fkey");
+        });
+
+        modelBuilder.Entity<Module>(entity =>
+        {
+            entity.HasKey(e => e.Uid).HasName("modules_pkey");
+
+            entity.ToTable("modules", "cybercity");
+
+            entity.HasIndex(e => new { e.CourseUid, e.OrderIndex }, "ix_modules_course_order");
+
+            entity.Property(e => e.Uid)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("uid");
+            entity.Property(e => e.CourseUid).HasColumnName("course_uid");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.OrderIndex)
+                .HasDefaultValue(0)
+                .HasColumnName("order_index");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(255)
+                .HasColumnName("title");
+
+            entity.HasOne(d => d.CourseU).WithMany(p => p.Modules)
+                .HasForeignKey(d => d.CourseUid)
+                .HasConstraintName("modules_course_uid_fkey");
         });
 
         modelBuilder.Entity<Notification>(entity =>
@@ -673,6 +713,8 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
             entity.ToTable("subtopics", "cybercity");
 
+            entity.HasIndex(e => new { e.TopicUid, e.OrderIndex }, "ix_subtopics_topic_order");
+
             entity.Property(e => e.Uid)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("uid");
@@ -729,15 +771,17 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
             entity.ToTable("topics", "cybercity");
 
+            entity.HasIndex(e => new { e.LessonUid, e.OrderIndex }, "ix_topics_lesson_order");
+
             entity.Property(e => e.Uid)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("uid");
-            entity.Property(e => e.CourseUid).HasColumnName("course_uid");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.LessonUid).HasColumnName("lesson_uid");
             entity.Property(e => e.OrderIndex)
                 .HasDefaultValue(0)
                 .HasColumnName("order_index");
@@ -747,9 +791,9 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("title");
 
-            entity.HasOne(d => d.CourseU).WithMany(p => p.Topics)
-                .HasForeignKey(d => d.CourseUid)
-                .HasConstraintName("topics_course_uid_fkey");
+            entity.HasOne(d => d.LessonU).WithMany(p => p.Topics)
+                .HasForeignKey(d => d.LessonUid)
+                .HasConstraintName("topics_lesson_uid_fkey");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -777,6 +821,7 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .IsRequired()
                 .HasMaxLength(255)
                 .HasColumnName("full_name");
+            entity.Property(e => e.Image).HasColumnName("image");
             entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(255)
@@ -786,6 +831,10 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasMaxLength(50)
                 .HasDefaultValueSql("'student'::character varying")
                 .HasColumnName("role");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasDefaultValueSql("'Active'::character varying")
+                .HasColumnName("status");
             entity.Property(e => e.Username)
                 .IsRequired()
                 .HasMaxLength(100)

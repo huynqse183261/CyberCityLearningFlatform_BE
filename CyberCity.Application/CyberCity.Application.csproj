@@ -9,6 +9,14 @@
   <ItemGroup>
     <ProjectReference Include="..\CyberCity.Infrastructure\CyberCity.Infrastructure.csproj" />
     <ProjectReference Include="..\CyberCity_AutoMapper\CyberCity.AutoMapper.csproj" />
+    <ProjectReference Include="..\CyberCity.DTOs\CyberCity.DTOs.csproj" />
   </ItemGroup>
-
+	<ItemGroup>
+		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="CloudinaryDotNet" Version="1.27.7" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.7" />
+		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.1.2" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.1.2" />
+	</ItemGroup>
 </Project>

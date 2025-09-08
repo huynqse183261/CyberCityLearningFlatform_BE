@@ -19,6 +19,10 @@ public partial class User
 
     public string Role { get; set; }
 
+    public string Image { get; set; }
+
+    public string Status { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public virtual ICollection<ApprovalLog> ApprovalLogs { get; set; } = new List<ApprovalLog>();

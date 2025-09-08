@@ -64,6 +64,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "cybercity.modules",
+         "ObjectType": 0
+      },
+      {
          "Name": "cybercity.notifications",
          "ObjectType": 0
       },
