@@ -12,9 +12,9 @@ namespace CyberCity.Controller.Controllers
     [ApiController]
     public class LessonController : ControllerBase
     {
-        private readonly ILessionService _lessonService;
+        private readonly ILessonService _lessonService;
         private readonly IMapper _mapper;
-        public LessonController(ILessionService lessonService, IMapper mapper)
+        public LessonController(ILessonService lessonService, IMapper mapper)
         {
             _lessonService = lessonService;
             _mapper = mapper;
@@ -23,7 +23,7 @@ namespace CyberCity.Controller.Controllers
         [HttpGet]
         public async Task<IActionResult> GetLessons([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var result = await _lessonService.GetModuleAsync(pageNumber, pageSize);
+            var result = await _lessonService.GetLessonAsync(pageNumber, pageSize);
             return Ok(result);
         }
         // GET: api/Lesson/{id}

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace CyberCity.Application.Implement
 {
-    public class LessonService: ILessionService
+    public class LessonService: ILessonService
     {
         private readonly LessonRepo _lessonRepo;
         private readonly IMapper _mapper;
@@ -26,7 +26,7 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<PagedResult<LessonDetailDto>> GetModuleAsync(int page, int pageSize)
+        public async Task<PagedResult<LessonDetailDto>> GetLessonAsync(int page, int pageSize)
         {
             var query = _lessonRepo.GetAllAsync();
             var totalItems = await query.CountAsync();

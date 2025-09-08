@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace CyberCity.Application.Interface
 {
-    public interface ILessionService
+    public interface ILessonService
     {
-        Task<PagedResult<LessonDetailDto>> GetModuleAsync(int pageNumber, int pageSize);
+        Task<PagedResult<LessonDetailDto>> GetLessonAsync(int pageNumber, int pageSize);
         Task<Lesson> GetByIdAsync(Guid uid);
         Task<Guid> CreateAsync(Lesson lesson);
         Task<bool> UpdateAsync(Lesson lesson);
