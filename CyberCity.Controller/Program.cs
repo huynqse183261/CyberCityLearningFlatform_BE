@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using CyberCity.AutoMapper;
 using Microsoft.OpenApi.Models;
 using System.Text.Json;
-using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,10 +60,9 @@ builder.Services.AddScoped<CourseRepo>();
 builder.Services.AddScoped<TopicRepo>();
 builder.Services.AddScoped<SubtopicRepo>();
 builder.Services.AddScoped<LessonRepo>();
-builder.Services.AddScoped<ModuleRepo>();
-builder.Services.AddScoped<TopicRepo>();
-builder.Services.AddScoped<SubtopicRepo>();
 builder.Services.AddScoped<CourseEnrollmentRepo>();
+builder.Services.AddScoped<CourseProgressRepo>();
+builder.Services.AddScoped<ModuleRepo>();
 
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -72,20 +70,22 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
-builder.Services.AddScoped<IModuleService, ModuleService>();
-builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<ICourseEnrollmentService, CourseEnrollmentService>();
+builder.Services.AddScoped<ICourseProgressService, CourseProgressService>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<ISubtopicService, SubtopicService>();
-builder.Services.AddScoped<ICourseEnrollmentService, CourseEnrollmentService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IModuleService, ModuleService>();
 
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
-builder.Services.AddAutoMapper(typeof(ModuleProfile));
-builder.Services.AddAutoMapper(typeof(LessonProfile));
 builder.Services.AddAutoMapper(typeof(TopicProfile));
 builder.Services.AddAutoMapper(typeof(SubtopicProfile));
+builder.Services.AddAutoMapper(typeof(LessonProfile));
 builder.Services.AddAutoMapper(typeof(CourseEnrollmentProfile));
+builder.Services.AddAutoMapper(typeof(CourseProgressProfile));
+builder.Services.AddAutoMapper(typeof(ModuleProfile));
 
 // JWT Auth
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -108,8 +108,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
-        RoleClaimType = ClaimTypes.Role
+        IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
     };
     options.Events = new JwtBearerEvents
     {
@@ -139,11 +138,6 @@ builder.Services.AddAuthentication(options =>
                 message = "Unauthorized: Token is missing or invalid"
             });
             return context.Response.WriteAsync(result);
-        },
-        OnAuthenticationFailed = context =>
-        {
-            Console.WriteLine($"JWT authentication failed: {context.Exception?.Message}");
-            return Task.CompletedTask;
         },
         OnForbidden = context =>
         {
