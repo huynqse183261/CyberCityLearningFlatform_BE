@@ -19,15 +19,9 @@ public partial class Course
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
-
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
     public virtual ICollection<CourseEnrollment> CourseEnrollments { get; set; } = new List<CourseEnrollment>();
-
-    public virtual ICollection<CourseGrade> CourseGrades { get; set; } = new List<CourseGrade>();
-
-    public virtual ICollection<CourseProgress> CourseProgresses { get; set; } = new List<CourseProgress>();
 
     public virtual User CreatedByNavigation { get; set; }
 

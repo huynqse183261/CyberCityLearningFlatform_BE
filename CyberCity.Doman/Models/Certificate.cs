@@ -15,8 +15,6 @@ public partial class Certificate
 
     public string CertificateType { get; set; }
 
-    public decimal? Score { get; set; }
-
     public decimal? CompletionPercentage { get; set; }
 
     public string FileUrl { get; set; }

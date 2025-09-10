@@ -5,19 +5,19 @@ using System.Collections.Generic;
 
 namespace CyberCity.Doman.Models;
 
-public partial class LessonProgress
+public partial class SubtopicProgress
 {
     public Guid Uid { get; set; }
 
     public Guid StudentUid { get; set; }
 
-    public Guid LessonUid { get; set; }
+    public Guid SubtopicUid { get; set; }
 
-    public string Status { get; set; }
+    public bool? IsCompleted { get; set; }
 
     public DateTime? CompletedAt { get; set; }
 
-    public virtual Lesson LessonU { get; set; }
-
     public virtual User StudentU { get; set; }
+
+    public virtual Subtopic SubtopicU { get; set; }
 }

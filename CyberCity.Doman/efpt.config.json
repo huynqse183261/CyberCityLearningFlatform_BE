@@ -20,10 +20,6 @@
          "ObjectType": 0
       },
       {
-         "Name": "cybercity.assignments",
-         "ObjectType": 0
-      },
-      {
          "Name": "cybercity.certificates",
          "ObjectType": 0
       },
@@ -40,19 +36,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "cybercity.course_grades",
-         "ObjectType": 0
-      },
-      {
-         "Name": "cybercity.course_progress",
-         "ObjectType": 0
-      },
-      {
          "Name": "cybercity.courses",
-         "ObjectType": 0
-      },
-      {
-         "Name": "cybercity.lesson_progress",
          "ObjectType": 0
       },
       {
@@ -92,7 +76,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "cybercity.submissions",
+         "Name": "cybercity.subtopic_progress",
          "ObjectType": 0
       },
       {

@@ -21,10 +21,6 @@ public partial class Lesson
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
-
-    public virtual ICollection<LessonProgress> LessonProgresses { get; set; } = new List<LessonProgress>();
-
     public virtual Module ModuleU { get; set; }
 
     public virtual ICollection<Topic> Topics { get; set; } = new List<Topic>();

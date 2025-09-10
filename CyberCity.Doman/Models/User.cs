@@ -27,23 +27,13 @@ public partial class User
 
     public virtual ICollection<ApprovalLog> ApprovalLogs { get; set; } = new List<ApprovalLog>();
 
-    public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
-
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
     public virtual ICollection<ConversationMember> ConversationMembers { get; set; } = new List<ConversationMember>();
 
     public virtual ICollection<CourseEnrollment> CourseEnrollments { get; set; } = new List<CourseEnrollment>();
 
-    public virtual ICollection<CourseGrade> CourseGradeGradedByNavigations { get; set; } = new List<CourseGrade>();
-
-    public virtual ICollection<CourseGrade> CourseGradeStudentUs { get; set; } = new List<CourseGrade>();
-
-    public virtual ICollection<CourseProgress> CourseProgresses { get; set; } = new List<CourseProgress>();
-
     public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
-
-    public virtual ICollection<LessonProgress> LessonProgresses { get; set; } = new List<LessonProgress>();
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 
@@ -55,7 +45,7 @@ public partial class User
 
     public virtual ICollection<OrgMember> OrgMembers { get; set; } = new List<OrgMember>();
 
-    public virtual ICollection<Submission> Submissions { get; set; } = new List<Submission>();
+    public virtual ICollection<SubtopicProgress> SubtopicProgresses { get; set; } = new List<SubtopicProgress>();
 
     public virtual ICollection<TeacherStudent> TeacherStudentStudentUs { get; set; } = new List<TeacherStudent>();
 

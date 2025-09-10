@@ -20,8 +20,6 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
     public virtual DbSet<ApprovalLog> ApprovalLogs { get; set; }
 
-    public virtual DbSet<Assignment> Assignments { get; set; }
-
     public virtual DbSet<Certificate> Certificates { get; set; }
 
     public virtual DbSet<Conversation> Conversations { get; set; }
@@ -32,13 +30,7 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
     public virtual DbSet<CourseEnrollment> CourseEnrollments { get; set; }
 
-    public virtual DbSet<CourseGrade> CourseGrades { get; set; }
-
-    public virtual DbSet<CourseProgress> CourseProgresses { get; set; }
-
     public virtual DbSet<Lesson> Lessons { get; set; }
-
-    public virtual DbSet<LessonProgress> LessonProgresses { get; set; }
 
     public virtual DbSet<Message> Messages { get; set; }
 
@@ -56,9 +48,9 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
     public virtual DbSet<PricingPlan> PricingPlans { get; set; }
 
-    public virtual DbSet<Submission> Submissions { get; set; }
-
     public virtual DbSet<Subtopic> Subtopics { get; set; }
+
+    public virtual DbSet<SubtopicProgress> SubtopicProgresses { get; set; }
 
     public virtual DbSet<TeacherStudent> TeacherStudents { get; set; }
 
@@ -103,54 +95,6 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasConstraintName("approval_logs_order_uid_fkey");
         });
 
-        modelBuilder.Entity<Assignment>(entity =>
-        {
-            entity.HasKey(e => e.Uid).HasName("assignments_pkey");
-
-            entity.ToTable("assignments", "cybercity");
-
-            entity.Property(e => e.Uid)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("uid");
-            entity.Property(e => e.AssignmentType)
-                .HasMaxLength(20)
-                .HasColumnName("assignment_type");
-            entity.Property(e => e.CourseUid).HasColumnName("course_uid");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("created_at");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.DueAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("due_at");
-            entity.Property(e => e.LessonUid).HasColumnName("lesson_uid");
-            entity.Property(e => e.SubtopicUid).HasColumnName("subtopic_uid");
-            entity.Property(e => e.Title)
-                .IsRequired()
-                .HasMaxLength(255)
-                .HasColumnName("title");
-
-            entity.HasOne(d => d.CourseU).WithMany(p => p.Assignments)
-                .HasForeignKey(d => d.CourseUid)
-                .HasConstraintName("assignments_course_uid_fkey");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.Assignments)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("assignments_created_by_fkey");
-
-            entity.HasOne(d => d.LessonU).WithMany(p => p.Assignments)
-                .HasForeignKey(d => d.LessonUid)
-                .HasConstraintName("assignments_lesson_uid_fkey");
-
-            entity.HasOne(d => d.SubtopicU).WithMany(p => p.Assignments)
-                .HasForeignKey(d => d.SubtopicUid)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("assignments_subtopic_uid_fkey");
-        });
-
         modelBuilder.Entity<Certificate>(entity =>
         {
             entity.HasKey(e => e.Uid).HasName("certificates_pkey");
@@ -172,9 +116,6 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("issued_at");
-            entity.Property(e => e.Score)
-                .HasPrecision(5, 2)
-                .HasColumnName("score");
             entity.Property(e => e.UserUid).HasColumnName("user_uid");
 
             entity.HasOne(d => d.CourseU).WithMany(p => p.Certificates)
@@ -199,6 +140,9 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
+            entity.Property(e => e.IsGroup)
+                .HasDefaultValue(false)
+                .HasColumnName("is_group");
             entity.Property(e => e.OrgUid).HasColumnName("org_uid");
             entity.Property(e => e.Title)
                 .HasMaxLength(255)
@@ -288,68 +232,6 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasConstraintName("course_enrollments_user_uid_fkey");
         });
 
-        modelBuilder.Entity<CourseGrade>(entity =>
-        {
-            entity.HasKey(e => e.Uid).HasName("course_grades_pkey");
-
-            entity.ToTable("course_grades", "cybercity");
-
-            entity.Property(e => e.Uid)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("uid");
-            entity.Property(e => e.CourseUid).HasColumnName("course_uid");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Feedback).HasColumnName("feedback");
-            entity.Property(e => e.Grade)
-                .HasPrecision(5, 2)
-                .HasColumnName("grade");
-            entity.Property(e => e.GradedBy).HasColumnName("graded_by");
-            entity.Property(e => e.StudentUid).HasColumnName("student_uid");
-
-            entity.HasOne(d => d.CourseU).WithMany(p => p.CourseGrades)
-                .HasForeignKey(d => d.CourseUid)
-                .HasConstraintName("course_grades_course_uid_fkey");
-
-            entity.HasOne(d => d.GradedByNavigation).WithMany(p => p.CourseGradeGradedByNavigations)
-                .HasForeignKey(d => d.GradedBy)
-                .HasConstraintName("course_grades_graded_by_fkey");
-
-            entity.HasOne(d => d.StudentU).WithMany(p => p.CourseGradeStudentUs)
-                .HasForeignKey(d => d.StudentUid)
-                .HasConstraintName("course_grades_student_uid_fkey");
-        });
-
-        modelBuilder.Entity<CourseProgress>(entity =>
-        {
-            entity.HasKey(e => e.Uid).HasName("course_progress_pkey");
-
-            entity.ToTable("course_progress", "cybercity");
-
-            entity.Property(e => e.Uid)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("uid");
-            entity.Property(e => e.CourseUid).HasColumnName("course_uid");
-            entity.Property(e => e.LastAccessedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("last_accessed_at");
-            entity.Property(e => e.ProgressPercent)
-                .HasPrecision(5, 2)
-                .HasDefaultValueSql("0")
-                .HasColumnName("progress_percent");
-            entity.Property(e => e.StudentUid).HasColumnName("student_uid");
-
-            entity.HasOne(d => d.CourseU).WithMany(p => p.CourseProgresses)
-                .HasForeignKey(d => d.CourseUid)
-                .HasConstraintName("course_progress_course_uid_fkey");
-
-            entity.HasOne(d => d.StudentU).WithMany(p => p.CourseProgresses)
-                .HasForeignKey(d => d.StudentUid)
-                .HasConstraintName("course_progress_student_uid_fkey");
-        });
-
         modelBuilder.Entity<Lesson>(entity =>
         {
             entity.HasKey(e => e.Uid).HasName("lessons_pkey");
@@ -383,34 +265,6 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
             entity.HasOne(d => d.ModuleU).WithMany(p => p.Lessons)
                 .HasForeignKey(d => d.ModuleUid)
                 .HasConstraintName("lessons_module_uid_fkey");
-        });
-
-        modelBuilder.Entity<LessonProgress>(entity =>
-        {
-            entity.HasKey(e => e.Uid).HasName("lesson_progress_pkey");
-
-            entity.ToTable("lesson_progress", "cybercity");
-
-            entity.Property(e => e.Uid)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("uid");
-            entity.Property(e => e.CompletedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("completed_at");
-            entity.Property(e => e.LessonUid).HasColumnName("lesson_uid");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .HasDefaultValueSql("'pending'::character varying")
-                .HasColumnName("status");
-            entity.Property(e => e.StudentUid).HasColumnName("student_uid");
-
-            entity.HasOne(d => d.LessonU).WithMany(p => p.LessonProgresses)
-                .HasForeignKey(d => d.LessonUid)
-                .HasConstraintName("lesson_progress_lesson_uid_fkey");
-
-            entity.HasOne(d => d.StudentU).WithMany(p => p.LessonProgresses)
-                .HasForeignKey(d => d.StudentUid)
-                .HasConstraintName("lesson_progress_student_uid_fkey");
         });
 
         modelBuilder.Entity<Message>(entity =>
@@ -673,40 +527,6 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasColumnName("price");
         });
 
-        modelBuilder.Entity<Submission>(entity =>
-        {
-            entity.HasKey(e => e.Uid).HasName("submissions_pkey");
-
-            entity.ToTable("submissions", "cybercity");
-
-            entity.Property(e => e.Uid)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("uid");
-            entity.Property(e => e.AnswerText).HasColumnName("answer_text");
-            entity.Property(e => e.AssignmentUid).HasColumnName("assignment_uid");
-            entity.Property(e => e.Feedback).HasColumnName("feedback");
-            entity.Property(e => e.Grade)
-                .HasPrecision(5, 2)
-                .HasColumnName("grade");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .HasDefaultValueSql("'submitted'::character varying")
-                .HasColumnName("status");
-            entity.Property(e => e.StudentUid).HasColumnName("student_uid");
-            entity.Property(e => e.SubmittedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("submitted_at");
-
-            entity.HasOne(d => d.AssignmentU).WithMany(p => p.Submissions)
-                .HasForeignKey(d => d.AssignmentUid)
-                .HasConstraintName("submissions_assignment_uid_fkey");
-
-            entity.HasOne(d => d.StudentU).WithMany(p => p.Submissions)
-                .HasForeignKey(d => d.StudentUid)
-                .HasConstraintName("submissions_student_uid_fkey");
-        });
-
         modelBuilder.Entity<Subtopic>(entity =>
         {
             entity.HasKey(e => e.Uid).HasName("subtopics_pkey");
@@ -735,6 +555,35 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
             entity.HasOne(d => d.TopicU).WithMany(p => p.Subtopics)
                 .HasForeignKey(d => d.TopicUid)
                 .HasConstraintName("subtopics_topic_uid_fkey");
+        });
+
+        modelBuilder.Entity<SubtopicProgress>(entity =>
+        {
+            entity.HasKey(e => e.Uid).HasName("subtopic_progress_pkey");
+
+            entity.ToTable("subtopic_progress", "cybercity");
+
+            entity.HasIndex(e => new { e.StudentUid, e.SubtopicUid }, "subtopic_progress_student_uid_subtopic_uid_key").IsUnique();
+
+            entity.Property(e => e.Uid)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("uid");
+            entity.Property(e => e.CompletedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("completed_at");
+            entity.Property(e => e.IsCompleted)
+                .HasDefaultValue(false)
+                .HasColumnName("is_completed");
+            entity.Property(e => e.StudentUid).HasColumnName("student_uid");
+            entity.Property(e => e.SubtopicUid).HasColumnName("subtopic_uid");
+
+            entity.HasOne(d => d.StudentU).WithMany(p => p.SubtopicProgresses)
+                .HasForeignKey(d => d.StudentUid)
+                .HasConstraintName("subtopic_progress_student_uid_fkey");
+
+            entity.HasOne(d => d.SubtopicU).WithMany(p => p.SubtopicProgresses)
+                .HasForeignKey(d => d.SubtopicUid)
+                .HasConstraintName("subtopic_progress_subtopic_uid_fkey");
         });
 
         modelBuilder.Entity<TeacherStudent>(entity =>
