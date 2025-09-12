@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CyberCity.Controller.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/subtopics")]
     [ApiController]
     public class SubtopicController : ControllerBase
     {

@@ -7,7 +7,7 @@ using System.Security.Claims;
 using CyberCity.DTOs;
 namespace CyberCity.Controller.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/course-enrollments")]
     [ApiController]
     public class CourseEnrollmentController : ControllerBase
     {

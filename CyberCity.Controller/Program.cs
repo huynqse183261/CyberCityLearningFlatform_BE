@@ -62,7 +62,7 @@ builder.Services.AddScoped<SubtopicRepo>();
 builder.Services.AddScoped<LessonRepo>();
 builder.Services.AddScoped<CourseEnrollmentRepo>();
 builder.Services.AddScoped<ModuleRepo>();
-
+builder.Services.AddScoped<SubtopicProgressRepo>();
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -74,7 +74,7 @@ builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<ISubtopicService, SubtopicService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IModuleService, ModuleService>();
-
+builder.Services.AddScoped<ISubtopicProgressService, SubtopicProgressService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
@@ -83,7 +83,7 @@ builder.Services.AddAutoMapper(typeof(SubtopicProfile));
 builder.Services.AddAutoMapper(typeof(LessonProfile));
 builder.Services.AddAutoMapper(typeof(CourseEnrollmentProfile));
 builder.Services.AddAutoMapper(typeof(ModuleProfile));
-
+builder.Services.AddAutoMapper(typeof(SubtopicProgressProfile));
 // JWT Auth
 var jwtKey = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey ?? "");

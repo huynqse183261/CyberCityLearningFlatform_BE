@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace CyberCity.Controller.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/courses")]
     public class CoursesController : ControllerBase
     {
         private readonly ICourseService _courseService;

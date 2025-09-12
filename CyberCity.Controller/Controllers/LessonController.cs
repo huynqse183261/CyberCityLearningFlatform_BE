@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CyberCity.Controller.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/lessons")]
     [ApiController]
     public class LessonController : ControllerBase
     {
