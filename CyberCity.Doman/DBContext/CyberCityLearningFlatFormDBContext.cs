@@ -634,7 +634,6 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
             entity.Property(e => e.OrderIndex)
                 .HasDefaultValue(0)
                 .HasColumnName("order_index");
-            entity.Property(e => e.PageNumber).HasColumnName("page_number");
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasMaxLength(255)
