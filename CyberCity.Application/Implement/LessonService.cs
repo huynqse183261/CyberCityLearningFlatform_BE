@@ -27,7 +27,7 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<PagedResult<LessonDetailDto>> GetLessonAsync(int page, int pageSize)
+        public async Task<PagedResult<LessonDetailResponse>> GetLessonAsync(int page, int pageSize)
         {
             var query = _lessonRepo.GetAllAsync();
             var totalItems = await query.CountAsync();
@@ -37,9 +37,9 @@ namespace CyberCity.Application.Implement
                 .Take(pageSize)
                 .ToListAsync();
 
-            var mappedCourses = courses.Select(course => _mapper.Map<LessonDetailDto>(course)).ToList();
+            var mappedCourses = courses.Select(course => _mapper.Map<LessonDetailResponse>(course)).ToList();
 
-            return new PagedResult<LessonDetailDto>
+            return new PagedResult<LessonDetailResponse>
             {
                 Items = mappedCourses,
                 TotalItems = totalItems,

@@ -13,10 +13,10 @@ namespace CyberCity.AutoMapper
     {
         public CourseEnrollmentProfile()
         {
-            CreateMap<CourseEnrollment, EnrollmentDto>()
+            CreateMap<CourseEnrollment, EnrollmentResponse>()
              .ForMember(dest => dest.CourseTitle, opt => opt.MapFrom(src => src.CourseU.Title));
 
-            CreateMap<CourseEnrollment, CourseEnrollmentDto>()
+            CreateMap<CourseEnrollment, CourseEnrollmentResponse>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserU.FullName))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.UserU.Email));
         }

@@ -38,24 +38,24 @@ namespace CyberCity.Application.Implement
             return await _courseEnrollmentRepo.CreateAsync(enrollment) > 0;
         }
 
-        public async Task<List<EnrollmentDto>> GetMyEnrollmentsAsync(Guid userId)
+        public async Task<List<EnrollmentResponse>> GetMyEnrollmentsAsync(Guid userId)
         {
             var result = await _courseEnrollmentRepo.GetAll()
                 .Where(e => e.UserUid == userId)
                 .Include(e => e.CourseU)
                 .ToListAsync();
 
-            return _mapper.Map<List<EnrollmentDto>>(result);
+            return _mapper.Map<List<EnrollmentResponse>>(result);
         }
 
-        public async Task<List<CourseEnrollmentDto>> GetEnrollmentsByCourseAsync(Guid courseId)
+        public async Task<List<CourseEnrollmentResponse>> GetEnrollmentsByCourseAsync(Guid courseId)
         {
             var result = await _courseEnrollmentRepo.GetAll()
                 .Where(e => e.CourseUid == courseId)
                 .Include(e => e.UserU)
                 .ToListAsync();
 
-            return _mapper.Map<List<CourseEnrollmentDto>>(result);
+            return _mapper.Map<List<CourseEnrollmentResponse>>(result);
         }
     }
 }

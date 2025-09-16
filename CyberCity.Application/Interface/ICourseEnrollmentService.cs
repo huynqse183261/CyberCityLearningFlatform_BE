@@ -8,7 +8,7 @@ namespace CyberCity.Application.Interface
     public interface ICourseEnrollmentService
     {
         Task<bool> EnrollAsync(Guid courseId, Guid studentId);
-        Task<List<EnrollmentDto>> GetMyEnrollmentsAsync(Guid studentId);
-        Task<List<CourseEnrollmentDto>> GetEnrollmentsByCourseAsync(Guid courseId);
+        Task<List<EnrollmentResponse>> GetMyEnrollmentsAsync(Guid studentId);
+        Task<List<CourseEnrollmentResponse>> GetEnrollmentsByCourseAsync(Guid courseId);
     }
 }

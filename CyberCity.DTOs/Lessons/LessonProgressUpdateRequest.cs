@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CyberCity.Application.Interface
+namespace CyberCity.DTOs.Lessons
 {
-    public interface IAprovalLogService
+    public class LessonProgressUpdateRequest
     {
+        public string Status { get; set; }
     }
 }

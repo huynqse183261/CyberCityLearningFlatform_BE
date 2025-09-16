@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CyberCity.DTOs.Lessons
 {
-    public class LessonProgressDto
+    public class LessonProgressResponse
     {
          public Guid Uid { get; set; }
         public Guid StudentUid { get; set; }

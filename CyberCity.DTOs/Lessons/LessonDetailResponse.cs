@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace CyberCity.DTOs.Lessons
 {
-    public class LessonCreateDto
+    public class LessonDetailResponse
     {
+        public Guid Uid { get; set; }
 
         public Guid ModuleUid { get; set; }
 
@@ -19,5 +20,6 @@ namespace CyberCity.DTOs.Lessons
 
         public int? OrderIndex { get; set; }
 
+        public DateTime? CreatedAt { get; set; }
     }
 }

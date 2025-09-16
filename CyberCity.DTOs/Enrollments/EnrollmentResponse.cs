@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CyberCity.DTOs.Enrollments
 {
-    public class EnrollmentDto
+    public class EnrollmentResponse
     {
         public Guid CourseUid { get; set; }
         public string CourseTitle { get; set; }

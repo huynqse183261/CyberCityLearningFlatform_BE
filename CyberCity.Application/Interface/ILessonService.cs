@@ -13,7 +13,7 @@ namespace CyberCity.Application.Interface
 {
     public interface ILessonService
     {
-        Task<PagedResult<LessonDetailDto>> GetLessonAsync(int pageNumber, int pageSize);
+        Task<PagedResult<LessonDetailResponse>> GetLessonAsync(int pageNumber, int pageSize);
         Task<Lesson> GetByIdAsync(Guid uid);
         Task<Guid> CreateAsync(Lesson lesson);
         Task<bool> UpdateAsync(Lesson lesson);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CyberCity.DTOs.Courses
 {
-    public class CourseOutlineResponseDto
+    public class CourseOutlineResponse
     {
         public Guid Uid { get; set; }
         public string Title { get; set; }

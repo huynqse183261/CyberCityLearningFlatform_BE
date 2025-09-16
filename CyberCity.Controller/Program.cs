@@ -64,6 +64,7 @@ builder.Services.AddScoped<CourseEnrollmentRepo>();
 builder.Services.AddScoped<ModuleRepo>();
 builder.Services.AddScoped<SubtopicProgressRepo>();
 builder.Services.AddScoped<OrderRepo>();
+builder.Services.AddScoped<NotificationRepo>();
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -77,6 +78,7 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IModuleService, ModuleService>();
 builder.Services.AddScoped<ISubtopicProgressService, SubtopicProgressService>();
 builder.Services.AddScoped<IDashboardSerivce, DashboardService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));

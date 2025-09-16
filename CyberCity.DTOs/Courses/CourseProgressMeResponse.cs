@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 
 namespace CyberCity.DTOs.Courses
 {
-    public class CourseProgressOverviewItemDto
+    public class CourseProgressMeResponse
     {
-        public Guid StudentUid { get; set; }
-        public string FullName { get; set; }
+        public Guid CourseUid { get; set; }
         public decimal ProgressPercent { get; set; }
-        public DateTime? LastAccessedAt { get; set; }
     }
 }
