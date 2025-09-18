@@ -66,6 +66,8 @@ builder.Services.AddScoped<SubtopicProgressRepo>();
 builder.Services.AddScoped<OrderRepo>();
 builder.Services.AddScoped<NotificationRepo>();
 builder.Services.AddScoped<CertificateRepo>();
+builder.Services.AddScoped<OrganizationRepo>();
+builder.Services.AddScoped<OrgMemberRepo>();
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -81,6 +83,7 @@ builder.Services.AddScoped<ISubtopicProgressService, SubtopicProgressService>();
 builder.Services.AddScoped<IDashboardSerivce, DashboardService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
@@ -90,6 +93,7 @@ builder.Services.AddAutoMapper(typeof(LessonProfile));
 builder.Services.AddAutoMapper(typeof(CourseEnrollmentProfile));
 builder.Services.AddAutoMapper(typeof(ModuleProfile));
 builder.Services.AddAutoMapper(typeof(SubtopicProgressProfile));
+builder.Services.AddAutoMapper(typeof(OrganizationProfile));
 // JWT Auth
 var jwtKey = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey ?? "");
