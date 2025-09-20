@@ -68,6 +68,9 @@ builder.Services.AddScoped<NotificationRepo>();
 builder.Services.AddScoped<CertificateRepo>();
 builder.Services.AddScoped<OrganizationRepo>();
 builder.Services.AddScoped<OrgMemberRepo>();
+builder.Services.AddScoped<ConversationRepo>();
+builder.Services.AddScoped<MessageRepo>();
+builder.Services.AddScoped<ConversationMemberRepo>();
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -84,6 +87,8 @@ builder.Services.AddScoped<IDashboardSerivce, DashboardService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+builder.Services.AddScoped<IConversationService, ConversationService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
@@ -94,6 +99,8 @@ builder.Services.AddAutoMapper(typeof(CourseEnrollmentProfile));
 builder.Services.AddAutoMapper(typeof(ModuleProfile));
 builder.Services.AddAutoMapper(typeof(SubtopicProgressProfile));
 builder.Services.AddAutoMapper(typeof(OrganizationProfile));
+builder.Services.AddAutoMapper(typeof(ConversationProfile));
+builder.Services.AddAutoMapper(typeof(MessageProfile));
 // JWT Auth
 var jwtKey = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey ?? "");
@@ -104,61 +111,61 @@ builder.Services.AddAuthentication(options =>
 })
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
-    };
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            var bearerToken = context.Request.Headers["Authorization"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(bearerToken))
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
             {
-                return Task.CompletedTask;
-            }
+                var bearerToken = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(bearerToken))
+                {
+                    return Task.CompletedTask;
+                }
 
-            var token = context.Request.Cookies["access_token"];
-            if (!string.IsNullOrEmpty(token))
+                var token = context.Request.Cookies["access_token"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
             {
-                context.Token = token;
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    status = 401,
+                    message = "Unauthorized: Token is missing or invalid"
+                });
+                return context.Response.WriteAsync(result);
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    status = 403,
+                    message = "Forbidden: You don’t have permission to access this resource."
+                });
+                return context.Response.WriteAsync(result);
             }
-            return Task.CompletedTask;
-        },
-        OnChallenge = context =>
-        {
-            context.HandleResponse();
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            context.Response.ContentType = "application/json";
-            var result = JsonSerializer.Serialize(new
-            {
-                status = 401,
-                message = "Unauthorized: Token is missing or invalid"
-            });
-            return context.Response.WriteAsync(result);
-        },
-        OnForbidden = context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            context.Response.ContentType = "application/json";
-            var result = JsonSerializer.Serialize(new
-            {
-                status = 403,
-                message = "Forbidden: You don’t have permission to access this resource."
-            });
-            return context.Response.WriteAsync(result);
-        }
-    };
-});
+        };
+    });
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
