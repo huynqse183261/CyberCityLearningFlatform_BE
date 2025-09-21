@@ -72,6 +72,7 @@ builder.Services.AddScoped<ConversationRepo>();
 builder.Services.AddScoped<MessageRepo>();
 builder.Services.AddScoped<ConversationMemberRepo>();
 builder.Services.AddScoped<PricingPlanRepo>();
+builder.Services.AddScoped<TeacherStudentRepo>();
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -91,6 +92,7 @@ builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IPricingPlanService, PricingPlanService>();
+builder.Services.AddScoped<ITeacherStudentService, TeacherStudentService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
@@ -104,6 +106,7 @@ builder.Services.AddAutoMapper(typeof(OrganizationProfile));
 builder.Services.AddAutoMapper(typeof(ConversationProfile));
 builder.Services.AddAutoMapper(typeof(MessageProfile));
 builder.Services.AddAutoMapper(typeof(PricingPlanProfile));
+builder.Services.AddAutoMapper(typeof(TeacherStudentProfile));
 // JWT Auth
 var jwtKey = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey ?? "");
