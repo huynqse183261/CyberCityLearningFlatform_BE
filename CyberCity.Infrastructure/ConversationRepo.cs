@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace CyberCity.Infrastructure
 {
-    public class ConversationRepo: GenericRepository<Conversation>
+    public class ConversationRepo : GenericRepository<Conversation>
     {
         public ConversationRepo() { }
         public ConversationRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
-        
+
         public IQueryable<Conversation> GetAllAsync(bool descending = true)
         {
             var query = _context.Conversations.AsQueryable();
@@ -22,7 +22,7 @@ namespace CyberCity.Infrastructure
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);
         }
-        
+
         public async Task<List<Conversation>> GetByAssignmentUidAsync(Guid conversationId)
         {
             return await _context.Conversations.Where(c => c.Uid == conversationId).ToListAsync();

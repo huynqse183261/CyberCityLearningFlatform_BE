@@ -516,7 +516,7 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
                 .HasColumnName("created_at");
             entity.Property(e => e.DurationDays).HasColumnName("duration_days");
             entity.Property(e => e.Features)
-                .HasColumnType("jsonb")
+                .HasMaxLength(255)
                 .HasColumnName("features");
             entity.Property(e => e.PlanName)
                 .IsRequired()
