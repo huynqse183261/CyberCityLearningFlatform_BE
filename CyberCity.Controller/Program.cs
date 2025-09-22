@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using CyberCity.AutoMapper;
 using Microsoft.OpenApi.Models;
 using System.Text.Json;
-using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,26 +60,53 @@ builder.Services.AddScoped<CourseRepo>();
 builder.Services.AddScoped<TopicRepo>();
 builder.Services.AddScoped<SubtopicRepo>();
 builder.Services.AddScoped<LessonRepo>();
+builder.Services.AddScoped<CourseEnrollmentRepo>();
 builder.Services.AddScoped<ModuleRepo>();
-builder.Services.AddScoped<TopicRepo>();
-
+builder.Services.AddScoped<SubtopicProgressRepo>();
+builder.Services.AddScoped<OrderRepo>();
+builder.Services.AddScoped<NotificationRepo>();
+builder.Services.AddScoped<CertificateRepo>();
+builder.Services.AddScoped<OrganizationRepo>();
+builder.Services.AddScoped<OrgMemberRepo>();
+builder.Services.AddScoped<ConversationRepo>();
+builder.Services.AddScoped<MessageRepo>();
+builder.Services.AddScoped<ConversationMemberRepo>();
+builder.Services.AddScoped<PricingPlanRepo>();
+builder.Services.AddScoped<TeacherStudentRepo>();
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
-builder.Services.AddScoped<IModuleService, ModuleService>();
-builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<ICourseEnrollmentService, CourseEnrollmentService>();
 builder.Services.AddScoped<ITopicService, TopicService>();
-
+builder.Services.AddScoped<ISubtopicService, SubtopicService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IModuleService, ModuleService>();
+builder.Services.AddScoped<ISubtopicProgressService, SubtopicProgressService>();
+builder.Services.AddScoped<IDashboardSerivce, DashboardService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+builder.Services.AddScoped<IConversationService, ConversationService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IPricingPlanService, PricingPlanService>();
+builder.Services.AddScoped<ITeacherStudentService, TeacherStudentService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
-builder.Services.AddAutoMapper(typeof(ModuleProfile));
-builder.Services.AddAutoMapper(typeof(LessonProfile));
 builder.Services.AddAutoMapper(typeof(TopicProfile));
-
+builder.Services.AddAutoMapper(typeof(SubtopicProfile));
+builder.Services.AddAutoMapper(typeof(LessonProfile));
+builder.Services.AddAutoMapper(typeof(CourseEnrollmentProfile));
+builder.Services.AddAutoMapper(typeof(ModuleProfile));
+builder.Services.AddAutoMapper(typeof(SubtopicProgressProfile));
+builder.Services.AddAutoMapper(typeof(OrganizationProfile));
+builder.Services.AddAutoMapper(typeof(ConversationProfile));
+builder.Services.AddAutoMapper(typeof(MessageProfile));
+builder.Services.AddAutoMapper(typeof(PricingPlanProfile));
+builder.Services.AddAutoMapper(typeof(TeacherStudentProfile));
 // JWT Auth
 var jwtKey = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey ?? "");
@@ -91,67 +117,61 @@ builder.Services.AddAuthentication(options =>
 })
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
-        RoleClaimType = ClaimTypes.Role
-    };
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            var bearerToken = context.Request.Headers["Authorization"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(bearerToken))
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
             {
-                return Task.CompletedTask;
-            }
+                var bearerToken = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(bearerToken))
+                {
+                    return Task.CompletedTask;
+                }
 
-            var token = context.Request.Cookies["access_token"];
-            if (!string.IsNullOrEmpty(token))
+                var token = context.Request.Cookies["access_token"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
             {
-                context.Token = token;
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    status = 401,
+                    message = "Unauthorized: Token is missing or invalid"
+                });
+                return context.Response.WriteAsync(result);
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    status = 403,
+                    message = "Forbidden: You don’t have permission to access this resource."
+                });
+                return context.Response.WriteAsync(result);
             }
-            return Task.CompletedTask;
-        },
-        OnChallenge = context =>
-        {
-            context.HandleResponse();
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            context.Response.ContentType = "application/json";
-            var result = JsonSerializer.Serialize(new
-            {
-                status = 401,
-                message = "Unauthorized: Token is missing or invalid"
-            });
-            return context.Response.WriteAsync(result);
-        },
-        OnAuthenticationFailed = context =>
-        {
-            Console.WriteLine($"JWT authentication failed: {context.Exception?.Message}");
-            return Task.CompletedTask;
-        },
-        OnForbidden = context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            context.Response.ContentType = "application/json";
-            var result = JsonSerializer.Serialize(new
-            {
-                status = 403,
-                message = "Forbidden: You don’t have permission to access this resource."
-            });
-            return context.Response.WriteAsync(result);
-        }
-    };
-});
+        };
+    });
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>

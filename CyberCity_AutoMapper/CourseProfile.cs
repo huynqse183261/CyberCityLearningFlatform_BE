@@ -13,12 +13,12 @@ namespace CyberCity.AutoMapper
     {
         public CourseProfile()
         {
-            CreateMap<Course, CourseListItemDto>();
-            CreateMap<Course, CourseDetailDto>();
-            CreateMap<CourseCreateUpdateDto, Course>();
+            CreateMap<Course, CourseListItemResponse>();
+            CreateMap<Course, CourseDetailResponse>();
+            CreateMap<CourseCreateUpdateRequest, Course>();
             
             // Mapping for Course Outline
-            CreateMap<Course, CourseOutlineResponseDto>();
+            CreateMap<Course, CourseOutlineResponse>();
             CreateMap<Module, ModuleOutlineDto>();
             CreateMap<Lesson, LessonOutlineDto>();
             CreateMap<Topic, TopicOutlineDto>();

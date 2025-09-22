@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -29,7 +29,8 @@ namespace CyberCity.Application.Implement
 				new Claim(JwtRegisteredClaimNames.Sub, user.Uid.ToString()),
 				new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
 				new Claim(JwtRegisteredClaimNames.UniqueName, user.Username ?? string.Empty),
-				new Claim(ClaimTypes.Role, user.Role ?? "student")
+				new Claim(ClaimTypes.Role, user.Role ?? "student"),
+				new Claim("uid", user.Uid.ToString())
 			};
 
 			var token = new JwtSecurityToken(

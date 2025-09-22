@@ -40,5 +40,9 @@ namespace CyberCity.Infrastructure
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Uid == id);
         }
+        public async Task<int> GetUserCountAsync()
+        {
+            return await _context.Users.CountAsync();
+        }
     }
 }

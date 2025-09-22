@@ -19,7 +19,7 @@ public partial class Subtopic
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
+    public virtual ICollection<SubtopicProgress> SubtopicProgresses { get; set; } = new List<SubtopicProgress>();
 
     public virtual Topic TopicU { get; set; }
 }

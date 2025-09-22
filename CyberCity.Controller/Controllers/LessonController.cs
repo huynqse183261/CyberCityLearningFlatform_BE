@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CyberCity.Controller.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/lessons")]
     [ApiController]
     public class LessonController : ControllerBase
     {
@@ -33,12 +33,12 @@ namespace CyberCity.Controller.Controllers
             var lesson = await _lessonService.GetByIdAsync(id);
             if (lesson == null)
                 return NotFound();
-            var dto = _mapper.Map<LessonDetailDto>(lesson);
+            var dto = _mapper.Map<LessonDetailResponse>(lesson);
             return Ok(dto);
         }
         // POST: api/Lesson
         [HttpPost]
-        public async Task<IActionResult> CreateLesson([FromBody] LessonCreateDto lessonDto)
+        public async Task<IActionResult> CreateLesson([FromBody] LessonCreateRequest lessonDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

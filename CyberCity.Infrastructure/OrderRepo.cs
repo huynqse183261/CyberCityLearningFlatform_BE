@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CyberCity.Doman.DBcontext;
 using CyberCity.Doman.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CyberCity.Infrastructure
 {
@@ -19,6 +20,18 @@ namespace CyberCity.Infrastructure
             return descending
                 ? query.OrderByDescending(c => c.ApprovalStatus)
                 : query.OrderBy(c => c.ApprovalStatus);
+        }
+        public async Task<int> getOrdertotalAsync()
+        {
+            return await _context.Orders.CountAsync();
+        }
+        public async Task<decimal> TotalAmountAsync()
+        {
+            return await _context.Orders.SumAsync(o => o.Amount);
+        }
+        public async Task<int> TotalapproveStatusAsync()
+        {
+            return await _context.Orders.CountAsync(o => o.ApprovalStatus == "pending");
         }
     }
 }

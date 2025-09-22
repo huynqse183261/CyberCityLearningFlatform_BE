@@ -10,10 +10,11 @@ using System.Threading.Tasks;
 
 namespace CyberCity.Infrastructure
 {
-    public class ConversationRepo: GenericRepository<Conversation>
+    public class ConversationRepo : GenericRepository<Conversation>
     {
         public ConversationRepo() { }
         public ConversationRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
+
         public IQueryable<Conversation> GetAllAsync(bool descending = true)
         {
             var query = _context.Conversations.AsQueryable();
@@ -21,9 +22,46 @@ namespace CyberCity.Infrastructure
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);
         }
+
         public async Task<List<Conversation>> GetByAssignmentUidAsync(Guid conversationId)
         {
             return await _context.Conversations.Where(c => c.Uid == conversationId).ToListAsync();
+        }
+
+        public async Task<List<Conversation>> GetConversationsByUserIdAsync(Guid userId)
+        {
+            return await _context.Conversations
+                .Include(c => c.ConversationMembers)
+                    .ThenInclude(cm => cm.UserU)
+                .Include(c => c.Messages.OrderByDescending(m => m.SentAt).Take(1))
+                    .ThenInclude(m => m.SenderU)
+                .Where(c => c.ConversationMembers.Any(cm => cm.UserUid == userId))
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<Conversation> GetConversationByIdAsync(Guid conversationId)
+        {
+            return await _context.Conversations
+                .Include(c => c.ConversationMembers)
+                    .ThenInclude(cm => cm.UserU)
+                .Include(c => c.Messages)
+                    .ThenInclude(m => m.SenderU)
+                .FirstOrDefaultAsync(c => c.Uid == conversationId);
+        }
+
+        public async Task<Conversation> GetConversationWithMembersAsync(Guid conversationId)
+        {
+            return await _context.Conversations
+                .Include(c => c.ConversationMembers)
+                    .ThenInclude(cm => cm.UserU)
+                .FirstOrDefaultAsync(c => c.Uid == conversationId);
+        }
+
+        public async Task<bool> IsUserMemberOfConversationAsync(Guid conversationId, Guid userId)
+        {
+            return await _context.ConversationMembers
+                .AnyAsync(cm => cm.ConversationUid == conversationId && cm.UserUid == userId);
         }
     }
 }

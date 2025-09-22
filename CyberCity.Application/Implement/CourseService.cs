@@ -54,7 +54,7 @@ namespace CyberCity.Application.Implement
                 TotalPages = totalPages
             };
         }
-        public async Task<PagedResult<CourseOutlineResponseDto>> GetAllOutline(int page, int pageSize)
+        public async Task<PagedResult<CourseOutlineResponse>> GetAllOutline(int page, int pageSize)
         {
             var query = _courseRepo.GetAllCourseAsync();
             var totalItems = await query.CountAsync();
@@ -64,9 +64,9 @@ namespace CyberCity.Application.Implement
                 .Take(pageSize)
                 .ToListAsync();
 
-            var mappedCourses = courses.Select(course => _mapper.Map<CourseOutlineResponseDto>(course)).ToList();
+            var mappedCourses = courses.Select(course => _mapper.Map<CourseOutlineResponse>(course)).ToList();
 
-            return new PagedResult<CourseOutlineResponseDto>
+            return new PagedResult<CourseOutlineResponse>
             {
                 Items = mappedCourses,
                 TotalItems = totalItems,

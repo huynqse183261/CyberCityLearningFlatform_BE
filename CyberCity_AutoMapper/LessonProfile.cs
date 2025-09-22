@@ -13,8 +13,8 @@ namespace CyberCity.AutoMapper
     {
         public LessonProfile()
         {
-            CreateMap<Lesson, LessonDetailDto>().ReverseMap();
-            CreateMap<LessonCreateDto, Lesson>();
+            CreateMap<Lesson, LessonDetailResponse>().ReverseMap();
+            CreateMap<LessonCreateRequest, Lesson>();
             CreateMap<LessonUpdateDto, Lesson>();
         }
     }

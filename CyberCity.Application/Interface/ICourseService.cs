@@ -12,7 +12,7 @@ namespace CyberCity.Application.Interface
     public interface ICourseService
     {
         Task<PagedResult<Course>> GetCoursesAsync(int pageNumber, int pageSize, string level = null, bool descending = true);
-        Task<PagedResult<CourseOutlineResponseDto>> GetAllOutline(int page, int pageSize);
+        Task<PagedResult<CourseOutlineResponse>> GetAllOutline(int page, int pageSize);
         Task<Course> GetByIdAsync(Guid uid);
         Task<Guid> CreateAsync(Course course);
         Task<bool> UpdateAsync(Course course);
