@@ -17,7 +17,9 @@ namespace CyberCity.Infrastructure
         
         public IQueryable<PricingPlan> GetAllAsync(bool descending = true)
         {
-            var query = _context.PricingPlans.AsQueryable();
+            var query = _context.PricingPlans
+                .OrderByDescending(t => t.CreatedAt)
+                .AsQueryable();
             return descending
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);

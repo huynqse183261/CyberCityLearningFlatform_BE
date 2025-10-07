@@ -15,7 +15,7 @@ namespace CyberCity.Infrastructure
         public OrganizationRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
         public IQueryable<Organization> GetAllAsync(bool descending = true)
         {
-            var query = _context.Organizations.AsQueryable();
+            var query = _context.Organizations.OrderByDescending(t => t.CreatedAt).AsQueryable();
             return descending
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);

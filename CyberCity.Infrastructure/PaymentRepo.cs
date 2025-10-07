@@ -15,7 +15,9 @@ namespace CyberCity.Infrastructure
         public PaymentRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
         public IQueryable<Payment> GetAllAsync(bool descending = true)
         {
-            var query = _context.Payments.AsQueryable();
+            var query = _context.Payments
+                .OrderByDescending(t => t.CreatedAt)
+                .AsQueryable();
             return descending
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);

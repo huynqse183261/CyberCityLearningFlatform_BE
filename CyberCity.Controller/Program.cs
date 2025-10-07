@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using CyberCity.AutoMapper;
 using Microsoft.OpenApi.Models;
 using System.Text.Json;
+using CyberCity.Controller.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
+// Add SignalR
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.KeepAliveInterval = TimeSpan.FromMinutes(1);
+    options.ClientTimeoutInterval = TimeSpan.FromMinutes(5);
+});
 builder.Services.AddSwaggerGen(c =>
 {
 	c.SwaggerDoc("v1", new OpenApiInfo
@@ -93,6 +102,7 @@ builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IPricingPlanService, PricingPlanService>();
 builder.Services.AddScoped<ITeacherStudentService, TeacherStudentService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
@@ -134,17 +144,29 @@ builder.Services.AddAuthentication(options =>
         {
             OnMessageReceived = context =>
             {
+                // Get token from Authorization header
                 var bearerToken = context.Request.Headers["Authorization"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(bearerToken))
                 {
                     return Task.CompletedTask;
                 }
 
+                // Get token from cookie
                 var token = context.Request.Cookies["access_token"];
                 if (!string.IsNullOrEmpty(token))
                 {
                     context.Token = token;
+                    return Task.CompletedTask;
                 }
+
+                // Get token from query string for SignalR
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+                {
+                    context.Token = accessToken;
+                }
+
                 return Task.CompletedTask;
             },
             OnChallenge = context =>
@@ -192,9 +214,15 @@ app.UseSwaggerUI();
 app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
 
+// Enable static files
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

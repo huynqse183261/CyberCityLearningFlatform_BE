@@ -1,6 +1,7 @@
 using AutoMapper;
 using CyberCity.Application.Interface;
 using CyberCity.Doman.Models;
+using CyberCity.DTOs;
 using CyberCity.DTOs.Conversations;
 using CyberCity.DTOs.Messages;
 using CyberCity.Infrastructure;
@@ -34,6 +35,27 @@ namespace CyberCity.Application.Implement
         {
             var conversations = await _conversationRepo.GetConversationsByUserIdAsync(userId);
             return conversations.Select(c => _mapper.Map<ConversationDto>(c)).ToList();
+        }
+
+        public async Task<PagedResult<ConversationDto>> GetUserConversationsAsync(Guid userId, int pageNumber = 1, int pageSize = 20)
+        {
+            var conversations = await _conversationRepo.GetConversationsByUserIdAsync(userId);
+            var totalConversations = conversations.Count;
+            var paginatedConversations = conversations
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var totalPages = (int)Math.Ceiling(totalConversations / (double)pageSize);
+
+            return new PagedResult<ConversationDto>
+            {
+                Items = paginatedConversations.Select(c => _mapper.Map<ConversationDto>(c)).ToList(),
+                TotalItems = totalConversations,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = totalPages
+            };
         }
 
         public async Task<ConversationDto> GetConversationByIdAsync(Guid conversationId, Guid requestingUserId)

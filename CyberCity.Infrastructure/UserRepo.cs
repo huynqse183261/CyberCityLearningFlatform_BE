@@ -17,7 +17,9 @@ namespace CyberCity.Infrastructure
 
         public async Task<User> GetByEmailAsync(string email)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email.Trim());
+            return await _context.Users
+                .OrderByDescending(u => u.CreatedAt)
+                .FirstOrDefaultAsync(u => u.Email == email.Trim());
         }
         public async Task<User> GetByUsernameAsync(string username)
         {

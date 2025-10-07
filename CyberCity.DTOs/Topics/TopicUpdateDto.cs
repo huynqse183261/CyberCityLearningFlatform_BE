@@ -14,8 +14,6 @@ namespace CyberCity.DTOs.Topics
 
         public string Description { get; set; }
 
-        public int? PageNumber { get; set; }
-
         public int? OrderIndex { get; set; }
     }
 }
