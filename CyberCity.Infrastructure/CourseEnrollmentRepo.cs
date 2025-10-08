@@ -14,7 +14,9 @@ namespace CyberCity.Infrastructure
     {
         public CourseEnrollmentRepo() { }
         public CourseEnrollmentRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
-        public IQueryable<CourseEnrollment> GetAll() => _context.CourseEnrollments.AsQueryable();
+        public IQueryable<CourseEnrollment> GetAll() => _context.CourseEnrollments
+            .OrderByDescending(e => e.EnrolledAt)
+            .AsQueryable();
 
         public async Task<CourseEnrollment?> GetByUserAndCourseAsync(Guid userId, Guid courseId)
         {

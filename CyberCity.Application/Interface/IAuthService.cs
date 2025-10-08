@@ -7,6 +7,12 @@ namespace CyberCity.Application.Interface
 	{
 		Task<LoginResponseDto?> LoginAsync(LoginRequestDto request);
 		Task<LoginResponseDto?> RegisterAsync(RegisterRequestDto request);
+		Task<LoginResponseDto?> GoogleLoginAsync(GoogleLoginRequestDto request);
+		Task<bool> IsEmailTakenAsync(string email);
+		Task<bool> IsUsernameTakenAsync(string username);
+		Task<bool> SendResetCodeAsync(ForgotPasswordRequestDto request);
+		Task<bool> VerifyResetCodeAsync(VerifyResetCodeDto request);
+		Task<bool> ResetPasswordAsync(ResetPasswordDto request);
 	}
 }
 

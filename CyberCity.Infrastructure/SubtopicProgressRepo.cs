@@ -19,6 +19,7 @@ namespace CyberCity.Infrastructure
         {
             var query = _context.SubtopicProgresses
                  .Where(p => p.StudentUid == studentId)
+                 .OrderByDescending(p => p.CompletedAt)
                  .AsQueryable();
             return await query.ToListAsync();
         }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CyberCity.Doman.DBcontext;
 using CyberCity.Doman.Models;
 using Microsoft.EntityFrameworkCore;
+using CyberCity.DTOs.Order;
 
 namespace CyberCity.Infrastructure
 {
@@ -32,6 +33,31 @@ namespace CyberCity.Infrastructure
         public async Task<int> TotalapproveStatusAsync()
         {
             return await _context.Orders.CountAsync(o => o.ApprovalStatus == "pending");
+        }
+        public async Task<List<OrderCountByMonthDto>> GetOrderCountByMonthAsync(int year)
+        {
+            return await _context.Orders
+                .Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Year == year)
+                .GroupBy(o => o.CreatedAt.Value.Month)
+                .Select(g => new OrderCountByMonthDto
+                {
+                    Year = year,
+                    Month = g.Key,
+                    OrderCount = g.Count()
+                })
+                .OrderBy(x => x.Month)
+                .ToListAsync();
+        }
+
+        // New: get recent orders with includes
+        public async Task<List<Order>> GetRecentOrdersAsync(int count = 10)
+        {
+            return await _context.Orders
+                .Include(o => o.UserU)
+                .Include(o => o.PlanU)
+                .OrderByDescending(o => o.CreatedAt ?? DateTime.MinValue)
+                .Take(count)
+                .ToListAsync();
         }
     }
 }

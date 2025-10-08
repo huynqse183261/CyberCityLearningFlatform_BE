@@ -18,7 +18,7 @@ namespace CyberCity.Infrastructure
         {
             return _context.Modules
                 .Include(m => m.CourseU)
-                .OrderBy(m => m.OrderIndex)
+                .OrderByDescending(m => m.OrderIndex)
                 .AsQueryable();
         }
     }

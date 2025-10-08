@@ -18,6 +18,7 @@ namespace CyberCity.Infrastructure
         {
             var query = _context.Topics
                 .Include(t => t.LessonU)
+                .OrderByDescending(t => t.CreatedAt)
                 .AsQueryable();
             return descending
                 ? query.OrderByDescending(c => c.CreatedAt)
