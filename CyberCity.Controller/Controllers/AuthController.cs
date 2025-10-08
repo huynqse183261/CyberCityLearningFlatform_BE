@@ -82,6 +82,27 @@ namespace CyberCity.Controller.Controllers
 			if (result == null)
 				return Unauthorized();
 
+			// Set cookie authentication for consistency with regular login
+			var claims = new List<Claim>
+			{
+				new Claim(ClaimTypes.NameIdentifier, result.Uid.ToString()),
+				new Claim(ClaimTypes.Name, result.Username),
+				new Claim(ClaimTypes.Email, result.Email),
+				new Claim(ClaimTypes.Role, result.Role)
+			};
+
+			var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+			var authProperties = new AuthenticationProperties
+			{
+				IsPersistent = true,
+				ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+			};
+
+			await HttpContext.SignInAsync(
+				CookieAuthenticationDefaults.AuthenticationScheme,
+				new ClaimsPrincipal(claimsIdentity),
+				authProperties);
+
 			return Ok(new
 			{
 				success = true,

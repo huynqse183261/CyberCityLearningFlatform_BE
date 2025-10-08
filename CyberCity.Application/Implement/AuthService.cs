@@ -119,8 +119,8 @@ namespace CyberCity.Application.Implement
 			// Upsert user by email
 			var email = payload.Email?.Trim();
 			if (string.IsNullOrWhiteSpace(email)) return null;
-			// If email not verified, reject optionally
-			if (!payload.EmailVerified)
+			// If email not verified, reject optionally (check for explicit false)
+			if (payload.EmailVerified == false)
 			{
 				return null;
 			}
