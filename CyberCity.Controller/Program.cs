@@ -82,6 +82,7 @@ builder.Services.AddScoped<MessageRepo>();
 builder.Services.AddScoped<ConversationMemberRepo>();
 builder.Services.AddScoped<PricingPlanRepo>();
 builder.Services.AddScoped<TeacherStudentRepo>();
+builder.Services.AddScoped<IAdminMessageRepository, AdminMessageRepository>();
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -103,6 +104,7 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IPricingPlanService, PricingPlanService>();
 builder.Services.AddScoped<ITeacherStudentService, TeacherStudentService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAdminMessageService, AdminMessageService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
