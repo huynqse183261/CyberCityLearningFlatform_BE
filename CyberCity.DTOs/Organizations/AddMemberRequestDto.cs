@@ -10,7 +10,7 @@ namespace CyberCity.DTOs.Organizations
     public class AddMemberRequestDto
     {
         [Required(ErrorMessage = "User ID là bắt buộc")]
-        public Guid UserUid { get; set; }
+        public string UserUid { get; set; }
 
         [Required(ErrorMessage = "Vai trò thành viên là bắt buộc")]
         [StringLength(50, ErrorMessage = "Vai trò thành viên không được vượt quá 50 ký tự")]

@@ -1,4 +1,4 @@
-﻿using CyberCity.Doman.DBcontext;
+﻿using CyberCity.Doman.DBContext;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -99,12 +99,12 @@ namespace CyberCity.Infrastructure.Basic
 
         public T GetById(Guid code)
         {
-            return _context.Set<T>().Find(code);
+            return _context.Set<T>().Find(code.ToString());
         }
 
         public async Task<T> GetByIdAsync(Guid code)
         {
-            return await _context.Set<T>().FindAsync(code);
+            return await _context.Set<T>().FindAsync(code.ToString());
         }
 
         #region Separating asigned entity and save operators        

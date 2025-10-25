@@ -1,4 +1,4 @@
-﻿using CyberCity.Doman.DBcontext;
+﻿using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
@@ -17,8 +17,9 @@ namespace CyberCity.Infrastructure
         public SubtopicProgressRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
         public async Task<List<SubtopicProgress>> GetByStudentAsync(Guid studentId)
         {
+            var studentIdString = studentId.ToString();
             var query = _context.SubtopicProgresses
-                 .Where(p => p.StudentUid == studentId)
+                 .Where(p => p.StudentUid == studentIdString)
                  .OrderByDescending(p => p.CompletedAt)
                  .AsQueryable();
             return await query.ToListAsync();
@@ -36,8 +37,10 @@ namespace CyberCity.Infrastructure
         }
         public async Task<SubtopicProgress?> GetBySubtopicAndStudentAsync(Guid subtopicId, Guid studentId)
         {
+            var subtopicIdString = subtopicId.ToString();
+            var studentIdString = studentId.ToString();
             var query = _context.SubtopicProgresses
-                .Where(p => p.StudentUid == studentId && p.SubtopicUid == subtopicId)
+                .Where(p => p.StudentUid == studentIdString && p.SubtopicUid == subtopicIdString)
                 .AsQueryable();
             return await query.FirstOrDefaultAsync();
         }
@@ -50,9 +53,9 @@ namespace CyberCity.Infrastructure
             {
                 progress = new SubtopicProgress
                 {
-                    Uid = Guid.NewGuid(),
-                    StudentUid = studentId,
-                    SubtopicUid = subtopicId,
+                    Uid = Guid.NewGuid().ToString(),
+                    StudentUid = studentId.ToString(),
+                    SubtopicUid = subtopicId.ToString(),
                     IsCompleted = true,
                     CompletedAt = DateTime.Now
                 };

@@ -1,6 +1,6 @@
 using AutoMapper;
 using CyberCity.Application.Interface;
-using CyberCity.Doman.DBcontext;
+using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.DTOs;
 using CyberCity.DTOs.Messages;
@@ -62,9 +62,9 @@ namespace CyberCity.Application.Implement
 
             var message = new Message
             {
-                Uid = Guid.NewGuid(),
-                ConversationUid = conversationId,
-                SenderUid = senderId,
+                Uid = Guid.NewGuid().ToString(),
+                ConversationUid = conversationId.ToString(),
+                SenderUid = senderId.ToString(),
                 Message1 = createDto.Message,
                 SentAt = DateTime.Now
             };

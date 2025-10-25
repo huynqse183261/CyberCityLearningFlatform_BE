@@ -28,10 +28,10 @@ namespace CyberCity.Application.Implement
 
         public async Task<Guid> CreateAsync(Module module)
         {
-            module.Uid = Guid.NewGuid();
+            module.Uid = Guid.NewGuid().ToString();
             module.CreatedAt = DateTime.Now;
             var result = await _moduleRepo.CreateAsync(module);
-            return result > 0 ? module.Uid : Guid.Empty;
+            return result > 0 ? Guid.Parse(module.Uid) : Guid.Empty;
         }
 
         public async Task<bool> DeleteAsync(Guid uid)

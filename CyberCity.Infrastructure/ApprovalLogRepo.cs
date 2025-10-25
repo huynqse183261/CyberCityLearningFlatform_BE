@@ -1,4 +1,4 @@
-﻿using CyberCity.Doman.DBcontext;
+﻿using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +23,8 @@ namespace CyberCity.Infrastructure
         }
         public async Task<List<ApprovalLog>> GetByOrderUidAsync(Guid orderUid)
         {
-            return await _context.ApprovalLogs.Where(a => a.OrderUid == orderUid).ToListAsync();
+            var orderUidString = orderUid.ToString();
+            return await _context.ApprovalLogs.Where(a => a.OrderUid == orderUidString).ToListAsync();
         }
     }
 }

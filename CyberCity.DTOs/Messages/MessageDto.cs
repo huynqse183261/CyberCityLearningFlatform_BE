@@ -4,9 +4,9 @@ namespace CyberCity.DTOs.Messages
 {
     public class MessageDto
     {
-        public Guid Uid { get; set; }
-        public Guid ConversationUid { get; set; }
-        public Guid SenderUid { get; set; }
+        public string Uid { get; set; }
+        public string ConversationUid { get; set; }
+        public string SenderUid { get; set; }
         public string Message { get; set; }
         public DateTime? SentAt { get; set; }
         public string SenderUsername { get; set; }

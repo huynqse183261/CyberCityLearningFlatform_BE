@@ -7,9 +7,9 @@ namespace CyberCity.Doman.Models;
 
 public partial class Lesson
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid ModuleUid { get; set; }
+    public string ModuleUid { get; set; }
 
     public string Title { get; set; }
 
@@ -22,6 +22,8 @@ public partial class Lesson
     public DateTime? CreatedAt { get; set; }
 
     public virtual Module ModuleU { get; set; }
+
+    public virtual ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
 
     public virtual ICollection<Topic> Topics { get; set; } = new List<Topic>();
 }

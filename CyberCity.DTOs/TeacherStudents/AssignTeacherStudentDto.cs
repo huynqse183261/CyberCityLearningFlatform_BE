@@ -6,12 +6,12 @@ namespace CyberCity.DTOs.TeacherStudents
     public class AssignTeacherStudentDto
     {
         [Required]
-        public Guid TeacherUid { get; set; }
+        public string TeacherUid { get; set; }
 
         [Required]
-        public Guid StudentUid { get; set; }
+        public string StudentUid { get; set; }
 
         [Required]
-        public Guid CourseUid { get; set; }
+        public string CourseUid { get; set; }
     }
 }

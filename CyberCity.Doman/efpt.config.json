@@ -16,6 +16,10 @@
    "T4TemplatePath": null,
    "Tables": [
       {
+         "Name": "cybercity.answers",
+         "ObjectType": 0
+      },
+      {
          "Name": "cybercity.approval_logs",
          "ObjectType": 0
       },
@@ -37,6 +41,14 @@
       },
       {
          "Name": "cybercity.courses",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.lab_components",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.labs",
          "ObjectType": 0
       },
       {
@@ -76,6 +88,26 @@
          "ObjectType": 0
       },
       {
+         "Name": "cybercity.quiz_answers",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.quiz_questions",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.quiz_submission_answers",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.quiz_submissions",
+         "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.quizzes",
+         "ObjectType": 0
+      },
+      {
          "Name": "cybercity.subtopic_progress",
          "ObjectType": 0
       },
@@ -94,6 +126,10 @@
       {
          "Name": "cybercity.users",
          "ObjectType": 0
+      },
+      {
+         "Name": "cybercity.vw_course_outline",
+         "ObjectType": 3
       }
    ],
    "UiHint": null,

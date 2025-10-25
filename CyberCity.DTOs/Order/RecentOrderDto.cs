@@ -4,8 +4,8 @@ namespace CyberCity.DTOs.Order
 {
     public class RecentOrderDto
     {
-        public Guid Uid { get; set; }
-        public Guid UserUid { get; set; }
+        public string Uid { get; set; }
+        public string UserUid { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
         public string PlanName { get; set; }

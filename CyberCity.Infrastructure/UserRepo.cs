@@ -1,4 +1,4 @@
-﻿using CyberCity.Doman.DBcontext;
+﻿using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +40,8 @@ namespace CyberCity.Infrastructure
         }
         public async Task<User> GetUserAsyncbyId(Guid id)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Uid == id);
+            var idString = id.ToString();
+            return await _context.Users.FirstOrDefaultAsync(u => u.Uid == idString);
         }
         public async Task<int> GetUserCountAsync()
         {

@@ -54,39 +54,39 @@ namespace CyberCity.Application.Implement
         public async Task<TeacherStudentDto> AssignTeacherToStudentAsync(AssignTeacherStudentDto assignDto)
         {
             // Verify teacher exists and has teacher role
-            var teacher = await _userRepo.GetByIdAsync(assignDto.TeacherUid);
+            var teacher = await _userRepo.GetByIdAsync(Guid.Parse(assignDto.TeacherUid));
             if (teacher == null || teacher.Role != "teacher")
                 throw new ArgumentException("Teacher not found or user is not a teacher");
 
             // Verify student exists and has student role
-            var student = await _userRepo.GetByIdAsync(assignDto.StudentUid);
+            var student = await _userRepo.GetByIdAsync(Guid.Parse(assignDto.StudentUid));
             if (student == null || student.Role != "student")
                 throw new ArgumentException("Student not found or user is not a student");
 
             // Verify course exists
-            var course = await _courseRepo.GetByIdAsync(assignDto.CourseUid);
+            var course = await _courseRepo.GetByIdAsync(Guid.Parse(assignDto.CourseUid));
             if (course == null)
                 throw new ArgumentException("Course not found");
 
             // Check if relationship already exists
             var existingRelationship = await _teacherStudentRepo.RelationshipExistsAsync(
-                assignDto.TeacherUid, assignDto.StudentUid, assignDto.CourseUid);
+                Guid.Parse(assignDto.TeacherUid), Guid.Parse(assignDto.StudentUid), Guid.Parse(assignDto.CourseUid));
             if (existingRelationship)
                 throw new ArgumentException("Teacher-Student relationship already exists for this course");
 
             // Create new relationship
             var teacherStudent = new TeacherStudent
             {
-                Uid = Guid.NewGuid(),
-                TeacherUid = assignDto.TeacherUid,
-                StudentUid = assignDto.StudentUid,
-                CourseUid = assignDto.CourseUid
+                Uid = Guid.NewGuid().ToString(),
+                TeacherUid = assignDto.TeacherUid.ToString(),
+                StudentUid = assignDto.StudentUid.ToString(),
+                CourseUid = assignDto.CourseUid.ToString()
             };
 
             await _teacherStudentRepo.CreateAsync(teacherStudent);
 
             // Get the created relationship with details
-            var createdRelationship = await _teacherStudentRepo.GetByIdWithDetailsAsync(teacherStudent.Uid);
+            var createdRelationship = await _teacherStudentRepo.GetByIdWithDetailsAsync(Guid.Parse(teacherStudent.Uid));
             return _mapper.Map<TeacherStudentDto>(createdRelationship);
         }
 

@@ -7,7 +7,7 @@ namespace CyberCity.Doman.Models;
 
 public partial class Course
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
     public string Title { get; set; }
 
@@ -15,7 +15,7 @@ public partial class Course
 
     public string Level { get; set; }
 
-    public Guid CreatedBy { get; set; }
+    public string CreatedBy { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

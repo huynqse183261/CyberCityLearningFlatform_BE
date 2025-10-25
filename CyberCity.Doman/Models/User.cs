@@ -7,7 +7,7 @@ namespace CyberCity.Doman.Models;
 
 public partial class User
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
     public string Email { get; set; }
 
@@ -44,6 +44,8 @@ public partial class User
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual ICollection<OrgMember> OrgMembers { get; set; } = new List<OrgMember>();
+
+    public virtual ICollection<QuizSubmission> QuizSubmissions { get; set; } = new List<QuizSubmission>();
 
     public virtual ICollection<SubtopicProgress> SubtopicProgresses { get; set; } = new List<SubtopicProgress>();
 

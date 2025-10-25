@@ -7,9 +7,9 @@ namespace CyberCity.Doman.Models;
 
 public partial class Subtopic
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid TopicUid { get; set; }
+    public string TopicUid { get; set; }
 
     public string Title { get; set; }
 
@@ -18,6 +18,10 @@ public partial class Subtopic
     public int? OrderIndex { get; set; }
 
     public DateTime? CreatedAt { get; set; }
+
+    public string YoutubeUrl { get; set; }
+
+    public virtual Answer Answer { get; set; }
 
     public virtual ICollection<SubtopicProgress> SubtopicProgresses { get; set; } = new List<SubtopicProgress>();
 

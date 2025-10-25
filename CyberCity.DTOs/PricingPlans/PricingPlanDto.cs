@@ -4,7 +4,7 @@ namespace CyberCity.DTOs.PricingPlans
 {
     public class PricingPlanDto
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
         public string PlanName { get; set; }
         public decimal Price { get; set; }
         public int DurationDays { get; set; }

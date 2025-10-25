@@ -29,9 +29,9 @@ namespace CyberCity.Application.Implement
 
             var enrollment = new CourseEnrollment
             {
-                Uid = Guid.NewGuid(),
-                CourseUid = courseId,
-                UserUid = userId,
+                Uid = Guid.NewGuid().ToString(),
+                CourseUid = courseId.ToString(),
+                UserUid = userId.ToString(),
                 EnrolledAt = DateTime.Now
             };
 
@@ -40,8 +40,9 @@ namespace CyberCity.Application.Implement
 
         public async Task<List<EnrollmentResponse>> GetMyEnrollmentsAsync(Guid userId)
         {
+            var userIdString = userId.ToString();
             var result = await _courseEnrollmentRepo.GetAll()
-                .Where(e => e.UserUid == userId)
+                .Where(e => e.UserUid == userIdString)
                 .Include(e => e.CourseU)
                 .ToListAsync();
 
@@ -50,8 +51,9 @@ namespace CyberCity.Application.Implement
 
         public async Task<List<CourseEnrollmentResponse>> GetEnrollmentsByCourseAsync(Guid courseId)
         {
+            var courseIdString = courseId.ToString();
             var result = await _courseEnrollmentRepo.GetAll()
-                .Where(e => e.CourseUid == courseId)
+                .Where(e => e.CourseUid == courseIdString)
                 .Include(e => e.UserU)
                 .ToListAsync();
 

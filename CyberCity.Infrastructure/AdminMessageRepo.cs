@@ -1,4 +1,4 @@
-using CyberCity.Doman.DBcontext;
+using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.DTOs.Admin;
 using CyberCity.Infrastructure.Basic;
@@ -57,7 +57,7 @@ namespace CyberCity.Infrastructure
             
             foreach (var conv in conversations)
             {
-                var members = await GetConversationMembersAsync(conv.Uid);
+                var members = await GetConversationMembersAsync(Guid.Parse(conv.Uid));
                 
                 conversationDtos.Add(new AdminConversationDto
                 {
@@ -76,8 +76,9 @@ namespace CyberCity.Infrastructure
 
         public async Task<List<SimpleUserDto>> GetConversationMembersAsync(Guid conversationId)
         {
+            var conversationIdString = conversationId.ToString();
             var members = await _context.ConversationMembers
-                .Where(cm => cm.ConversationUid == conversationId)
+                .Where(cm => cm.ConversationUid == conversationIdString)
                 .Join(_context.Users,
                     cm => cm.UserUid,
                     u => u.Uid,
@@ -96,8 +97,9 @@ namespace CyberCity.Infrastructure
 
         public async Task<(List<AdminMessageDto> messages, int totalCount)> GetMessagesAsync(Guid conversationId, GetMessagesQuery query)
         {
+            var conversationIdString = conversationId.ToString();
             var messagesQuery = _context.Messages
-                .Where(m => m.ConversationUid == conversationId);
+                .Where(m => m.ConversationUid == conversationIdString);
 
             var totalCount = await messagesQuery.CountAsync();
 
@@ -131,9 +133,9 @@ namespace CyberCity.Infrastructure
         {
             var newMessage = new Message
             {
-                Uid = Guid.NewGuid(),
-                ConversationUid = conversationId,
-                SenderUid = adminUserId,
+                Uid = Guid.NewGuid().ToString(),
+                ConversationUid = conversationId.ToString(),
+                SenderUid = adminUserId.ToString(),
                 Message1 = message,
                 SentAt = DateTime.Now
             };
@@ -142,8 +144,9 @@ namespace CyberCity.Infrastructure
             await _context.SaveChangesAsync();
 
             // Lấy thông tin sender
+            var adminUserIdString = adminUserId.ToString();
             var sender = await _context.Users
-                .Where(u => u.Uid == adminUserId)
+                .Where(u => u.Uid == adminUserIdString)
                 .Select(u => new SimpleUserDto
                 {
                     Uid = u.Uid,
@@ -170,7 +173,8 @@ namespace CyberCity.Infrastructure
 
         public async Task<bool> DeleteMessageAsync(Guid messageId)
         {
-            var message = await _context.Messages.FindAsync(messageId);
+            var messageIdString = messageId.ToString();
+            var message = await _context.Messages.FindAsync(messageIdString);
             if (message == null)
                 return false;
 

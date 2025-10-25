@@ -7,13 +7,13 @@ namespace CyberCity.Doman.Models;
 
 public partial class TeacherStudent
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid TeacherUid { get; set; }
+    public string TeacherUid { get; set; }
 
-    public Guid StudentUid { get; set; }
+    public string StudentUid { get; set; }
 
-    public Guid CourseUid { get; set; }
+    public string CourseUid { get; set; }
 
     public virtual Course CourseU { get; set; }
 

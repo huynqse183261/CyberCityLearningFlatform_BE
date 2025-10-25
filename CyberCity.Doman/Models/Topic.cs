@@ -7,13 +7,15 @@ namespace CyberCity.Doman.Models;
 
 public partial class Topic
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid LessonUid { get; set; }
+    public string LessonUid { get; set; }
 
     public string Title { get; set; }
 
     public string Description { get; set; }
+
+    public int? PageNumber { get; set; }
 
     public int? OrderIndex { get; set; }
 

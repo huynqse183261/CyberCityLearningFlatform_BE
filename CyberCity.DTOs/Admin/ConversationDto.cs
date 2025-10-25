@@ -2,7 +2,7 @@ namespace CyberCity.DTOs.Admin
 {
     public class AdminConversationDto
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
         public string Title { get; set; }
         public bool IsGroup { get; set; }
         public int TotalMessages { get; set; }

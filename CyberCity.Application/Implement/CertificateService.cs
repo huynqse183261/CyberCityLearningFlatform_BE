@@ -264,9 +264,9 @@ namespace CyberCity.Application.Implement
 
             var certificate = new Certificate
             {
-                Uid = Guid.NewGuid(),
-                UserUid = userId,
-                CourseUid = courseId,
+                Uid = Guid.NewGuid().ToString(),
+                UserUid = userId.ToString(),
+                CourseUid = courseId.ToString(),
                 CertificateType = certificateType,
                 CompletionPercentage = completionPercentage,
                 FileUrl = null,
@@ -274,7 +274,7 @@ namespace CyberCity.Application.Implement
             };
 
             await _certificateRepo.CreateAsync(certificate);
-            return certificate.Uid;
+            return Guid.Parse(certificate.Uid);
         }
 
         public async Task<IReadOnlyList<Certificate>> GetByStudentAsync(Guid studentId)
@@ -294,8 +294,8 @@ namespace CyberCity.Application.Implement
             if (cert == null) return Array.Empty<byte>();
             // For now, regenerate dynamically. If FileUrl stored, you can fetch instead.
             return await GenerateDetailedLinuxCertificatePdfAsync(
-                cert.UserUid, 
-                cert.CourseUid, 
+                Guid.Parse(cert.UserUid), 
+                Guid.Parse(cert.CourseUid), 
                 "Student Name", // Default placeholder
                 DateTime.Now.AddDays(-30), // Default start date
                 DateTime.Now, // Default completion date

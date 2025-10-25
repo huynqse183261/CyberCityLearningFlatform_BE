@@ -78,7 +78,7 @@ namespace CyberCity.Application.Implement
 			var hash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 			var newUser = new CyberCity.Doman.Models.User
 			{
-				Uid = System.Guid.NewGuid(),
+				Uid = System.Guid.NewGuid().ToString(),
 				Email = email,
 				Username = username,
 				PasswordHash = hash,
@@ -129,7 +129,7 @@ namespace CyberCity.Application.Implement
 			{
 				var newUser = new CyberCity.Doman.Models.User
 				{
-					Uid = System.Guid.NewGuid(),
+					Uid = System.Guid.NewGuid().ToString(),
 					Email = email,
 					Username = (payload.Name ?? email).Trim(),
 					PasswordHash = string.Empty,
@@ -156,7 +156,7 @@ namespace CyberCity.Application.Implement
 
 			var rng = new Random();
 			var code = rng.Next(0, 999999).ToString("D6");
-			var expires = DateTime.UtcNow.AddMinutes(10);
+			var expires = DateTime.Now.AddMinutes(10);
 			_resetCodes[email] = (code, expires);
 
 			var subject = "Mã xác nhận đặt lại mật khẩu";
@@ -170,7 +170,7 @@ namespace CyberCity.Application.Implement
 			if (request == null || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Code)) return Task.FromResult(false);
 			var email = request.Email.Trim();
 			if (!_resetCodes.TryGetValue(email, out var entry)) return Task.FromResult(false);
-			if (entry.Expires < DateTime.UtcNow) { _resetCodes.TryRemove(email, out _); return Task.FromResult(false); }
+			if (entry.Expires < DateTime.Now) { _resetCodes.TryRemove(email, out _); return Task.FromResult(false); }
 			var ok = string.Equals(entry.Code, request.Code.Trim(), StringComparison.Ordinal);
 			return Task.FromResult(ok);
 		}
@@ -180,7 +180,7 @@ namespace CyberCity.Application.Implement
 			if (request == null || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Code) || string.IsNullOrWhiteSpace(request.NewPassword)) return false;
 			var email = request.Email.Trim();
 			if (!_resetCodes.TryGetValue(email, out var entry)) return false;
-			if (entry.Expires < DateTime.UtcNow) { _resetCodes.TryRemove(email, out _); return false; }
+			if (entry.Expires < DateTime.Now) { _resetCodes.TryRemove(email, out _); return false; }
 			if (!string.Equals(entry.Code, request.Code.Trim(), StringComparison.Ordinal)) return false;
 
 			var user = await _userRepo.GetByEmailAsync(email);

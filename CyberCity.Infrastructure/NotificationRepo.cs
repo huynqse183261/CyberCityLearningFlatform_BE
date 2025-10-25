@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CyberCity.Doman.DBcontext;
+using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
@@ -23,24 +23,28 @@ namespace CyberCity.Infrastructure
         }
         public async Task<List<Notification>> GetNotificationsInfoAsync(Guid receiverUid)
         {
+            var receiverUidString = receiverUid.ToString();
             return await _context.Notifications
                 .Include(n => n.SenderU) // Include the Sender navigation property
                 .Include(n => n.ReceiverU) // Include the Receiver navigation property
-                .Where(n => n.ReceiverUid == receiverUid)
+                .Where(n => n.ReceiverUid == receiverUidString)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
         public async Task<List<Notification>> GetAllByReceiverUidAsync(Guid receiverUid)
         {
-            return await _context.Notifications.Where(n => n.ReceiverUid == receiverUid).OrderByDescending(n => n.CreatedAt).ToListAsync();
+            var receiverUidString = receiverUid.ToString();
+            return await _context.Notifications.Where(n => n.ReceiverUid == receiverUidString).OrderByDescending(n => n.CreatedAt).ToListAsync();
         }
         public async Task<int> GetUnreadCountByReceiverUidAsync(Guid receiverUid)
         {
-            return await _context.Notifications.CountAsync(n => n.ReceiverUid == receiverUid && (n.IsRead == null || n.IsRead == false));
+            var receiverUidString = receiverUid.ToString();
+            return await _context.Notifications.CountAsync(n => n.ReceiverUid == receiverUidString && (n.IsRead == null || n.IsRead == false));
         }
         public async Task<int> MarkAllAsReadByReceiverUidAsync(Guid receiverUid)
         {
-            var notifications = await _context.Notifications.Where(n => n.ReceiverUid == receiverUid && (n.IsRead == null || n.IsRead == false)).ToListAsync();
+            var receiverUidString = receiverUid.ToString();
+            var notifications = await _context.Notifications.Where(n => n.ReceiverUid == receiverUidString && (n.IsRead == null || n.IsRead == false)).ToListAsync();
             foreach (var notification in notifications)
             {
                 notification.IsRead = true;
@@ -51,9 +55,9 @@ namespace CyberCity.Infrastructure
         {
             var notification = new Notification
             {
-                Uid = Guid.NewGuid(),
-                ReceiverUid = receiverUid,
-                SenderUid = senderUid,
+                Uid = Guid.NewGuid().ToString(),
+                ReceiverUid = receiverUid.ToString(),
+                SenderUid = senderUid?.ToString(),
                 Message = message,
                 IsRead = false,
                 CreatedAt = DateTime.Now
@@ -64,7 +68,8 @@ namespace CyberCity.Infrastructure
         public async Task<int> DeleteAllByReceiverUidAsync(Guid receiverUid, Guid deleterUid)
         {
             // Nếu cần kiểm tra quyền hoặc log người xóa, có thể thực hiện ở đây
-            var notifications = await _context.Notifications.Where(n => n.ReceiverUid == receiverUid).ToListAsync();
+            var receiverUidString = receiverUid.ToString();
+            var notifications = await _context.Notifications.Where(n => n.ReceiverUid == receiverUidString).ToListAsync();
             // Ví dụ: Ghi log hoặc kiểm tra deleterUid có quyền xóa không
             _context.Notifications.RemoveRange(notifications);
             return await _context.SaveChangesAsync();
@@ -73,7 +78,8 @@ namespace CyberCity.Infrastructure
         public async Task<int> DeleteNotificationAsync(Guid notificationUid, Guid deleterUid)
         {
             // Nếu cần kiểm tra quyền hoặc log người xóa, có thể thực hiện ở đây
-            var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Uid == notificationUid);
+            var notificationUidString = notificationUid.ToString();
+            var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Uid == notificationUidString);
             if (notification != null)
             {
                 // Ví dụ: Ghi log hoặc kiểm tra deleterUid có quyền xóa không
@@ -84,11 +90,13 @@ namespace CyberCity.Infrastructure
         }
         public async Task<Notification> GetByUidAsync(Guid notificationUid)
         {
-            return await _context.Notifications.FirstOrDefaultAsync(n => n.Uid == notificationUid);
+            var notificationUidString = notificationUid.ToString();
+            return await _context.Notifications.FirstOrDefaultAsync(n => n.Uid == notificationUidString);
         }
         public async Task<int> MarkNotificationAsReadAsync(Guid notificationUid)
         {
-            var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Uid == notificationUid);
+            var notificationUidString = notificationUid.ToString();
+            var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Uid == notificationUidString);
             if (notification != null && (notification.IsRead == null || notification.IsRead == false))
             {
                 notification.IsRead = true;

@@ -1,6 +1,6 @@
 ﻿using CyberCity.Application.Implement;
 using CyberCity.Application.Interface;
-using CyberCity.Doman.DBcontext;
+using CyberCity.Doman.DBContext;
 using CyberCity.Infrastructure;
 using CyberCity_AutoMapper;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +37,9 @@ builder.Services.AddSwaggerGen(c =>
 		Version = "v1",
 		Description = "CyberCity backend API"
 	});
+
+	// Avoid schemaId collisions for DTOs with same class name across namespaces
+	c.CustomSchemaIds(type => type.FullName);
 
 	var jwtSecurityScheme = new OpenApiSecurityScheme
 	{
@@ -83,6 +86,10 @@ builder.Services.AddScoped<ConversationMemberRepo>();
 builder.Services.AddScoped<PricingPlanRepo>();
 builder.Services.AddScoped<TeacherStudentRepo>();
 builder.Services.AddScoped<IAdminMessageRepository, AdminMessageRepository>();
+builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
+builder.Services.AddScoped<IQuizRepository, QuizRepo>();
+builder.Services.AddScoped<ILabRepository, LabRepo>();
+builder.Services.AddScoped<IAnswerRepository, AnswerRepo>();
 //services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -105,6 +112,10 @@ builder.Services.AddScoped<IPricingPlanService, PricingPlanService>();
 builder.Services.AddScoped<ITeacherStudentService, TeacherStudentService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAdminMessageService, AdminMessageService>();
+builder.Services.AddScoped<ITeacherService, TeacherService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<ILabService, LabService>();
+builder.Services.AddScoped<ILearningService, LearningService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));
@@ -119,6 +130,14 @@ builder.Services.AddAutoMapper(typeof(ConversationProfile));
 builder.Services.AddAutoMapper(typeof(MessageProfile));
 builder.Services.AddAutoMapper(typeof(PricingPlanProfile));
 builder.Services.AddAutoMapper(typeof(TeacherStudentProfile));
+builder.Services.AddAutoMapper(typeof(QuizProfile));
+builder.Services.AddAutoMapper(typeof(LabProfile));
+builder.Services.AddAutoMapper(typeof(AnswerProfile));
+builder.Services.AddAutoMapper(typeof(CourseProfileExtended));
+builder.Services.AddAutoMapper(typeof(LessonProfileExtended));
+builder.Services.AddAutoMapper(typeof(ModuleProfileExtended));
+builder.Services.AddAutoMapper(typeof(TopicProfileExtended));
+builder.Services.AddAutoMapper(typeof(EnrollmentProfile));
 // JWT Auth
 var jwtKey = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey ?? "");
