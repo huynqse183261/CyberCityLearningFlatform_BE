@@ -8,7 +8,7 @@ namespace CyberCity.DTOs.Conversations
 {
     public class ConversationDto
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
         public Guid? OrgUid { get; set; }
         public string Title { get; set; }
         public bool? IsGroup { get; set; }

@@ -9,10 +9,13 @@ namespace CyberCity_AutoMapper
 		public UserProfile()
 		{
 			CreateMap<User, LoginResponseDto>();
+			
 			CreateMap<User, UserAccountDTO>();
+			
 			CreateMap<CreateUserRequestDto, User>()
 				.ForMember(d => d.PasswordHash, o => o.MapFrom(s => s.Password))
 				.ForMember(d => d.CreatedAt, o => o.MapFrom(_ => DateTime.Now));
+			
 			CreateMap<UpdateUserRequestDto, User>()
 				.ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 		}

@@ -1,4 +1,4 @@
-﻿using CyberCity.Doman.DBcontext;
+﻿using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,8 @@ namespace CyberCity.Infrastructure
         }
         public async Task<List<Certificate>> GetByUserUidAsync(Guid userUid)
         {
-            return await _context.Certificates.Where(c => c.UserUid == userUid).ToListAsync();
+            var userUidString = userUid.ToString();
+            return await _context.Certificates.Where(c => c.UserUid == userUidString).ToListAsync();
         }
     }
 }

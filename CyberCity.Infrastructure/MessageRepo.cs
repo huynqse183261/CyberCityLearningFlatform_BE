@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CyberCity.Doman.DBcontext;
+using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
@@ -25,9 +25,10 @@ namespace CyberCity.Infrastructure
 
         public async Task<List<Message>> GetMessagesByConversationIdAsync(Guid conversationId, int pageNumber = 1, int pageSize = 50)
         {
+            var conversationIdString = conversationId.ToString();
             return await _context.Messages
                 .Include(m => m.SenderU)
-                .Where(m => m.ConversationUid == conversationId)
+                .Where(m => m.ConversationUid == conversationIdString)
                 .OrderByDescending(m => m.SentAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -36,15 +37,17 @@ namespace CyberCity.Infrastructure
 
         public async Task<int> GetMessageCountByConversationIdAsync(Guid conversationId)
         {
+            var conversationIdString = conversationId.ToString();
             return await _context.Messages
-                .CountAsync(m => m.ConversationUid == conversationId);
+                .CountAsync(m => m.ConversationUid == conversationIdString);
         }
 
         public async Task<Message> GetLatestMessageByConversationIdAsync(Guid conversationId)
         {
+            var conversationIdString = conversationId.ToString();
             return await _context.Messages
                 .Include(m => m.SenderU)
-                .Where(m => m.ConversationUid == conversationId)
+                .Where(m => m.ConversationUid == conversationIdString)
                 .OrderByDescending(m => m.SentAt)
                 .FirstOrDefaultAsync();
         }

@@ -66,7 +66,7 @@ namespace CyberCity.Application.Implement
         public async Task SendNotificationAsync(NotificationRequest request)
         {
             var notification = _mapper.Map<Notification>(request);
-            notification.Uid = Guid.NewGuid();      
+            notification.Uid = Guid.NewGuid().ToString();      
             notification.IsRead = false;
             notification.CreatedAt = DateTime.Now;
             await _notificationRepo.CreateAsync(notification);

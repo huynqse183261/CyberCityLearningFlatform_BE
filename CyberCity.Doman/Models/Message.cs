@@ -7,11 +7,11 @@ namespace CyberCity.Doman.Models;
 
 public partial class Message
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid ConversationUid { get; set; }
+    public string ConversationUid { get; set; }
 
-    public Guid SenderUid { get; set; }
+    public string SenderUid { get; set; }
 
     public string Message1 { get; set; }
 

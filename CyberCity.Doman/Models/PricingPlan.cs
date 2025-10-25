@@ -7,7 +7,7 @@ namespace CyberCity.Doman.Models;
 
 public partial class PricingPlan
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
     public string PlanName { get; set; }
 

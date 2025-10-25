@@ -77,10 +77,10 @@ namespace CyberCity.Application.Implement
             // Create conversation
             var conversation = new Conversation
             {
-                Uid = Guid.NewGuid(),
+                Uid = Guid.NewGuid().ToString(),
                 Title = createDto.Title,
                 IsGroup = createDto.IsGroup,
-                OrgUid = createDto.OrgUid,
+                OrgUid = createDto.OrgUid?.ToString(),
                 CreatedAt = DateTime.Now
             };
 
@@ -94,10 +94,10 @@ namespace CyberCity.Application.Implement
             }
 
             // Add members
-            await _conversationMemberRepo.AddMembersAsync(conversation.Uid, allMemberIds.ToArray());
+            await _conversationMemberRepo.AddMembersAsync(Guid.Parse(conversation.Uid), allMemberIds.ToArray());
 
             // Get the created conversation with members
-            var createdConversation = await _conversationRepo.GetConversationWithMembersAsync(conversation.Uid);
+            var createdConversation = await _conversationRepo.GetConversationWithMembersAsync(Guid.Parse(conversation.Uid));
             return _mapper.Map<ConversationDto>(createdConversation);
         }
 

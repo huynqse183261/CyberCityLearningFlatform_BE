@@ -50,6 +50,76 @@ namespace CyberCity.Controller.Controllers
             return Ok(_mapper.Map<UserAccountDTO>(user));
         }
 
+        /// <summary>
+        /// Get current user profile (for all roles: teacher, student, admin)
+        /// </summary>
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<ActionResult<UserAccountDTO>> GetCurrentUserProfile()
+        {
+            var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out var userId))
+                return Unauthorized(new { success = false, message = "User not found in token" });
+            
+            var user = await _userService.GetByIdAsync(userId);
+            if (user == null) 
+                return NotFound(new { success = false, message = "User not found" });
+            
+            return Ok(new 
+            { 
+                success = true, 
+                data = _mapper.Map<UserAccountDTO>(user) 
+            });
+        }
+
+        /// <summary>
+        /// Update current user profile (for all roles)
+        /// </summary>
+        [Authorize]
+        [HttpPut("me")]
+        public async Task<ActionResult> UpdateCurrentUserProfile([FromBody] UpdateUserRequestDto request)
+        {
+            var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out var userId))
+                return Unauthorized(new { success = false, message = "User not found in token" });
+            
+            var existing = await _userService.GetByIdAsync(userId);
+            if (existing == null) 
+                return NotFound(new { success = false, message = "User not found" });
+            
+            _mapper.Map(request, existing);
+            var updated = await _userService.UpdateAccount(existing);
+            
+            if (updated <= 0) 
+                return BadRequest(new { success = false, message = "Cannot update user profile" });
+            
+            return Ok(new 
+            { 
+                success = true, 
+                message = "Cập nhật thông tin thành công",
+                data = _mapper.Map<UserAccountDTO>(existing) 
+            });
+        }
+
+        /// <summary>
+        /// Change password for current user (for all roles)
+        /// </summary>
+        [Authorize]
+        [HttpPut("me/password")]
+        public async Task<ActionResult> ChangeCurrentUserPassword([FromBody] UpdatePasswordDto request)
+        {
+            var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out var userId))
+                return Unauthorized(new { success = false, message = "User not found in token" });
+            
+            var ok = await _userService.UpdatePasswordAsync(userId, request?.CurrentPassword, request?.NewPassword);
+            
+            if (!ok) 
+                return BadRequest(new { success = false, message = "Mật khẩu cũ không đúng hoặc cập nhật thất bại" });
+            
+            return Ok(new { success = true, message = "Đổi mật khẩu thành công" });
+        }
+
         [HttpPost]
         public async Task<ActionResult<UserAccountDTO>> Create([FromBody] CreateUserRequestDto request)
         {

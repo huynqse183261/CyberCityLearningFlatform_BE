@@ -5,7 +5,7 @@ namespace CyberCity.DTOs.Courses
 {
     public class CourseOutlineResponse
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public string Level { get; set; }
@@ -15,7 +15,7 @@ namespace CyberCity.DTOs.Courses
 
     public class ModuleOutlineDto
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public int? OrderIndex { get; set; }
@@ -25,7 +25,7 @@ namespace CyberCity.DTOs.Courses
 
     public class LessonOutlineDto
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
         public string LessonType { get; set; }
@@ -36,7 +36,7 @@ namespace CyberCity.DTOs.Courses
 
     public class TopicOutlineDto
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public int? PageNumber { get; set; }
@@ -47,7 +47,7 @@ namespace CyberCity.DTOs.Courses
 
     public class SubtopicOutlineDto
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
         public int? OrderIndex { get; set; }

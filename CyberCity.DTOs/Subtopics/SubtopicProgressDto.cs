@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +8,11 @@ namespace CyberCity.DTOs.Subtopics
 {
     public class SubtopicProgressDto
     {
-        public Guid Uid { get; set; }
+        public string Uid { get; set; }
 
-        public Guid StudentUid { get; set; }
+        public string StudentUid { get; set; }
 
-        public Guid SubtopicUid { get; set; }
+        public string SubtopicUid { get; set; }
 
         public bool? IsCompleted { get; set; }
 

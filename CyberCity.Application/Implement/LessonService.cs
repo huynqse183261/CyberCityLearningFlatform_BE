@@ -56,10 +56,10 @@ namespace CyberCity.Application.Implement
 
         public async Task<Guid> CreateAsync(Lesson lesson)
         {
-            lesson.Uid = Guid.NewGuid();
+            lesson.Uid = Guid.NewGuid().ToString();
             lesson.CreatedAt = DateTime.Now;
             var result = await _lessonRepo.CreateAsync(lesson);
-            return result > 0 ? lesson.Uid : Guid.Empty;
+            return result > 0 ? Guid.Parse(lesson.Uid) : Guid.Empty;
         }
 
         public async Task<bool> UpdateAsync(Lesson lesson)

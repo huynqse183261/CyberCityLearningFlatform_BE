@@ -7,13 +7,13 @@ namespace CyberCity.Doman.Models;
 
 public partial class Order
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid UserUid { get; set; }
+    public string UserUid { get; set; }
 
-    public Guid? OrgUid { get; set; }
+    public string OrgUid { get; set; }
 
-    public Guid PlanUid { get; set; }
+    public string PlanUid { get; set; }
 
     public decimal Amount { get; set; }
 

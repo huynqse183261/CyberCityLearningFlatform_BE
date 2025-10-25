@@ -1,4 +1,4 @@
-﻿using CyberCity.Doman.DBcontext;
+﻿using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
@@ -20,8 +20,10 @@ namespace CyberCity.Infrastructure
 
         public async Task<CourseEnrollment?> GetByUserAndCourseAsync(Guid userId, Guid courseId)
         {
+            var userIdString = userId.ToString();
+            var courseIdString = courseId.ToString();
             return await _context.CourseEnrollments
-                .FirstOrDefaultAsync(e => e.UserUid == userId && e.CourseUid == courseId);
+                .FirstOrDefaultAsync(e => e.UserUid == userIdString && e.CourseUid == courseIdString);
         }
     }
 }

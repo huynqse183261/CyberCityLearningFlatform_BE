@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CyberCity.Doman.DBcontext;
+using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
 using Microsoft.EntityFrameworkCore;
@@ -38,14 +38,16 @@ namespace CyberCity.Infrastructure
 
         public async Task<PricingPlan> GetByIdWithOrdersAsync(Guid id)
         {
+            var idString = id.ToString();
             return await _context.PricingPlans
                 .Include(p => p.Orders)
-                .FirstOrDefaultAsync(p => p.Uid == id);
+                .FirstOrDefaultAsync(p => p.Uid == idString);
         }
 
         public async Task<bool> IsBeingUsedAsync(Guid id)
         {
-            return await _context.Orders.AnyAsync(o => o.PlanUid == id);
+            var idString = id.ToString();
+            return await _context.Orders.AnyAsync(o => o.PlanUid == idString);
         }
 
         public async Task<PricingPlan> GetByNameAsync(string planName)

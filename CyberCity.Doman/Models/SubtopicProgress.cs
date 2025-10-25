@@ -7,15 +7,23 @@ namespace CyberCity.Doman.Models;
 
 public partial class SubtopicProgress
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid StudentUid { get; set; }
+    public string StudentUid { get; set; }
 
-    public Guid SubtopicUid { get; set; }
+    public string SubtopicUid { get; set; }
 
     public bool? IsCompleted { get; set; }
 
     public DateTime? CompletedAt { get; set; }
+
+    public string UserOutput { get; set; }
+
+    public bool? IsCorrect { get; set; }
+
+    public int? AttemptCount { get; set; }
+
+    public DateTime? LastAttemptedAt { get; set; }
 
     public virtual User StudentU { get; set; }
 

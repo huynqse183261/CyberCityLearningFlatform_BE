@@ -63,7 +63,7 @@ namespace CyberCity.Controller.Controllers
             if (!Guid.TryParse(userIdClaim.Value, out var creatorId)) return Unauthorized();
 
             var entity = _mapper.Map<Course>(request);
-            entity.CreatedBy = creatorId;
+            entity.CreatedBy = creatorId.ToString();
 
             var uid = await _courseService.CreateAsync(entity);
             if (uid == Guid.Empty) return BadRequest("Cannot create course");

@@ -7,11 +7,11 @@ namespace CyberCity.Doman.Models;
 
 public partial class CourseEnrollment
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid UserUid { get; set; }
+    public string UserUid { get; set; }
 
-    public Guid CourseUid { get; set; }
+    public string CourseUid { get; set; }
 
     public DateTime? EnrolledAt { get; set; }
 

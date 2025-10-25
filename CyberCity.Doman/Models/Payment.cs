@@ -7,9 +7,9 @@ namespace CyberCity.Doman.Models;
 
 public partial class Payment
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid OrderUid { get; set; }
+    public string OrderUid { get; set; }
 
     public string PaymentMethod { get; set; }
 

@@ -7,11 +7,11 @@ namespace CyberCity.Doman.Models;
 
 public partial class ApprovalLog
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid OrderUid { get; set; }
+    public string OrderUid { get; set; }
 
-    public Guid? ApprovedBy { get; set; }
+    public string ApprovedBy { get; set; }
 
     public string Status { get; set; }
 

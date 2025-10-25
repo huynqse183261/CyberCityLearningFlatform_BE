@@ -84,10 +84,10 @@ namespace CyberCity.Application.Implement
 
         public async Task<Guid> CreateAsync(Course course)
         {
-            course.Uid = Guid.NewGuid();
+            course.Uid = Guid.NewGuid().ToString();
             course.CreatedAt = DateTime.Now;
             var result = await _courseRepo.CreateAsync(course);
-            return result > 0 ? course.Uid : Guid.Empty;
+            return result > 0 ? Guid.Parse(course.Uid) : Guid.Empty;
         }
 
         public async Task<bool> UpdateAsync(Course course)

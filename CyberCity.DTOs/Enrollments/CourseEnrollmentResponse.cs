@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +8,7 @@ namespace CyberCity.DTOs.Enrollments
 {
     public class CourseEnrollmentResponse
     {
-        public Guid UserUid { get; set; }
+        public string UserUid { get; set; }
         public string FullName { get; set; }
         public string Email { get; set; }
         public DateTime EnrolledAt { get; set; }

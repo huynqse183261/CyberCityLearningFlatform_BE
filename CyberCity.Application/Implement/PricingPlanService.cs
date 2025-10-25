@@ -44,7 +44,7 @@ namespace CyberCity.Application.Implement
                 throw new ArgumentException("Plan name already exists");
 
             var pricingPlan = _mapper.Map<PricingPlan>(createDto);
-            pricingPlan.Uid = Guid.NewGuid();
+            pricingPlan.Uid = Guid.NewGuid().ToString();
             pricingPlan.CreatedAt = DateTime.Now;
 
             await _pricingPlanRepo.CreateAsync(pricingPlan);
@@ -113,7 +113,7 @@ namespace CyberCity.Application.Implement
                 return false;
 
             // If excludeId is provided, ignore that specific plan (for updates)
-            return excludeId == null || existingPlan.Uid != excludeId;
+            return excludeId == null || existingPlan.Uid != excludeId.ToString();
         }
     }
 }

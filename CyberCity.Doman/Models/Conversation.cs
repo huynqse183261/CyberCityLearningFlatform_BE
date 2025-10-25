@@ -7,9 +7,9 @@ namespace CyberCity.Doman.Models;
 
 public partial class Conversation
 {
-    public Guid Uid { get; set; }
+    public string Uid { get; set; }
 
-    public Guid? OrgUid { get; set; }
+    public string OrgUid { get; set; }
 
     public string Title { get; set; }
 

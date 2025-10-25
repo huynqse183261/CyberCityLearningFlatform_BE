@@ -8,9 +8,9 @@ namespace CyberCity.DTOs.Organizations
 {
     public class OrganizationMemberDTO
     {
-        public Guid Uid { get; set; }
-        public Guid OrgUid { get; set; }
-        public Guid UserUid { get; set; }
+        public string Uid { get; set; }
+        public string OrgUid { get; set; }
+        public string UserUid { get; set; }
         public string MemberRole { get; set; }
         public DateTime? JoinedAt { get; set; }
         

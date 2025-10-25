@@ -111,51 +111,59 @@ namespace CyberCity.Application.Implement
 
             // recent users
             var recentUsers = await _userRepo.GetAllAsync().Take(count).ToListAsync();
-            activities.AddRange(recentUsers.Where(u => u.CreatedAt.HasValue).Select(u => new ActivityDto
-            {
-                Type = "user",
-                Title = "Người dùng mới",
-                Detail = $"{(string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName)} đã đăng ký",
-                UserUid = u.Uid,
-                RelatedUid = u.Uid,
-                When = u.CreatedAt!.Value
-            }));
+            activities.AddRange(recentUsers
+                .Where(u => u.CreatedAt.HasValue && !string.IsNullOrEmpty(u.Uid) && Guid.TryParse(u.Uid, out _))
+                .Select(u => new ActivityDto
+                {
+                    Type = "user",
+                    Title = "Người dùng mới",
+                    Detail = $"{(string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName)} đã đăng ký",
+                    UserUid = Guid.Parse(u.Uid),
+                    RelatedUid = Guid.Parse(u.Uid),
+                    When = u.CreatedAt!.Value
+                }));
 
             // recent orders
             var recentOrders = await _orderRepo.GetRecentOrdersAsync(count);
-            activities.AddRange(recentOrders.Where(o => o.CreatedAt.HasValue).Select(o => new ActivityDto
-            {
-                Type = "order",
-                Title = "Đơn hàng mới",
-                Detail = $"{o.UserU?.Username} mua gói {o.PlanU?.PlanName} ({o.Amount:C})",
-                UserUid = o.UserUid,
-                RelatedUid = o.Uid,
-                When = o.CreatedAt!.Value
-            }));
+            activities.AddRange(recentOrders
+                .Where(o => o.CreatedAt.HasValue && !string.IsNullOrEmpty(o.UserUid) && Guid.TryParse(o.UserUid, out _) && !string.IsNullOrEmpty(o.Uid) && Guid.TryParse(o.Uid, out _))
+                .Select(o => new ActivityDto
+                {
+                    Type = "order",
+                    Title = "Đơn hàng mới",
+                    Detail = $"{o.UserU?.Username} mua gói {o.PlanU?.PlanName} ({o.Amount:C})",
+                    UserUid = Guid.Parse(o.UserUid),
+                    RelatedUid = Guid.Parse(o.Uid),
+                    When = o.CreatedAt!.Value
+                }));
 
             // recent enrollments
             var recentEnrollments = await _courseEnrollmentRepo.GetAll().Take(count).ToListAsync();
-            activities.AddRange(recentEnrollments.Where(e => e.EnrolledAt.HasValue).Select(e => new ActivityDto
-            {
-                Type = "enrollment",
-                Title = "Đăng ký khóa học",
-                Detail = $"User {e.UserUid} đã đăng ký khóa {e.CourseUid}",
-                UserUid = e.UserUid,
-                RelatedUid = e.Uid,
-                When = e.EnrolledAt!.Value
-            }));
+            activities.AddRange(recentEnrollments
+                .Where(e => e.EnrolledAt.HasValue && !string.IsNullOrEmpty(e.UserUid) && Guid.TryParse(e.UserUid, out _) && !string.IsNullOrEmpty(e.Uid) && Guid.TryParse(e.Uid, out _))
+                .Select(e => new ActivityDto
+                {
+                    Type = "enrollment",
+                    Title = "Đăng ký khóa học",
+                    Detail = $"User {e.UserUid} đã đăng ký khóa {e.CourseUid}",
+                    UserUid = Guid.Parse(e.UserUid),
+                    RelatedUid = Guid.Parse(e.Uid),
+                    When = e.EnrolledAt!.Value
+                }));
 
             // recent messages
             var messages = await _messageRepo.GetAllAsync().Take(count).ToListAsync();
-            activities.AddRange(messages.Where(m => m.SentAt.HasValue).Select(m => new ActivityDto
-            {
-                Type = "message",
-                Title = "Tin nhắn mới",
-                Detail = $"User {m.SenderUid} đã gửi tin nhắn",
-                UserUid = m.SenderUid,
-                RelatedUid = m.Uid,
-                When = m.SentAt!.Value
-            }));
+            activities.AddRange(messages
+                .Where(m => m.SentAt.HasValue && !string.IsNullOrEmpty(m.SenderUid) && Guid.TryParse(m.SenderUid, out _) && !string.IsNullOrEmpty(m.Uid) && Guid.TryParse(m.Uid, out _))
+                .Select(m => new ActivityDto
+                {
+                    Type = "message",
+                    Title = "Tin nhắn mới",
+                    Detail = $"User {m.SenderUid} đã gửi tin nhắn",
+                    UserUid = Guid.Parse(m.SenderUid),
+                    RelatedUid = Guid.Parse(m.Uid),
+                    When = m.SentAt!.Value
+                }));
 
             return activities.OrderByDescending(a => a.When).Take(count).ToList();
         }
