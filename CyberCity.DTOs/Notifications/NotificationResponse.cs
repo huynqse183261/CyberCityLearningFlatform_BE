@@ -10,7 +10,7 @@ namespace CyberCity.DTOs.Notifications
     {
         public string Uid { get; set; }
 
-        public Guid? SenderUid { get; set; }
+        public string? SenderUid { get; set; }
 
         public string SenderUsername { get; set; }
 

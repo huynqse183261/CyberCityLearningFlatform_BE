@@ -13,7 +13,7 @@ namespace CyberCity.Application.Implement
             _teacherRepo = teacherRepo;
         }
 
-        public async Task<TeacherStudentListResponse> GetStudentsAsync(Guid teacherUid, int page, int limit, string? search, Guid? courseUid)
+        public async Task<TeacherStudentListResponse> GetStudentsAsync(string teacherUid, int page, int limit, string? search, string? courseUid)
         {
             try
             {
@@ -49,7 +49,7 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<TeacherStudentDetailResponse> GetStudentDetailAsync(Guid teacherUid, Guid studentUid)
+        public async Task<TeacherStudentDetailResponse> GetStudentDetailAsync(string teacherUid, string studentUid)
         {
             try
             {
@@ -80,14 +80,14 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<AddStudentResponse> AddStudentAsync(Guid teacherUid, AddStudentRequest request)
+        public async Task<AddStudentResponse> AddStudentAsync(string teacherUid, AddStudentRequest request)
         {
             try
             {
                 var result = await _teacherRepo.AddStudentAsync(
                     teacherUid,
-                    Guid.Parse(request.StudentUid),
-                    Guid.Parse(request.CourseUid)
+                    request.StudentUid,
+                    request.CourseUid
                 );
 
                 return new AddStudentResponse
@@ -108,7 +108,7 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<RemoveStudentResponse> RemoveStudentAsync(Guid teacherUid, Guid studentUid, Guid courseUid)
+        public async Task<RemoveStudentResponse> RemoveStudentAsync(string teacherUid, string studentUid, string courseUid)
         {
             try
             {
@@ -139,7 +139,7 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<StudentProgressResponse> GetStudentProgressAsync(Guid teacherUid, Guid studentUid, Guid? courseUid)
+        public async Task<StudentProgressResponse> GetStudentProgressAsync(string teacherUid, string studentUid, string? courseUid)
         {
             try
             {
@@ -172,7 +172,7 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<ConversationsListResponse> GetConversationsAsync(Guid teacherUid, int page, int limit)
+        public async Task<ConversationsListResponse> GetConversationsAsync(string teacherUid, int page, int limit)
         {
             try
             {
@@ -206,14 +206,14 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<CreateConversationResponse> CreateConversationAsync(Guid teacherUid, CreateConversationRequest request)
+        public async Task<CreateConversationResponse> CreateConversationAsync(string teacherUid, CreateConversationRequest request)
         {
             try
             {
                 // Check if conversation already exists
-                var existingConversationUid = await _teacherRepo.FindExistingConversationAsync(teacherUid, Guid.Parse(request.StudentUid));
+                var existingConversationUid = await _teacherRepo.FindExistingConversationAsync(teacherUid, request.StudentUid);
 
-                if (existingConversationUid.HasValue)
+                if (!string.IsNullOrEmpty(existingConversationUid))
                 {
                 return new CreateConversationResponse
                 {
@@ -221,15 +221,15 @@ namespace CyberCity.Application.Implement
                     Message = "Hội thoại đã tồn tại",
                     Data = new CreateConversationDataDto
                     {
-                        ConversationUid = existingConversationUid.Value.ToString()
+                        ConversationUid = existingConversationUid
                     }
                 };
                 }
 
                 // Create new conversation
-                var conversationUid = await _teacherRepo.CreateConversationAsync(teacherUid, Guid.Parse(request.StudentUid));
+                var conversationUid = await _teacherRepo.CreateConversationAsync(teacherUid, request.StudentUid);
 
-                if (!conversationUid.HasValue)
+                if (string.IsNullOrEmpty(conversationUid))
                 {
                     return new CreateConversationResponse
                     {
@@ -245,7 +245,7 @@ namespace CyberCity.Application.Implement
                     Message = "Tạo hội thoại thành công",
                     Data = new CreateConversationDataDto
                     {
-                        ConversationUid = conversationUid.Value.ToString()
+                        ConversationUid = conversationUid
                     }
                 };
             }
@@ -261,7 +261,7 @@ namespace CyberCity.Application.Implement
         }
 
         public async Task<ConversationMessagesResponse> GetConversationMessagesAsync(
-            Guid teacherUid, Guid conversationUid, int page, int limit, DateTime? before)
+            string teacherUid, string conversationUid, int page, int limit, DateTime? before)
         {
             try
             {
@@ -278,7 +278,7 @@ namespace CyberCity.Application.Implement
                     return new ConversationMessagesResponse
                     {
                         Success = false,
-                        ConversationUid = conversationUid.ToString(),
+                        ConversationUid = conversationUid,
                         Participant = null,
                         Messages = new List<TeacherMessageDto>(),
                         Pagination = new MessagesPaginationDto { CurrentPage = page, HasMore = false }
@@ -311,7 +311,7 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<SendMessageResponse> SendMessageAsync(Guid teacherUid, Guid conversationUid, SendMessageRequest request)
+        public async Task<SendMessageResponse> SendMessageAsync(string teacherUid, string conversationUid, SendMessageRequest request)
         {
             try
             {
@@ -355,7 +355,7 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<MarkAsReadResponse> MarkAsReadAsync(Guid teacherUid, Guid conversationUid)
+        public async Task<MarkAsReadResponse> MarkAsReadAsync(string teacherUid, string conversationUid)
         {
             try
             {
@@ -386,7 +386,7 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<TeacherDashboardStatsResponse> GetDashboardStatsAsync(Guid teacherUid)
+        public async Task<TeacherDashboardStatsResponse> GetDashboardStatsAsync(string teacherUid)
         {
             try
             {

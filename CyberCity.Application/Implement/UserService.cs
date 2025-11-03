@@ -58,7 +58,7 @@ namespace CyberCity.Application.Implement
             return await _userRepository.GetByUsernameOrEmailAsync(EmailorName);
         }
 
-        public async Task<User> GetByIdAsync(Guid id)
+        public async Task<User> GetByIdAsync(string id)
         {
             return await _userRepository.GetByIdAsync(id);
         }
@@ -67,7 +67,7 @@ namespace CyberCity.Application.Implement
         {
             return await _userRepository.UpdateAsync(user);
         }
-        public async Task<bool> UpdatePasswordAsync(Guid userId, string currentPassword, string newPassword)
+        public async Task<bool> UpdatePasswordAsync(string userId, string currentPassword, string newPassword)
         {
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) return false;

@@ -7,11 +7,11 @@ namespace CyberCity.Application.Interface
 {
     public interface ITeacherStudentService
     {
-        Task<List<StudentOfTeacherDto>> GetStudentsByTeacherIdAsync(Guid teacherId);
-        Task<List<TeacherOfStudentDto>> GetTeachersByStudentIdAsync(Guid studentId);
+        Task<List<StudentOfTeacherDto>> GetStudentsByTeacherIdAsync(string teacherId);
+        Task<List<TeacherOfStudentDto>> GetTeachersByStudentIdAsync(string studentId);
         Task<TeacherStudentDto> AssignTeacherToStudentAsync(AssignTeacherStudentDto assignDto);
-        Task<bool> UnassignTeacherStudentAsync(Guid relationshipId);
+        Task<bool> UnassignTeacherStudentAsync(string relationshipId);
         Task<List<TeacherStudentDto>> GetAllRelationshipsAsync();
-        Task<bool> RelationshipExistsAsync(Guid teacherId, Guid studentId, Guid courseId);
+        Task<bool> RelationshipExistsAsync(string teacherId, string studentId, string courseId);
     }
 }

@@ -27,7 +27,7 @@ namespace CyberCity.Application.Implement
             return pricingPlans.Select(p => _mapper.Map<PricingPlanDto>(p)).ToList();
         }
 
-        public async Task<PricingPlanDto> GetPricingPlanByIdAsync(Guid id)
+        public async Task<PricingPlanDto> GetPricingPlanByIdAsync(string id)
         {
             var pricingPlan = await _pricingPlanRepo.GetByIdWithOrdersAsync(id);
             if (pricingPlan == null)
@@ -52,7 +52,7 @@ namespace CyberCity.Application.Implement
             return _mapper.Map<PricingPlanDto>(pricingPlan);
         }
 
-        public async Task<PricingPlanDto> UpdatePricingPlanAsync(Guid id, UpdatePricingPlanDto updateDto)
+        public async Task<PricingPlanDto> UpdatePricingPlanAsync(string id, UpdatePricingPlanDto updateDto)
         {
             var existingPlan = await _pricingPlanRepo.GetByIdAsync(id);
             if (existingPlan == null)
@@ -85,7 +85,7 @@ namespace CyberCity.Application.Implement
             return _mapper.Map<PricingPlanDto>(existingPlan);
         }
 
-        public async Task<bool> DeletePricingPlanAsync(Guid id)
+        public async Task<bool> DeletePricingPlanAsync(string id)
         {
             var pricingPlan = await _pricingPlanRepo.GetByIdAsync(id);
             if (pricingPlan == null)
@@ -100,20 +100,20 @@ namespace CyberCity.Application.Implement
             return true;
         }
 
-        public async Task<bool> PricingPlanExistsAsync(Guid id)
+        public async Task<bool> PricingPlanExistsAsync(string id)
         {
             var pricingPlan = await _pricingPlanRepo.GetByIdAsync(id);
             return pricingPlan != null;
         }
 
-        public async Task<bool> PlanNameExistsAsync(string planName, Guid? excludeId = null)
+        public async Task<bool> PlanNameExistsAsync(string planName, string? excludeId = null)
         {
             var existingPlan = await _pricingPlanRepo.GetByNameAsync(planName);
             if (existingPlan == null)
                 return false;
 
             // If excludeId is provided, ignore that specific plan (for updates)
-            return excludeId == null || existingPlan.Uid != excludeId.ToString();
+            return excludeId == null || existingPlan.Uid != excludeId;
         }
     }
 }

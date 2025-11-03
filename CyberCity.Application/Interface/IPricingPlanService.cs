@@ -9,11 +9,11 @@ namespace CyberCity.Application.Interface
     public interface IPricingPlanService
     {
         Task<List<PricingPlanDto>> GetAllPricingPlansAsync(bool descending = true);
-        Task<PricingPlanDto> GetPricingPlanByIdAsync(Guid id);
+        Task<PricingPlanDto> GetPricingPlanByIdAsync(string id);
         Task<PricingPlanDto> CreatePricingPlanAsync(CreatePricingPlanDto createDto);
-        Task<PricingPlanDto> UpdatePricingPlanAsync(Guid id, UpdatePricingPlanDto updateDto);
-        Task<bool> DeletePricingPlanAsync(Guid id);
-        Task<bool> PricingPlanExistsAsync(Guid id);
-        Task<bool> PlanNameExistsAsync(string planName, Guid? excludeId = null);
+        Task<PricingPlanDto> UpdatePricingPlanAsync(string id, UpdatePricingPlanDto updateDto);
+        Task<bool> DeletePricingPlanAsync(string id);
+        Task<bool> PricingPlanExistsAsync(string id);
+        Task<bool> PlanNameExistsAsync(string planName, string? excludeId = null);
     }
 }

@@ -20,59 +20,50 @@ namespace CyberCity.Infrastructure
             return _context.TeacherStudents.AsQueryable();
         }
 
-        public async Task<List<TeacherStudent>> GetStudentsByTeacherIdAsync(Guid teacherId)
+        public async Task<List<TeacherStudent>> GetStudentsByTeacherIdAsync(string teacherId)
         {
-            var teacherIdString = teacherId.ToString();
             return await _context.TeacherStudents
                 .Include(ts => ts.StudentU)
                 .Include(ts => ts.CourseU)
-                .Where(ts => ts.TeacherUid == teacherIdString)
+                .Where(ts => ts.TeacherUid == teacherId)
                 .ToListAsync();
         }
 
-        public async Task<List<TeacherStudent>> GetTeachersByStudentIdAsync(Guid studentId)
+        public async Task<List<TeacherStudent>> GetTeachersByStudentIdAsync(string studentId)
         {
-            var studentIdString = studentId.ToString();
             return await _context.TeacherStudents
                 .Include(ts => ts.TeacherU)
                 .Include(ts => ts.CourseU)
-                .Where(ts => ts.StudentUid == studentIdString)
+                .Where(ts => ts.StudentUid == studentId)
                 .ToListAsync();
         }
 
-        public async Task<TeacherStudent> GetByRelationshipAsync(Guid teacherId, Guid studentId, Guid courseId)
+        public async Task<TeacherStudent> GetByRelationshipAsync(string teacherId, string studentId, string courseId)
         {
-            var teacherIdString = teacherId.ToString();
-            var studentIdString = studentId.ToString();
-            var courseIdString = courseId.ToString();
             return await _context.TeacherStudents
                 .Include(ts => ts.TeacherU)
                 .Include(ts => ts.StudentU)
                 .Include(ts => ts.CourseU)
-                .FirstOrDefaultAsync(ts => ts.TeacherUid == teacherIdString &&
-                                         ts.StudentUid == studentIdString &&
-                                         ts.CourseUid == courseIdString);
+                .FirstOrDefaultAsync(ts => ts.TeacherUid == teacherId &&
+                                         ts.StudentUid == studentId &&
+                                         ts.CourseUid == courseId);
         }
 
-        public async Task<bool> RelationshipExistsAsync(Guid teacherId, Guid studentId, Guid courseId)
+        public async Task<bool> RelationshipExistsAsync(string teacherId, string studentId, string courseId)
         {
-            var teacherIdString = teacherId.ToString();
-            var studentIdString = studentId.ToString();
-            var courseIdString = courseId.ToString();
             return await _context.TeacherStudents
-                .AnyAsync(ts => ts.TeacherUid == teacherIdString &&
-                              ts.StudentUid == studentIdString &&
-                              ts.CourseUid == courseIdString);
+                .AnyAsync(ts => ts.TeacherUid == teacherId &&
+                              ts.StudentUid == studentId &&
+                              ts.CourseUid == courseId);
         }
 
-        public async Task<TeacherStudent> GetByIdWithDetailsAsync(Guid id)
+        public async Task<TeacherStudent> GetByIdWithDetailsAsync(string id)
         {
-            var idString = id.ToString();
             return await _context.TeacherStudents
                 .Include(ts => ts.TeacherU)
                 .Include(ts => ts.StudentU)
                 .Include(ts => ts.CourseU)
-                .FirstOrDefaultAsync(ts => ts.Uid == idString);
+                .FirstOrDefaultAsync(ts => ts.Uid == id);
         }
 
         public async Task<List<TeacherStudent>> GetAllWithDetailsAsync()

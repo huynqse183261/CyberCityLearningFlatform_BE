@@ -27,7 +27,7 @@ namespace CyberCity.Controller.Controllers
         }
         // GET: api/Topic/{id}
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetTopicById(Guid id)
+        public async Task<IActionResult> GetTopicById(string id)
         {
             var topic = await _topicService.GetByIdAsync(id);
             if (topic == null)
@@ -47,7 +47,7 @@ namespace CyberCity.Controller.Controllers
         }
         // PUT: api/Topic/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTopic(Guid id, [FromBody] TopicUpdateDto topicDto)
+        public async Task<IActionResult> UpdateTopic(string id, [FromBody] TopicUpdateDto topicDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -62,7 +62,7 @@ namespace CyberCity.Controller.Controllers
         }
         // DELETE: api/Topic/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTopic(Guid id)
+        public async Task<IActionResult> DeleteTopic(string id)
         {
             var existingTopic = await _topicService.GetByIdAsync(id);
             if (existingTopic == null)

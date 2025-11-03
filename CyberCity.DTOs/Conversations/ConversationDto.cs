@@ -9,7 +9,7 @@ namespace CyberCity.DTOs.Conversations
     public class ConversationDto
     {
         public string Uid { get; set; }
-        public Guid? OrgUid { get; set; }
+        public string? OrgUid { get; set; }
         public string Title { get; set; }
         public bool? IsGroup { get; set; }
         public DateTime? CreatedAt { get; set; }

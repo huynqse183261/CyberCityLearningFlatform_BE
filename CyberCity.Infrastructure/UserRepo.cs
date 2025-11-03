@@ -38,11 +38,6 @@ namespace CyberCity.Infrastructure
                 ? query.OrderByDescending(u => u.CreatedAt)
                 : query.OrderBy(u => u.CreatedAt);
         }
-        public async Task<User> GetUserAsyncbyId(Guid id)
-        {
-            var idString = id.ToString();
-            return await _context.Users.FirstOrDefaultAsync(u => u.Uid == idString);
-        }
         public async Task<int> GetUserCountAsync()
         {
             return await _context.Users.CountAsync();

@@ -48,7 +48,7 @@ namespace CyberCity.Controller.Controllers
 
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+        public async Task<IActionResult> GetById(string id)
         {
             var course = await _courseService.GetByIdAsync(id);
             if (course == null) return NotFound();
@@ -60,19 +60,18 @@ namespace CyberCity.Controller.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst(ClaimTypes.Name);
             if (userIdClaim == null) return Unauthorized();
-            if (!Guid.TryParse(userIdClaim.Value, out var creatorId)) return Unauthorized();
 
             var entity = _mapper.Map<Course>(request);
-            entity.CreatedBy = creatorId.ToString();
+            entity.CreatedBy = userIdClaim.Value;
 
             var uid = await _courseService.CreateAsync(entity);
-            if (uid == Guid.Empty) return BadRequest("Cannot create course");
+            if (string.IsNullOrEmpty(uid)) return BadRequest("Cannot create course");
             var created = await _courseService.GetByIdAsync(uid);
             return CreatedAtAction(nameof(GetById), new { id = uid }, _mapper.Map<CourseDetailResponse>(created));
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] CourseCreateUpdateRequest request)
+        public async Task<IActionResult> Update(string id, [FromBody] CourseCreateUpdateRequest request)
         {
             var existing = await _courseService.GetByIdAsync(id);
             if (existing == null) return NotFound();
@@ -86,7 +85,7 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete(string id)
         {
             var ok = await _courseService.DeleteAsync(id);
             if (!ok) return NotFound();

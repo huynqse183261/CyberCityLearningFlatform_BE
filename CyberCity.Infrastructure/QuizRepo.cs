@@ -7,11 +7,11 @@ namespace CyberCity.Infrastructure
 {
     public interface IQuizRepository
     {
-        Task<Quiz> GetByIdAsync(Guid id);
-        Task<Quiz> GetQuizByLessonIdAsync(Guid lessonId);
-        Task<List<QuizQuestion>> GetQuizQuestionsAsync(Guid quizId);
-        Task<List<QuizAnswer>> GetQuestionAnswersAsync(Guid questionId);
-        Task<QuizSubmission> GetUserSubmissionAsync(Guid quizId, Guid studentId);
+        Task<Quiz> GetByIdAsync(string id);
+        Task<Quiz> GetQuizByLessonIdAsync(string lessonId);
+        Task<List<QuizQuestion>> GetQuizQuestionsAsync(string quizId);
+        Task<List<QuizAnswer>> GetQuestionAnswersAsync(string questionId);
+        Task<QuizSubmission> GetUserSubmissionAsync(string quizId, string studentId);
         Task<QuizSubmission> CreateSubmissionAsync(QuizSubmission submission);
         Task CreateSubmissionAnswersAsync(List<QuizSubmissionAnswer> answers);
     }
@@ -25,31 +25,31 @@ namespace CyberCity.Infrastructure
             _dbContext = context;
         }
 
-        public async Task<Quiz> GetQuizByLessonIdAsync(Guid lessonId)
+        public async Task<Quiz> GetQuizByLessonIdAsync(string lessonId)
         {
             return await _dbContext.Quizzes
-                .FirstOrDefaultAsync(q => q.LessonUid == lessonId.ToString());
+                .FirstOrDefaultAsync(q => q.LessonUid == lessonId);
         }
 
-        public async Task<List<QuizQuestion>> GetQuizQuestionsAsync(Guid quizId)
+        public async Task<List<QuizQuestion>> GetQuizQuestionsAsync(string quizId)
         {
             return await _dbContext.QuizQuestions
-                .Where(qq => qq.QuizUid == quizId.ToString())
+                .Where(qq => qq.QuizUid == quizId)
                 .OrderBy(qq => qq.OrderIndex)
                 .ToListAsync();
         }
 
-        public async Task<List<QuizAnswer>> GetQuestionAnswersAsync(Guid questionId)
+        public async Task<List<QuizAnswer>> GetQuestionAnswersAsync(string questionId)
         {
             return await _dbContext.QuizAnswers
-                .Where(qa => qa.QuestionUid == questionId.ToString())
+                .Where(qa => qa.QuestionUid == questionId)
                 .ToListAsync();
         }
 
-        public async Task<QuizSubmission> GetUserSubmissionAsync(Guid quizId, Guid studentId)
+        public async Task<QuizSubmission> GetUserSubmissionAsync(string quizId, string studentId)
         {
             return await _dbContext.QuizSubmissions
-                .FirstOrDefaultAsync(qs => qs.QuizUid == quizId.ToString() && qs.StudentUid == studentId.ToString());
+                .FirstOrDefaultAsync(qs => qs.QuizUid == quizId && qs.StudentUid == studentId);
         }
 
         public async Task<QuizSubmission> CreateSubmissionAsync(QuizSubmission submission)

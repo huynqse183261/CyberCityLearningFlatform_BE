@@ -31,7 +31,7 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<PagedResult<MessageDto>> GetMessagesByConversationIdAsync(Guid conversationId, Guid requestingUserId, int pageNumber = 1, int pageSize = 50)
+        public async Task<PagedResult<MessageDto>> GetMessagesByConversationIdAsync(string conversationId, string requestingUserId, int pageNumber = 1, int pageSize = 50)
         {
             // Check if user is member of conversation
             var isMember = await _conversationRepo.IsUserMemberOfConversationAsync(conversationId, requestingUserId);
@@ -53,7 +53,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<MessageDto> SendMessageAsync(Guid conversationId, CreateMessageDto createDto, Guid senderId)
+        public async Task<MessageDto> SendMessageAsync(string conversationId, CreateMessageDto createDto, string senderId)
         {
             // Check if sender is member of conversation
             var isMember = await _conversationRepo.IsUserMemberOfConversationAsync(conversationId, senderId);
@@ -63,8 +63,8 @@ namespace CyberCity.Application.Implement
             var message = new Message
             {
                 Uid = Guid.NewGuid().ToString(),
-                ConversationUid = conversationId.ToString(),
-                SenderUid = senderId.ToString(),
+                ConversationUid = conversationId,
+                SenderUid = senderId,
                 Message1 = createDto.Message,
                 SentAt = DateTime.Now
             };

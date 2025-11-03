@@ -76,6 +76,7 @@ builder.Services.AddScoped<CourseEnrollmentRepo>();
 builder.Services.AddScoped<ModuleRepo>();
 builder.Services.AddScoped<SubtopicProgressRepo>();
 builder.Services.AddScoped<OrderRepo>();
+builder.Services.AddScoped<PaymentRepo>();
 builder.Services.AddScoped<NotificationRepo>();
 builder.Services.AddScoped<CertificateRepo>();
 builder.Services.AddScoped<OrganizationRepo>();
@@ -116,6 +117,7 @@ builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<ILabService, LabService>();
 builder.Services.AddScoped<ILearningService, LearningService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 //mapper
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(CourseProfile));

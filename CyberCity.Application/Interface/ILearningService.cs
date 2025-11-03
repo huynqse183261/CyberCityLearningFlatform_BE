@@ -7,22 +7,22 @@ namespace CyberCity.Application.Interface
     public interface ILearningService
     {
         // Course methods
-        Task<List<CourseDto>> GetAllCoursesAsync(Guid? studentId = null);
-        Task<CourseDetailDto> GetCourseDetailAsync(Guid courseId, Guid studentId);
+        Task<List<CourseDto>> GetAllCoursesAsync(string? studentId = null);
+        Task<CourseDetailDto> GetCourseDetailAsync(string courseId, string studentId);
         
         // Module methods
-        Task<ModuleDetailResponseDto> GetModuleDetailAsync(Guid moduleId, Guid studentId);
+        Task<ModuleDetailResponseDto> GetModuleDetailAsync(string moduleId, string studentId);
         
         // Lesson methods
-        Task<LearningContentDto> GetLessonContentAsync(Guid lessonId, Guid studentId);
+        Task<LearningContentDto> GetLessonContentAsync(string lessonId, string studentId);
         
         // Subtopic methods
-        Task<SubmitAnswerResponseDto> SubmitSubtopicAnswerAsync(Guid subtopicId, Guid studentId, SubmitAnswerDto submitDto);
-        Task<SubtopicProgressDto> CompleteSubtopicAsync(Guid subtopicId, Guid studentId);
+        Task<SubmitAnswerResponseDto> SubmitSubtopicAnswerAsync(string subtopicId, string studentId, SubmitAnswerDto submitDto);
+        Task<SubtopicProgressDto> CompleteSubtopicAsync(string subtopicId, string studentId);
         
         // Progress methods
-        Task<StudentProgressDto> GetStudentProgressAsync(Guid studentId);
-        Task<CourseProgressDetailDto> GetCourseProgressDetailAsync(Guid courseId, Guid studentId);
+        Task<StudentProgressDto> GetStudentProgressAsync(string studentId);
+        Task<CourseProgressDetailDto> GetCourseProgressDetailAsync(string courseId, string studentId);
     }
 }
 

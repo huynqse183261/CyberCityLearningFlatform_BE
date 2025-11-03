@@ -7,10 +7,10 @@ namespace CyberCity.Infrastructure
 {
     public interface IAnswerRepository
     {
-        Task<Answer> GetAnswerBySubtopicIdAsync(Guid subtopicId);
-        Task<SubtopicProgress> GetUserProgressAsync(Guid studentId, Guid subtopicId);
+        Task<Answer> GetAnswerBySubtopicIdAsync(string subtopicId);
+        Task<SubtopicProgress> GetUserProgressAsync(string studentId, string subtopicId);
         Task<SubtopicProgress> CreateOrUpdateProgressAsync(SubtopicProgress progress);
-        Task<List<SubtopicProgress>> GetUserProgressByLessonAsync(Guid studentId, Guid lessonId);
+        Task<List<SubtopicProgress>> GetUserProgressByLessonAsync(string studentId, string lessonId);
     }
 
     public class AnswerRepo : GenericRepository<Answer>, IAnswerRepository
@@ -22,21 +22,21 @@ namespace CyberCity.Infrastructure
             _dbContext = context;
         }
 
-        public async Task<Answer> GetAnswerBySubtopicIdAsync(Guid subtopicId)
+        public async Task<Answer> GetAnswerBySubtopicIdAsync(string subtopicId)
         {
             return await _dbContext.Answers
-                .FirstOrDefaultAsync(a => a.SubtopicUid == subtopicId.ToString());
+                .FirstOrDefaultAsync(a => a.SubtopicUid == subtopicId);
         }
 
-        public async Task<SubtopicProgress> GetUserProgressAsync(Guid studentId, Guid subtopicId)
+        public async Task<SubtopicProgress> GetUserProgressAsync(string studentId, string subtopicId)
         {
             return await _dbContext.SubtopicProgresses
-                .FirstOrDefaultAsync(sp => sp.StudentUid == studentId.ToString() && sp.SubtopicUid == subtopicId.ToString());
+                .FirstOrDefaultAsync(sp => sp.StudentUid == studentId && sp.SubtopicUid == subtopicId);
         }
 
         public async Task<SubtopicProgress> CreateOrUpdateProgressAsync(SubtopicProgress progress)
         {
-            var existing = await GetUserProgressAsync(Guid.Parse(progress.StudentUid), Guid.Parse(progress.SubtopicUid));
+            var existing = await GetUserProgressAsync(progress.StudentUid, progress.SubtopicUid);
 
             if (existing == null)
             {
@@ -57,14 +57,13 @@ namespace CyberCity.Infrastructure
             return existing ?? progress;
         }
 
-        public async Task<List<SubtopicProgress>> GetUserProgressByLessonAsync(Guid studentId, Guid lessonId)
+        public async Task<List<SubtopicProgress>> GetUserProgressByLessonAsync(string studentId, string lessonId)
         {
             return await _dbContext.SubtopicProgresses
-                .Where(sp => sp.StudentUid == studentId.ToString() 
+                .Where(sp => sp.StudentUid == studentId 
                     && _dbContext.Subtopics.Any(st => st.Uid == sp.SubtopicUid 
-                        && _dbContext.Topics.Any(t => t.Uid == st.TopicUid && t.LessonUid == lessonId.ToString())))
+                        && _dbContext.Topics.Any(t => t.Uid == st.TopicUid && t.LessonUid == lessonId)))
                 .ToListAsync();
         }
     }
 }
-

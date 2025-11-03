@@ -21,10 +21,9 @@ namespace CyberCity.Infrastructure
                 ? query.OrderByDescending(u => u.CreatedAt)
                 : query.OrderBy(u => u.CreatedAt);
         }
-        public async Task<List<ApprovalLog>> GetByOrderUidAsync(Guid orderUid)
+        public async Task<List<ApprovalLog>> GetByOrderUidAsync(string orderUid)
         {
-            var orderUidString = orderUid.ToString();
-            return await _context.ApprovalLogs.Where(a => a.OrderUid == orderUidString).ToListAsync();
+            return await _context.ApprovalLogs.Where(a => a.OrderUid == orderUid).ToListAsync();
         }
     }
 }

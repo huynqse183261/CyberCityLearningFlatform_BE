@@ -31,13 +31,13 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<List<ConversationDto>> GetConversationsByUserIdAsync(Guid userId)
+        public async Task<List<ConversationDto>> GetConversationsByUserIdAsync(string userId)
         {
             var conversations = await _conversationRepo.GetConversationsByUserIdAsync(userId);
             return conversations.Select(c => _mapper.Map<ConversationDto>(c)).ToList();
         }
 
-        public async Task<PagedResult<ConversationDto>> GetUserConversationsAsync(Guid userId, int pageNumber = 1, int pageSize = 20)
+        public async Task<PagedResult<ConversationDto>> GetUserConversationsAsync(string userId, int pageNumber = 1, int pageSize = 20)
         {
             var conversations = await _conversationRepo.GetConversationsByUserIdAsync(userId);
             var totalConversations = conversations.Count;
@@ -58,7 +58,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<ConversationDto> GetConversationByIdAsync(Guid conversationId, Guid requestingUserId)
+        public async Task<ConversationDto> GetConversationByIdAsync(string conversationId, string requestingUserId)
         {
             // Check if user is member of conversation
             var isMember = await _conversationRepo.IsUserMemberOfConversationAsync(conversationId, requestingUserId);
@@ -72,7 +72,7 @@ namespace CyberCity.Application.Implement
             return _mapper.Map<ConversationDto>(conversation);
         }
 
-        public async Task<ConversationDto> CreateConversationAsync(CreateConversationDto createDto, Guid creatorId)
+        public async Task<ConversationDto> CreateConversationAsync(CreateConversationDto createDto, string creatorId)
         {
             // Create conversation
             var conversation = new Conversation
@@ -80,7 +80,7 @@ namespace CyberCity.Application.Implement
                 Uid = Guid.NewGuid().ToString(),
                 Title = createDto.Title,
                 IsGroup = createDto.IsGroup,
-                OrgUid = createDto.OrgUid?.ToString(),
+                OrgUid = createDto.OrgUid,
                 CreatedAt = DateTime.Now
             };
 
@@ -94,14 +94,14 @@ namespace CyberCity.Application.Implement
             }
 
             // Add members
-            await _conversationMemberRepo.AddMembersAsync(Guid.Parse(conversation.Uid), allMemberIds.ToArray());
+            await _conversationMemberRepo.AddMembersAsync(conversation.Uid, allMemberIds.ToArray());
 
             // Get the created conversation with members
-            var createdConversation = await _conversationRepo.GetConversationWithMembersAsync(Guid.Parse(conversation.Uid));
+            var createdConversation = await _conversationRepo.GetConversationWithMembersAsync(conversation.Uid);
             return _mapper.Map<ConversationDto>(createdConversation);
         }
 
-        public async Task<bool> UpdateConversationMembersAsync(Guid conversationId, UpdateConversationMembersDto updateDto, Guid requestingUserId)
+        public async Task<bool> UpdateConversationMembersAsync(string conversationId, UpdateConversationMembersDto updateDto, string requestingUserId)
         {
             // Check if user is member of conversation
             var isMember = await _conversationRepo.IsUserMemberOfConversationAsync(conversationId, requestingUserId);
@@ -126,7 +126,7 @@ namespace CyberCity.Application.Implement
             return true;
         }
 
-        public async Task<bool> IsUserMemberOfConversationAsync(Guid conversationId, Guid userId)
+        public async Task<bool> IsUserMemberOfConversationAsync(string conversationId, string userId)
         {
             return await _conversationRepo.IsUserMemberOfConversationAsync(conversationId, userId);
         }

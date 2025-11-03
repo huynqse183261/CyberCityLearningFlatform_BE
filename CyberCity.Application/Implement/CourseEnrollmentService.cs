@@ -22,7 +22,7 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<bool> EnrollAsync(Guid courseId, Guid userId)
+        public async Task<bool> EnrollAsync(string courseId, string userId)
         {
             var exists = await _courseEnrollmentRepo.GetByUserAndCourseAsync(userId, courseId);
             if (exists != null) return false;
@@ -30,30 +30,28 @@ namespace CyberCity.Application.Implement
             var enrollment = new CourseEnrollment
             {
                 Uid = Guid.NewGuid().ToString(),
-                CourseUid = courseId.ToString(),
-                UserUid = userId.ToString(),
+                CourseUid = courseId,
+                UserUid = userId,
                 EnrolledAt = DateTime.Now
             };
 
             return await _courseEnrollmentRepo.CreateAsync(enrollment) > 0;
         }
 
-        public async Task<List<EnrollmentResponse>> GetMyEnrollmentsAsync(Guid userId)
+        public async Task<List<EnrollmentResponse>> GetMyEnrollmentsAsync(string userId)
         {
-            var userIdString = userId.ToString();
             var result = await _courseEnrollmentRepo.GetAll()
-                .Where(e => e.UserUid == userIdString)
+                .Where(e => e.UserUid == userId)
                 .Include(e => e.CourseU)
                 .ToListAsync();
 
             return _mapper.Map<List<EnrollmentResponse>>(result);
         }
 
-        public async Task<List<CourseEnrollmentResponse>> GetEnrollmentsByCourseAsync(Guid courseId)
+        public async Task<List<CourseEnrollmentResponse>> GetEnrollmentsByCourseAsync(string courseId)
         {
-            var courseIdString = courseId.ToString();
             var result = await _courseEnrollmentRepo.GetAll()
-                .Where(e => e.CourseUid == courseIdString)
+                .Where(e => e.CourseUid == courseId)
                 .Include(e => e.UserU)
                 .ToListAsync();
 

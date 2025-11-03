@@ -44,7 +44,7 @@ namespace CyberCity.Controller.Controllers
         /// GET /api/pricing-plans/{id} - Lấy thông tin gói giá theo ID
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<PricingPlanDto>> GetPricingPlan(Guid id)
+        public async Task<ActionResult<PricingPlanDto>> GetPricingPlan(string id)
         {
             try
             {
@@ -91,7 +91,7 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "admin")]
-        public async Task<ActionResult<PricingPlanDto>> UpdatePricingPlan(Guid id, [FromBody] UpdatePricingPlanDto updateDto)
+        public async Task<ActionResult<PricingPlanDto>> UpdatePricingPlan(string id, [FromBody] UpdatePricingPlanDto updateDto)
         {
             try
             {
@@ -116,7 +116,7 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
-        public async Task<ActionResult> DeletePricingPlan(Guid id)
+        public async Task<ActionResult> DeletePricingPlan(string id)
         {
             try
             {
@@ -140,7 +140,7 @@ namespace CyberCity.Controller.Controllers
         /// GET /api/pricing-plans/{id}/exists - Kiểm tra gói giá có tồn tại
         /// </summary>
         [HttpGet("{id}/exists")]
-        public async Task<ActionResult<bool>> PricingPlanExists(Guid id)
+        public async Task<ActionResult<bool>> PricingPlanExists(string id)
         {
             try
             {

@@ -7,7 +7,7 @@ namespace CyberCity.Application.Interface
 {
     public interface IMessageService
     {
-        Task<PagedResult<MessageDto>> GetMessagesByConversationIdAsync(Guid conversationId, Guid requestingUserId, int pageNumber = 1, int pageSize = 50);
-        Task<MessageDto> SendMessageAsync(Guid conversationId, CreateMessageDto createDto, Guid senderId);
+        Task<PagedResult<MessageDto>> GetMessagesByConversationIdAsync(string conversationId, string requestingUserId, int pageNumber = 1, int pageSize = 50);
+        Task<MessageDto> SendMessageAsync(string conversationId, CreateMessageDto createDto, string senderId);
     }
 }

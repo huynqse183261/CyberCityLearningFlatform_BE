@@ -20,7 +20,7 @@ namespace CyberCity.Application.Implement
             _notificationRepo = notificationRepo;
             _mapper = mapper;
         }
-        public async Task DeleteAllNotificationsAsync(Guid userId)
+        public async Task DeleteAllNotificationsAsync(string userId)
         {
             var notifications = await _notificationRepo.GetByIdAsync(userId);
             if (notifications != null)
@@ -30,19 +30,19 @@ namespace CyberCity.Application.Implement
 
         }
 
-        public async Task DeleteAllNotificationsByUserAsync(Guid receiverUid, Guid deleterUid)
+        public async Task DeleteAllNotificationsByUserAsync(string receiverUid, string deleterUid)
         {
             var notifications = await _notificationRepo.DeleteAllByReceiverUidAsync(receiverUid, deleterUid);
             return;
         }
 
-        public async Task DeleteNotificationByIdAsync(Guid notificationUid, Guid deleterUid)
+        public async Task DeleteNotificationByIdAsync(string notificationUid, string deleterUid)
         {
             var result = await _notificationRepo.DeleteNotificationAsync(notificationUid, deleterUid);
             return ;
         }
 
-        public async Task<List<NotificationResponse>> GetNotificationsAsync(Guid userId)
+        public async Task<List<NotificationResponse>> GetNotificationsAsync(string userId)
         {
             // Lấy danh sách notification và include navigation property để lấy username
           var notifications = await _notificationRepo.GetNotificationsInfoAsync(userId);
@@ -52,13 +52,13 @@ namespace CyberCity.Application.Implement
             return result;
         }
 
-        public async Task<int> GetUnreadCountAsync(Guid userUid)
+        public async Task<int> GetUnreadCountAsync(string userUid)
         {
             var count = await _notificationRepo.GetUnreadCountByReceiverUidAsync(userUid);
             return count;
         }
 
-        public async Task MarkAllAsReadAsync(Guid userId)
+        public async Task MarkAllAsReadAsync(string userId)
         {
             await _notificationRepo.MarkAllAsReadByReceiverUidAsync(userId);
         }
@@ -71,7 +71,7 @@ namespace CyberCity.Application.Implement
             notification.CreatedAt = DateTime.Now;
             await _notificationRepo.CreateAsync(notification);
         }
-        public async Task MarkNotificationAsReadAsync(Guid notificationId)
+        public async Task MarkNotificationAsReadAsync(string notificationId)
         {
             var notification = await _notificationRepo.GetByIdAsync(notificationId);
             if (notification != null && (notification.IsRead == null || notification.IsRead == false))

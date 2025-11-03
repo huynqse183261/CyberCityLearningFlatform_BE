@@ -23,51 +23,45 @@ namespace CyberCity.Infrastructure
                 : query.OrderBy(c => c.CreatedAt);
         }
 
-        public async Task<List<Conversation>> GetByAssignmentUidAsync(Guid conversationId)
+        public async Task<List<Conversation>> GetByAssignmentUidAsync(string conversationId)
         {
-            var conversationIdString = conversationId.ToString();
-            return await _context.Conversations.Where(c => c.Uid == conversationIdString).ToListAsync();
+            return await _context.Conversations.Where(c => c.Uid == conversationId).ToListAsync();
         }
 
-        public async Task<List<Conversation>> GetConversationsByUserIdAsync(Guid userId)
+        public async Task<List<Conversation>> GetConversationsByUserIdAsync(string userId)
         {
-            var userIdString = userId.ToString();
             return await _context.Conversations
                 .Include(c => c.ConversationMembers)
                     .ThenInclude(cm => cm.UserU)
                 .Include(c => c.Messages.OrderByDescending(m => m.SentAt).Take(1))
                     .ThenInclude(m => m.SenderU)
-                .Where(c => c.ConversationMembers.Any(cm => cm.UserUid == userIdString))
+                .Where(c => c.ConversationMembers.Any(cm => cm.UserUid == userId))
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<Conversation> GetConversationByIdAsync(Guid conversationId)
+        public async Task<Conversation> GetConversationByIdAsync(string conversationId)
         {
-            var conversationIdString = conversationId.ToString();
             return await _context.Conversations
                 .Include(c => c.ConversationMembers)
                     .ThenInclude(cm => cm.UserU)
                 .Include(c => c.Messages)
                     .ThenInclude(m => m.SenderU)
-                .FirstOrDefaultAsync(c => c.Uid == conversationIdString);
+                .FirstOrDefaultAsync(c => c.Uid == conversationId);
         }
 
-        public async Task<Conversation> GetConversationWithMembersAsync(Guid conversationId)
+        public async Task<Conversation> GetConversationWithMembersAsync(string conversationId)
         {
-            var conversationIdString = conversationId.ToString();
             return await _context.Conversations
                 .Include(c => c.ConversationMembers)
                     .ThenInclude(cm => cm.UserU)
-                .FirstOrDefaultAsync(c => c.Uid == conversationIdString);
+                .FirstOrDefaultAsync(c => c.Uid == conversationId);
         }
 
-        public async Task<bool> IsUserMemberOfConversationAsync(Guid conversationId, Guid userId)
+        public async Task<bool> IsUserMemberOfConversationAsync(string conversationId, string userId)
         {
-            var conversationIdString = conversationId.ToString();
-            var userIdString = userId.ToString();
             return await _context.ConversationMembers
-                .AnyAsync(cm => cm.ConversationUid == conversationIdString && cm.UserUid == userIdString);
+                .AnyAsync(cm => cm.ConversationUid == conversationId && cm.UserUid == userId);
         }
     }
 }

@@ -14,9 +14,9 @@ namespace CyberCity.Application.Interface
     public interface ILessonService
     {
         Task<PagedResult<LessonDetailResponse>> GetLessonAsync(int pageNumber, int pageSize);
-        Task<Lesson> GetByIdAsync(Guid uid);
-        Task<Guid> CreateAsync(Lesson lesson);
+        Task<Lesson> GetByIdAsync(string uid);
+        Task<string> CreateAsync(Lesson lesson);
         Task<bool> UpdateAsync(Lesson lesson);
-        Task<bool> DeleteAsync(Guid uid);
+        Task<bool> DeleteAsync(string uid);
     }
 }

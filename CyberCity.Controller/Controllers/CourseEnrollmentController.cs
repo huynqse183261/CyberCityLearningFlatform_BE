@@ -21,9 +21,9 @@ namespace CyberCity.Controller.Controllers
 
         // POST api/courses/{id}/enroll
         [HttpPost("courses/{id}/enroll")]
-        public async Task<IActionResult> Enroll(Guid id)
+        public async Task<IActionResult> Enroll(string id)
         {
-            var userId = Guid.Parse(User.FindFirst("uid")!.Value);
+            var userId = User.FindFirst("uid")!.Value;
             var success = await _enrollmentService.EnrollAsync(id, userId);
             if (!success) return BadRequest("Already enrolled or failed");
 
@@ -34,7 +34,7 @@ namespace CyberCity.Controller.Controllers
         [HttpGet("enrollments/me")]
         public async Task<IActionResult> GetMyEnrollments()
         {
-            var userId = Guid.Parse(User.FindFirst("uid")!.Value);
+            var userId = User.FindFirst("uid")!.Value;
             var result = await _enrollmentService.GetMyEnrollmentsAsync(userId);
 
             return Ok(result);
@@ -42,7 +42,7 @@ namespace CyberCity.Controller.Controllers
 
         // GET api/courses/{id}/enrollments
         [HttpGet("courses/{id}/enrollments")]
-        public async Task<IActionResult> GetCourseEnrollments(Guid id)
+        public async Task<IActionResult> GetCourseEnrollments(string id)
         {
             var result = await _enrollmentService.GetEnrollmentsByCourseAsync(id);
             return Ok(result);

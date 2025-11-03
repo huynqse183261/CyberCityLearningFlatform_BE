@@ -17,7 +17,7 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<QuizDetailDto> GetQuizByIdAsync(Guid quizId, Guid studentId)
+        public async Task<QuizDetailDto> GetQuizByIdAsync(string quizId, string studentId)
         {
             var quiz = await _quizRepo.GetByIdAsync(quizId);
             if (quiz == null)
@@ -30,7 +30,7 @@ namespace CyberCity.Application.Implement
 
             foreach (var question in questions)
             {
-                var answers = await _quizRepo.GetQuestionAnswersAsync(Guid.Parse(question.Uid));
+                var answers = await _quizRepo.GetQuestionAnswersAsync(question.Uid);
                 
                 questionsWithAnswers.Add(new QuestionWithAnswersDto
                 {
@@ -49,7 +49,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<SubmitQuizResponseDto> SubmitQuizAsync(Guid quizId, Guid studentId, SubmitQuizDto submitDto)
+        public async Task<SubmitQuizResponseDto> SubmitQuizAsync(string quizId, string studentId, SubmitQuizDto submitDto)
         {
             var quiz = await _quizRepo.GetByIdAsync(quizId);
             if (quiz == null)
@@ -72,7 +72,7 @@ namespace CyberCity.Application.Implement
             foreach (var answer in submitDto.Answers)
             {
                 // Get all answers for this question
-                var questionAnswers = await _quizRepo.GetQuestionAnswersAsync(Guid.Parse(answer.QuestionId));
+                var questionAnswers = await _quizRepo.GetQuestionAnswersAsync(answer.QuestionId);
                 var selectedAnswer = questionAnswers.FirstOrDefault(qa => qa.Uid == answer.SelectedAnswerId);
                 var correctAnswerId = questionAnswers.FirstOrDefault(a => a.IsCorrect == true)?.Uid;
 

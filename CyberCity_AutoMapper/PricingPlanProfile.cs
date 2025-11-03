@@ -15,7 +15,7 @@ namespace CyberCity_AutoMapper
                 .ForMember(dest => dest.OrderCount, opt => opt.MapFrom(src => src.Orders.Count));
 
             CreateMap<CreatePricingPlanDto, PricingPlan>()
-                .ForMember(dest => dest.Uid, opt => opt.MapFrom(_ => Guid.NewGuid()))
+                .ForMember(dest => dest.Uid, opt => opt.MapFrom(_ => Guid.NewGuid().ToString()))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
                 .ForMember(dest => dest.Orders, opt => opt.Ignore());
 

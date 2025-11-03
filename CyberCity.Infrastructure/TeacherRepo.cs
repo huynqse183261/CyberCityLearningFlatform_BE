@@ -8,19 +8,19 @@ namespace CyberCity.Infrastructure
 {
     public interface ITeacherRepository
     {
-        Task<(List<TeacherStudentListDto> students, int totalCount)> GetStudentsAsync(Guid teacherUid, int page, int limit, string? search, Guid? courseUid);
-        Task<TeacherStudentListDto?> GetStudentDetailAsync(Guid teacherUid, Guid studentUid);
-        Task<AddStudentDataDto> AddStudentAsync(Guid teacherUid, Guid studentUid, Guid courseUid);
-        Task<bool> RemoveStudentAsync(Guid teacherUid, Guid studentUid, Guid courseUid);
-        Task<List<TeacherCourseProgressDto>> GetStudentProgressAsync(Guid teacherUid, Guid studentUid, Guid? courseUid);
-        Task<(List<TeacherConversationDto> conversations, int totalCount)> GetConversationsAsync(Guid teacherUid, int page, int limit);
-        Task<Guid?> CreateConversationAsync(Guid teacherUid, Guid studentUid);
-        Task<Guid?> FindExistingConversationAsync(Guid teacherUid, Guid studentUid);
-        Task<(List<TeacherMessageDto> messages, int totalCount, ParticipantDto? participant)> GetConversationMessagesAsync(Guid teacherUid, Guid conversationUid, int page, int limit, DateTime? before);
-        Task<TeacherMessageDto?> SendMessageAsync(Guid teacherUid, Guid conversationUid, string content);
-        Task<bool> MarkAsReadAsync(Guid teacherUid, Guid conversationUid);
-        Task<DashboardStatsDataDto> GetDashboardStatsAsync(Guid teacherUid);
-        Task<bool> VerifyTeacherStudentRelationship(Guid teacherUid, Guid studentUid);
+        Task<(List<TeacherStudentListDto> students, int totalCount)> GetStudentsAsync(string teacherUid, int page, int limit, string? search, string? courseUid);
+        Task<TeacherStudentListDto?> GetStudentDetailAsync(string teacherUid, string studentUid);
+        Task<AddStudentDataDto> AddStudentAsync(string teacherUid, string studentUid, string courseUid);
+        Task<bool> RemoveStudentAsync(string teacherUid, string studentUid, string courseUid);
+        Task<List<TeacherCourseProgressDto>> GetStudentProgressAsync(string teacherUid, string studentUid, string? courseUid);
+        Task<(List<TeacherConversationDto> conversations, int totalCount)> GetConversationsAsync(string teacherUid, int page, int limit);
+        Task<string?> CreateConversationAsync(string teacherUid, string studentUid);
+        Task<string?> FindExistingConversationAsync(string teacherUid, string studentUid);
+        Task<(List<TeacherMessageDto> messages, int totalCount, ParticipantDto? participant)> GetConversationMessagesAsync(string teacherUid, string conversationUid, int page, int limit, DateTime? before);
+        Task<TeacherMessageDto?> SendMessageAsync(string teacherUid, string conversationUid, string content);
+        Task<bool> MarkAsReadAsync(string teacherUid, string conversationUid);
+        Task<DashboardStatsDataDto> GetDashboardStatsAsync(string teacherUid);
+        Task<bool> VerifyTeacherStudentRelationship(string teacherUid, string studentUid);
     }
 
     public class TeacherRepository : GenericRepository<TeacherStudent>, ITeacherRepository
@@ -29,11 +29,10 @@ namespace CyberCity.Infrastructure
         public TeacherRepository(CyberCityLearningFlatFormDBContext context) => _context = context;
 
         public async Task<(List<TeacherStudentListDto> students, int totalCount)> GetStudentsAsync(
-            Guid teacherUid, int page, int limit, string? search, Guid? courseUid)
+            string teacherUid, int page, int limit, string? search, string? courseUid)
         {
-            var teacherUidString = teacherUid.ToString();
             var query = _context.TeacherStudents
-                .Where(ts => ts.TeacherUid == teacherUidString)
+                .Where(ts => ts.TeacherUid == teacherUid)
                 .Select(ts => ts.StudentUid)
                 .Distinct();
 
@@ -75,9 +74,9 @@ namespace CyberCity.Infrastructure
                         c => c.Uid,
                         (ce, c) => new { ce, c });
 
-                if (courseUid.HasValue)
+                if (courseUid != null)
                 {
-                    coursesQuery = coursesQuery.Where(x => x.c.Uid == courseUid.Value.ToString());
+                    coursesQuery = coursesQuery.Where(x => x.c.Uid == courseUid);
                 }
 
                 var courses = await coursesQuery
@@ -89,7 +88,7 @@ namespace CyberCity.Infrastructure
                     })
                     .ToListAsync();
 
-                if (!courseUid.HasValue || courses.Any())
+                if (courseUid == null || courses.Any())
                 {
                     result.Add(new TeacherStudentListDto
                     {
@@ -106,17 +105,15 @@ namespace CyberCity.Infrastructure
             return (result, totalCount);
         }
 
-        public async Task<TeacherStudentListDto?> GetStudentDetailAsync(Guid teacherUid, Guid studentUid)
+        public async Task<TeacherStudentListDto?> GetStudentDetailAsync(string teacherUid, string studentUid)
         {
-            var teacherUidString = teacherUid.ToString();
-            var studentUidString = studentUid.ToString();
             var exists = await _context.TeacherStudents
-                .AnyAsync(ts => ts.TeacherUid == teacherUidString && ts.StudentUid == studentUidString);
+                .AnyAsync(ts => ts.TeacherUid == teacherUid && ts.StudentUid == studentUid);
 
             if (!exists) return null;
 
             var student = await _context.Users
-                .Where(u => u.Uid == studentUidString)
+                .Where(u => u.Uid == studentUid)
                 .Select(u => new
                 {
                     u.Uid,
@@ -130,7 +127,7 @@ namespace CyberCity.Infrastructure
             if (student == null) return null;
 
             var courses = await _context.CourseEnrollments
-                .Where(ce => ce.UserUid == studentUidString)
+                .Where(ce => ce.UserUid == studentUid)
                 .Join(_context.Courses,
                     ce => ce.CourseUid,
                     c => c.Uid,
@@ -153,16 +150,13 @@ namespace CyberCity.Infrastructure
             };
         }
 
-        public async Task<AddStudentDataDto> AddStudentAsync(Guid teacherUid, Guid studentUid, Guid courseUid)
+        public async Task<AddStudentDataDto> AddStudentAsync(string teacherUid, string studentUid, string courseUid)
         {
-            var teacherUidString = teacherUid.ToString();
-            var studentUidString = studentUid.ToString();
-            var courseUidString = courseUid.ToString();
             // Check if relationship already exists
             var existing = await _context.TeacherStudents
-                .FirstOrDefaultAsync(ts => ts.TeacherUid == teacherUidString &&
-                                          ts.StudentUid == studentUidString &&
-                                          ts.CourseUid == courseUidString);
+                .FirstOrDefaultAsync(ts => ts.TeacherUid == teacherUid &&
+                                          ts.StudentUid == studentUid &&
+                                          ts.CourseUid == courseUid);
 
             if (existing != null)
             {
@@ -180,24 +174,24 @@ namespace CyberCity.Infrastructure
             var teacherStudent = new TeacherStudent
             {
                 Uid = Guid.NewGuid().ToString(),
-                TeacherUid = teacherUidString,
-                StudentUid = studentUidString,
-                CourseUid = courseUidString
+                TeacherUid = teacherUid,
+                StudentUid = studentUid,
+                CourseUid = courseUid
             };
 
             await _context.TeacherStudents.AddAsync(teacherStudent);
 
             // Enroll student if not already
             var enrollment = await _context.CourseEnrollments
-                .FirstOrDefaultAsync(ce => ce.UserUid == studentUidString && ce.CourseUid == courseUidString);
+                .FirstOrDefaultAsync(ce => ce.UserUid == studentUid && ce.CourseUid == courseUid);
 
             if (enrollment == null)
             {
                 await _context.CourseEnrollments.AddAsync(new CourseEnrollment
                 {
                     Uid = Guid.NewGuid().ToString(),
-                    UserUid = studentUidString,
-                    CourseUid = courseUidString,
+                    UserUid = studentUid,
+                    CourseUid = courseUid,
                     EnrolledAt = DateTime.Now
                 });
             }
@@ -214,15 +208,12 @@ namespace CyberCity.Infrastructure
             };
         }
 
-        public async Task<bool> RemoveStudentAsync(Guid teacherUid, Guid studentUid, Guid courseUid)
+        public async Task<bool> RemoveStudentAsync(string teacherUid, string studentUid, string courseUid)
         {
-            var teacherUidString = teacherUid.ToString();
-            var studentUidString = studentUid.ToString();
-            var courseUidString = courseUid.ToString();
             var record = await _context.TeacherStudents
-                .FirstOrDefaultAsync(ts => ts.TeacherUid == teacherUidString &&
-                                          ts.StudentUid == studentUidString &&
-                                          ts.CourseUid == courseUidString);
+                .FirstOrDefaultAsync(ts => ts.TeacherUid == teacherUid &&
+                                          ts.StudentUid == studentUid &&
+                                          ts.CourseUid == courseUid);
 
             if (record == null) return false;
 
@@ -232,27 +223,25 @@ namespace CyberCity.Infrastructure
         }
 
         public async Task<List<TeacherCourseProgressDto>> GetStudentProgressAsync(
-            Guid teacherUid, Guid studentUid, Guid? courseUid)
+            string teacherUid, string studentUid, string? courseUid)
         {
             // Verify relationship
-            var teacherUidString = teacherUid.ToString();
-            var studentUidString = studentUid.ToString();
             var hasRelationship = await _context.TeacherStudents
-                .AnyAsync(ts => ts.TeacherUid == teacherUidString && ts.StudentUid == studentUidString);
+                .AnyAsync(ts => ts.TeacherUid == teacherUid && ts.StudentUid == studentUid);
 
             if (!hasRelationship) return new List<TeacherCourseProgressDto>();
 
             var coursesQuery = _context.Courses.AsQueryable();
 
-            if (courseUid.HasValue)
+            if (courseUid != null)
             {
-                coursesQuery = coursesQuery.Where(c => c.Uid == courseUid.Value.ToString());
+                coursesQuery = coursesQuery.Where(c => c.Uid == courseUid);
             }
             else
             {
                 // Get courses where student is enrolled
                 var enrolledCourseIds = _context.CourseEnrollments
-                    .Where(ce => ce.UserUid == studentUidString)
+                    .Where(ce => ce.UserUid == studentUid)
                     .Select(ce => ce.CourseUid);
                 coursesQuery = coursesQuery.Where(c => enrolledCourseIds.Contains(c.Uid));
             }
@@ -302,11 +291,11 @@ namespace CyberCity.Infrastructure
                             .Select(s => s.Uid)
                             .ToListAsync();
 
-                var completedCount = await _context.SubtopicProgresses
-                    .Where(sp => sp.StudentUid == studentUidString &&
-                                subtopicIds.Contains(sp.SubtopicUid) &&
-                                sp.IsCompleted == true)
-                    .CountAsync();
+                        var completedCount = await _context.SubtopicProgresses
+                            .Where(sp => sp.StudentUid == studentUid &&
+                                        subtopicIds.Contains(sp.SubtopicUid) &&
+                                        sp.IsCompleted == true)
+                            .CountAsync();
 
                         var totalCount = subtopicIds.Count;
                         moduleTotalSubtopics += totalCount;
@@ -341,7 +330,7 @@ namespace CyberCity.Infrastructure
                     : 0;
 
                 courseProgress.LastActivity = await _context.SubtopicProgresses
-                    .Where(sp => sp.StudentUid == studentUidString)
+                    .Where(sp => sp.StudentUid == studentUid)
                     .MaxAsync(sp => (DateTime?)sp.CompletedAt);
 
                 result.Add(courseProgress);
@@ -351,12 +340,11 @@ namespace CyberCity.Infrastructure
         }
 
         public async Task<(List<TeacherConversationDto> conversations, int totalCount)> GetConversationsAsync(
-            Guid teacherUid, int page, int limit)
+            string teacherUid, int page, int limit)
         {
             // Get conversations where teacher is a member
-            var teacherUidString = teacherUid.ToString();
             var conversationsQuery = _context.ConversationMembers
-                .Where(cm => cm.UserUid == teacherUidString)
+                .Where(cm => cm.UserUid == teacherUid)
                 .Select(cm => cm.ConversationUid);
 
             var totalCount = await conversationsQuery.Distinct().CountAsync();
@@ -376,11 +364,11 @@ namespace CyberCity.Infrastructure
             {
                 // Get the other participant (not the teacher)
                 var otherMemberUid = await _context.ConversationMembers
-                    .Where(cm => cm.ConversationUid == convUid && cm.UserUid != teacherUidString)
+                    .Where(cm => cm.ConversationUid == convUid && cm.UserUid != teacherUid)
                     .Select(cm => cm.UserUid)
                     .FirstOrDefaultAsync();
 
-                if (otherMemberUid == Guid.Empty.ToString()) continue;
+                if (string.IsNullOrEmpty(otherMemberUid)) continue;
 
                 var participant = await _context.Users
                     .Where(u => u.Uid == otherMemberUid)
@@ -394,7 +382,7 @@ namespace CyberCity.Infrastructure
                     .FirstOrDefaultAsync();
 
                 var unreadCount = await _context.Messages
-                    .Where(m => m.ConversationUid == convUid && m.SenderUid != teacherUidString)
+                    .Where(m => m.ConversationUid == convUid && m.SenderUid != teacherUid)
                     .CountAsync();
 
                 result.Add(new TeacherConversationDto
@@ -411,27 +399,25 @@ namespace CyberCity.Infrastructure
             return (result, totalCount);
         }
 
-        public async Task<Guid?> FindExistingConversationAsync(Guid teacherUid, Guid studentUid)
+        public async Task<string?> FindExistingConversationAsync(string teacherUid, string studentUid)
         {
             // Find conversation where both teacher and student are members
-            var teacherUidString = teacherUid.ToString();
-            var studentUidString = studentUid.ToString();
             var teacherConversations = _context.ConversationMembers
-                .Where(cm => cm.UserUid == teacherUidString)
+                .Where(cm => cm.UserUid == teacherUid)
                 .Select(cm => cm.ConversationUid);
 
             var studentConversations = _context.ConversationMembers
-                .Where(cm => cm.UserUid == studentUidString)
+                .Where(cm => cm.UserUid == studentUid)
                 .Select(cm => cm.ConversationUid);
 
             var sharedConversation = await teacherConversations
                 .Intersect(studentConversations)
                 .FirstOrDefaultAsync();
 
-            return string.IsNullOrEmpty(sharedConversation) ? null : Guid.Parse(sharedConversation);
+            return string.IsNullOrEmpty(sharedConversation) ? null : sharedConversation;
         }
 
-        public async Task<Guid?> CreateConversationAsync(Guid teacherUid, Guid studentUid)
+        public async Task<string?> CreateConversationAsync(string teacherUid, string studentUid)
         {
             var conversation = new Conversation
             {
@@ -443,14 +429,12 @@ namespace CyberCity.Infrastructure
             await _context.Conversations.AddAsync(conversation);
 
             // Add both members
-            var teacherUidString = teacherUid.ToString();
-            var studentUidString = studentUid.ToString();
             
             await _context.ConversationMembers.AddAsync(new ConversationMember
             {
                 Uid = Guid.NewGuid().ToString(),
                 ConversationUid = conversation.Uid,
-                UserUid = teacherUidString,
+                UserUid = teacherUid,
                 JoinedAt = DateTime.Now
             });
 
@@ -458,30 +442,28 @@ namespace CyberCity.Infrastructure
             {
                 Uid = Guid.NewGuid().ToString(),
                 ConversationUid = conversation.Uid,
-                UserUid = studentUidString,
+                UserUid = studentUid,
                 JoinedAt = DateTime.Now
             });
 
             await _context.SaveChangesAsync();
 
-            return Guid.Parse(conversation.Uid);
+            return conversation.Uid;
         }
 
         public async Task<(List<TeacherMessageDto> messages, int totalCount, ParticipantDto? participant)> 
-            GetConversationMessagesAsync(Guid teacherUid, Guid conversationUid, int page, int limit, DateTime? before)
+            GetConversationMessagesAsync(string teacherUid, string conversationUid, int page, int limit, DateTime? before)
         {
             // Check if teacher is member of this conversation
-            var teacherUidString = teacherUid.ToString();
-            var conversationUidString = conversationUid.ToString();
             var isMember = await _context.ConversationMembers
-                .AnyAsync(cm => cm.ConversationUid == conversationUidString && cm.UserUid == teacherUidString);
+                .AnyAsync(cm => cm.ConversationUid == conversationUid && cm.UserUid == teacherUid);
 
             if (!isMember) 
                 return (new List<TeacherMessageDto>(), 0, null);
 
             // Get the other participant
             var participantUid = await _context.ConversationMembers
-                .Where(cm => cm.ConversationUid == conversationUidString && cm.UserUid != teacherUidString)
+                .Where(cm => cm.ConversationUid == conversationUid && cm.UserUid != teacherUid)
                 .Select(cm => cm.UserUid)
                 .FirstOrDefaultAsync();
 
@@ -499,7 +481,7 @@ namespace CyberCity.Infrastructure
             }
 
             var messagesQuery = _context.Messages
-                .Where(m => m.ConversationUid == conversationUidString);
+                .Where(m => m.ConversationUid == conversationUid);
 
             if (before.HasValue)
             {
@@ -525,21 +507,19 @@ namespace CyberCity.Infrastructure
             return (messages, totalCount, participant);
         }
 
-        public async Task<TeacherMessageDto?> SendMessageAsync(Guid teacherUid, Guid conversationUid, string content)
+        public async Task<TeacherMessageDto?> SendMessageAsync(string teacherUid, string conversationUid, string content)
         {
             // Check if teacher is member of this conversation
-            var teacherUidString = teacherUid.ToString();
-            var conversationUidString = conversationUid.ToString();
             var isMember = await _context.ConversationMembers
-                .AnyAsync(cm => cm.ConversationUid == conversationUidString && cm.UserUid == teacherUidString);
+                .AnyAsync(cm => cm.ConversationUid == conversationUid && cm.UserUid == teacherUid);
 
             if (!isMember) return null;
 
             var message = new Message
             {
                 Uid = Guid.NewGuid().ToString(),
-                ConversationUid = conversationUidString,
-                SenderUid = teacherUidString,
+                ConversationUid = conversationUid,
+                SenderUid = teacherUid,
                 Message1 = content,
                 SentAt = DateTime.Now
             };
@@ -557,13 +537,11 @@ namespace CyberCity.Infrastructure
             };
         }
 
-        public async Task<bool> MarkAsReadAsync(Guid teacherUid, Guid conversationUid)
+        public async Task<bool> MarkAsReadAsync(string teacherUid, string conversationUid)
         {
             // Check if teacher is member of this conversation
-            var teacherUidString = teacherUid.ToString();
-            var conversationUidString = conversationUid.ToString();
             var isMember = await _context.ConversationMembers
-                .AnyAsync(cm => cm.ConversationUid == conversationUidString && cm.UserUid == teacherUidString);
+                .AnyAsync(cm => cm.ConversationUid == conversationUid && cm.UserUid == teacherUid);
 
             if (!isMember) return false;
 
@@ -572,17 +550,16 @@ namespace CyberCity.Infrastructure
             return true;
         }
 
-        public async Task<DashboardStatsDataDto> GetDashboardStatsAsync(Guid teacherUid)
+        public async Task<DashboardStatsDataDto> GetDashboardStatsAsync(string teacherUid)
         {
-            var teacherUidString = teacherUid.ToString();
             var totalStudents = await _context.TeacherStudents
-                .Where(ts => ts.TeacherUid == teacherUidString)
+                .Where(ts => ts.TeacherUid == teacherUid)
                 .Select(ts => ts.StudentUid)
                 .Distinct()
                 .CountAsync();
 
             var activeCourses = await _context.Courses
-                .Where(c => c.CreatedBy == teacherUidString)
+                .Where(c => c.CreatedBy == teacherUid)
                 .CountAsync();
 
             // Note: Message model doesn't have IsRead field
@@ -590,7 +567,7 @@ namespace CyberCity.Infrastructure
 
             // Calculate average progress
             var studentIds = await _context.TeacherStudents
-                .Where(ts => ts.TeacherUid == teacherUidString)
+                .Where(ts => ts.TeacherUid == teacherUid)
                 .Select(ts => ts.StudentUid)
                 .Distinct()
                 .ToListAsync();
@@ -625,12 +602,10 @@ namespace CyberCity.Infrastructure
             };
         }
 
-        public async Task<bool> VerifyTeacherStudentRelationship(Guid teacherUid, Guid studentUid)
+        public async Task<bool> VerifyTeacherStudentRelationship(string teacherUid, string studentUid)
         {
-            var teacherUidString = teacherUid.ToString();
-            var studentUidString = studentUid.ToString();
             return await _context.TeacherStudents
-                .AnyAsync(ts => ts.TeacherUid == teacherUidString && ts.StudentUid == studentUidString);
+                .AnyAsync(ts => ts.TeacherUid == teacherUid && ts.StudentUid == studentUid);
         }
     }
 }

@@ -15,11 +15,10 @@ namespace CyberCity.Infrastructure
 
         public SubtopicProgressRepo() { }
         public SubtopicProgressRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
-        public async Task<List<SubtopicProgress>> GetByStudentAsync(Guid studentId)
+        public async Task<List<SubtopicProgress>> GetByStudentAsync(string studentId)
         {
-            var studentIdString = studentId.ToString();
             var query = _context.SubtopicProgresses
-                 .Where(p => p.StudentUid == studentIdString)
+                 .Where(p => p.StudentUid == studentId)
                  .OrderByDescending(p => p.CompletedAt)
                  .AsQueryable();
             return await query.ToListAsync();
@@ -35,17 +34,15 @@ namespace CyberCity.Infrastructure
                 ? query.OrderByDescending(c => c.CompletedAt)
                 : query.OrderBy(c => c.CompletedAt);
         }
-        public async Task<SubtopicProgress?> GetBySubtopicAndStudentAsync(Guid subtopicId, Guid studentId)
+        public async Task<SubtopicProgress?> GetBySubtopicAndStudentAsync(string subtopicId, string studentId)
         {
-            var subtopicIdString = subtopicId.ToString();
-            var studentIdString = studentId.ToString();
             var query = _context.SubtopicProgresses
-                .Where(p => p.StudentUid == studentIdString && p.SubtopicUid == subtopicIdString)
+                .Where(p => p.StudentUid == studentId && p.SubtopicUid == subtopicId)
                 .AsQueryable();
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task MarkCompleteAsync(Guid subtopicId, Guid studentId)
+        public async Task MarkCompleteAsync(string subtopicId, string studentId)
         {
             // Đánh dấu hoàn thành 
             var progress = await GetBySubtopicAndStudentAsync(subtopicId, studentId);
@@ -54,8 +51,8 @@ namespace CyberCity.Infrastructure
                 progress = new SubtopicProgress
                 {
                     Uid = Guid.NewGuid().ToString(),
-                    StudentUid = studentId.ToString(),
-                    SubtopicUid = subtopicId.ToString(),
+                    StudentUid = studentId,
+                    SubtopicUid = subtopicId,
                     IsCompleted = true,
                     CompletedAt = DateTime.Now
                 };

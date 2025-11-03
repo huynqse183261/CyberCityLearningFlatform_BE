@@ -30,13 +30,13 @@ namespace CyberCity.Controller.Controllers
 
         // GET: api/Module/{id}
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetModuleById(Guid id)
+        public async Task<IActionResult> GetModuleById(string id)
         {
             var module = await _moduleService.GetByIdAsync(id);
             if (module == null)
                 return NotFound();
 
-            var dto = _mapper.Map<ModuleDetailDto>(module);
+            var dto = _mapper.Map<ModuleDto>(module);
             return Ok(dto);
         }
 
@@ -54,7 +54,7 @@ namespace CyberCity.Controller.Controllers
 
         // PUT: api/Module/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateModule(Guid id, [FromBody] ModuleUpdateDto moduleDto)
+        public async Task<IActionResult> UpdateModule(string id, [FromBody] ModuleUpdateDto moduleDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -73,7 +73,7 @@ namespace CyberCity.Controller.Controllers
 
         // DELETE: api/Module/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteModule(Guid id)
+        public async Task<IActionResult> DeleteModule(string id)
         {
             var deleted = await _moduleService.DeleteAsync(id);
             if (!deleted)

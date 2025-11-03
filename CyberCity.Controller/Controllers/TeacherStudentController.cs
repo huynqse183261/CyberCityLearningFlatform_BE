@@ -33,7 +33,7 @@ namespace CyberCity.Controller.Controllers
         /// GET /api/teacher-student/teachers/{teacherId}/students - Học viên của giáo viên
         /// </summary>
         [HttpGet("teachers/{teacherId}/students")]
-        public async Task<ActionResult<List<StudentOfTeacherDto>>> GetStudentsByTeacherId(Guid teacherId)
+        public async Task<ActionResult<List<StudentOfTeacherDto>>> GetStudentsByTeacherId(string teacherId)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace CyberCity.Controller.Controllers
         /// GET /api/teacher-student/students/{studentId}/teachers - Giáo viên của học viên
         /// </summary>
         [HttpGet("students/{studentId}/teachers")]
-        public async Task<ActionResult<List<TeacherOfStudentDto>>> GetTeachersByStudentId(Guid studentId)
+        public async Task<ActionResult<List<TeacherOfStudentDto>>> GetTeachersByStudentId(string studentId)
         {
             try
             {
@@ -117,7 +117,7 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin,teacher")]
-        public async Task<ActionResult> UnassignTeacherStudent(Guid id)
+        public async Task<ActionResult> UnassignTeacherStudent(string id)
         {
             try
             {
@@ -156,9 +156,9 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpGet("check")]
         public async Task<ActionResult<bool>> CheckRelationshipExists(
-            [FromQuery] Guid teacherId, 
-            [FromQuery] Guid studentId, 
-            [FromQuery] Guid courseId)
+            [FromQuery] string teacherId, 
+            [FromQuery] string studentId, 
+            [FromQuery] string courseId)
         {
             try
             {

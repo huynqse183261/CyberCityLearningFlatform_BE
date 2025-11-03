@@ -36,18 +36,16 @@ namespace CyberCity.Infrastructure
                 : await query.OrderBy(p => p.CreatedAt).ToListAsync();
         }
 
-        public async Task<PricingPlan> GetByIdWithOrdersAsync(Guid id)
+        public async Task<PricingPlan> GetByIdWithOrdersAsync(string id)
         {
-            var idString = id.ToString();
             return await _context.PricingPlans
                 .Include(p => p.Orders)
-                .FirstOrDefaultAsync(p => p.Uid == idString);
+                .FirstOrDefaultAsync(p => p.Uid == id);
         }
 
-        public async Task<bool> IsBeingUsedAsync(Guid id)
+        public async Task<bool> IsBeingUsedAsync(string id)
         {
-            var idString = id.ToString();
-            return await _context.Orders.AnyAsync(o => o.PlanUid == idString);
+            return await _context.Orders.AnyAsync(o => o.PlanUid == id);
         }
 
         public async Task<PricingPlan> GetByNameAsync(string planName)

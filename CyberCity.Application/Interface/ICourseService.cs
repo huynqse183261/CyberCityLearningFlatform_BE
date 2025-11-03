@@ -13,9 +13,9 @@ namespace CyberCity.Application.Interface
     {
         Task<PagedResult<Course>> GetCoursesAsync(int pageNumber, int pageSize, string level = null, bool descending = true);
         Task<PagedResult<CourseOutlineResponse>> GetAllOutline(int page, int pageSize);
-        Task<Course> GetByIdAsync(Guid uid);
-        Task<Guid> CreateAsync(Course course);
+        Task<Course> GetByIdAsync(string uid);
+        Task<string> CreateAsync(Course course);
         Task<bool> UpdateAsync(Course course);
-        Task<bool> DeleteAsync(Guid uid);
+        Task<bool> DeleteAsync(string uid);
     }
 }

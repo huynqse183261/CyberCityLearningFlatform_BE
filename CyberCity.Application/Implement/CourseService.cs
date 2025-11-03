@@ -77,17 +77,17 @@ namespace CyberCity.Application.Implement
         }
         
 
-        public async Task<Course> GetByIdAsync(Guid uid)
+        public async Task<Course> GetByIdAsync(string uid)
         {
             return await _courseRepo.GetByIdAsync(uid);
         }
 
-        public async Task<Guid> CreateAsync(Course course)
+        public async Task<string> CreateAsync(Course course)
         {
             course.Uid = Guid.NewGuid().ToString();
             course.CreatedAt = DateTime.Now;
             var result = await _courseRepo.CreateAsync(course);
-            return result > 0 ? Guid.Parse(course.Uid) : Guid.Empty;
+            return result > 0 ? course.Uid : null;
         }
 
         public async Task<bool> UpdateAsync(Course course)
@@ -96,7 +96,7 @@ namespace CyberCity.Application.Implement
             return updated > 0;
         }
 
-        public async Task<bool> DeleteAsync(Guid uid)
+        public async Task<bool> DeleteAsync(string uid)
         {
             var existing = await _courseRepo.GetByIdAsync(uid);
             if (existing == null) return false;

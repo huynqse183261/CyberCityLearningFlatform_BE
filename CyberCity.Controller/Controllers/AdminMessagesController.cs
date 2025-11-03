@@ -42,7 +42,7 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpGet("conversations/{conversationId}/messages")]
         public async Task<ActionResult<MessagesListResponse>> GetMessages(
-            Guid conversationId,
+            string conversationId,
             [FromQuery] GetMessagesQuery query)
         {
             try
@@ -61,7 +61,7 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpPost("conversations/{conversationId}/messages")]
         public async Task<ActionResult<SendMessageResponse>> SendMessage(
-            Guid conversationId,
+            string conversationId,
             [FromBody] SendMessageRequest request)
         {
             try
@@ -91,7 +91,7 @@ namespace CyberCity.Controller.Controllers
         /// Xóa tin nhắn
         /// </summary>
         [HttpDelete("messages/{messageId}")]
-        public async Task<ActionResult<DeleteMessageResponse>> DeleteMessage(Guid messageId)
+        public async Task<ActionResult<DeleteMessageResponse>> DeleteMessage(string messageId)
         {
             try
             {
@@ -127,7 +127,80 @@ namespace CyberCity.Controller.Controllers
             }
         }
 
-        private Guid GetCurrentUserId()
+        /// <summary>
+        /// [USER] Kiểm tra user có thể liên hệ admin không
+        /// </summary>
+        [HttpGet("user/can-contact")]
+        [AllowAnonymous]
+        [Authorize]
+        public async Task<ActionResult<bool>> CanContactAdmin()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var canContact = await _service.CanUserContactAdminAsync(userId);
+                return Ok(new { canContact, message = canContact ? "You can contact admin" : "Please purchase a plan to contact admin support" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// [USER] Gửi tin nhắn cho admin (chỉ cho user đã mua gói)
+        /// </summary>
+        [HttpPost("user/messages")]
+        [AllowAnonymous]
+        [Authorize]
+        public async Task<ActionResult<SendMessageResponse>> SendMessageToAdmin(
+            [FromBody] SendMessageRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var userId = GetCurrentUserId();
+                var result = await _service.SendMessageToAdminAsync(userId, request);
+                
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(result);
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// [USER] Lấy tin nhắn trong cuộc hội thoại với admin
+        /// </summary>
+        [HttpGet("user/messages")]
+        [AllowAnonymous]
+        [Authorize]
+        public async Task<ActionResult<MessagesListResponse>> GetUserMessages(
+            [FromQuery] GetMessagesQuery query)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var result = await _service.GetUserConversationWithAdminAsync(userId, query);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        private string GetCurrentUserId()
         {
             // Try to get from "sub" claim first (standard JWT)
             var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
@@ -144,12 +217,12 @@ namespace CyberCity.Controller.Controllers
                 userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             }
             
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            if (string.IsNullOrEmpty(userIdClaim))
             {
                 throw new UnauthorizedAccessException("User ID not found in token");
             }
 
-            return userId;
+            return userIdClaim;
         }
     }
 }

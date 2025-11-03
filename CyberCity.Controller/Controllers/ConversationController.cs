@@ -25,7 +25,7 @@ namespace CyberCity.Controller.Controllers
             _mapper = mapper;
         }
 
-        private Guid GetCurrentUserId()
+        private string GetCurrentUserId()
         {
             // Try to get from "sub" claim first (standard JWT)
             var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
@@ -42,18 +42,18 @@ namespace CyberCity.Controller.Controllers
                 userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             }
             
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            if (string.IsNullOrEmpty(userIdClaim))
             {
                 throw new UnauthorizedAccessException("Invalid user token");
             }
-            return userId;
+            return userIdClaim;
         }
 
         /// <summary>
         /// GET /api/conversations/user/{userId} - Cuộc trò chuyện của user
         /// </summary>
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<ConversationDto>>> GetConversationsByUserId(Guid userId)
+        public async Task<ActionResult<List<ConversationDto>>> GetConversationsByUserId(string userId)
         {
             try
             {
@@ -104,7 +104,7 @@ namespace CyberCity.Controller.Controllers
         /// GET /api/conversations/{id} - Lấy thông tin cuộc trò chuyện
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<ConversationDto>> GetConversationById(Guid id)
+        public async Task<ActionResult<ConversationDto>> GetConversationById(string id)
         {
             try
             {
@@ -130,7 +130,7 @@ namespace CyberCity.Controller.Controllers
         /// PUT /api/conversations/{id}/members - Thêm/xóa thành viên
         /// </summary>
         [HttpPut("{id}/members")]
-        public async Task<ActionResult> UpdateConversationMembers(Guid id, [FromBody] UpdateConversationMembersDto updateDto)
+        public async Task<ActionResult> UpdateConversationMembers(string id, [FromBody] UpdateConversationMembersDto updateDto)
         {
             try
             {

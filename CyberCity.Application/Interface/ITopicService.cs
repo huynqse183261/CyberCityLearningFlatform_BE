@@ -13,9 +13,9 @@ namespace CyberCity.Application.Interface
     public interface ITopicService
     {
         Task<PagedResult<TopicDetailDto>> GetTopicAsync(int pageNumber, int pageSize);
-        Task<Topic> GetByIdAsync(Guid uid);
-        Task<Guid> CreateAsync(Topic topic);
+        Task<Topic> GetByIdAsync(string uid);
+        Task<string> CreateAsync(Topic topic);
         Task<bool> UpdateAsync(Topic topic);
-        Task<bool> DeleteAsync(Guid uid);
+        Task<bool> DeleteAsync(string uid);
     }
 }

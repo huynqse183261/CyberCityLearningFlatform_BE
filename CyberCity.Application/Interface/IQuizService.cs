@@ -4,8 +4,8 @@ namespace CyberCity.Application.Interface
 {
     public interface IQuizService
     {
-        Task<QuizDetailDto> GetQuizByIdAsync(Guid quizId, Guid studentId);
-        Task<SubmitQuizResponseDto> SubmitQuizAsync(Guid quizId, Guid studentId, SubmitQuizDto submitDto);
+        Task<QuizDetailDto> GetQuizByIdAsync(string quizId, string studentId);
+        Task<SubmitQuizResponseDto> SubmitQuizAsync(string quizId, string studentId, SubmitQuizDto submitDto);
     }
 }
 

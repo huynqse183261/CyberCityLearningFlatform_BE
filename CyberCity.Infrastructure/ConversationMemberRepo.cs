@@ -21,38 +21,31 @@ namespace CyberCity.Infrastructure
             return query.OrderByDescending(c => c.JoinedAt);
         }
         
-        public async Task<List<ConversationMember>> GetByConversationUidAsync(Guid conversationUid)
+        public async Task<List<ConversationMember>> GetByConversationUidAsync(string conversationUid)
         {
-            var conversationUidString = conversationUid.ToString();
             return await _context.ConversationMembers
                 .Include(cm => cm.UserU)
-                .Where(c => c.ConversationUid == conversationUidString)
+                .Where(c => c.ConversationUid == conversationUid)
                 .ToListAsync();
         }
 
-        public async Task<ConversationMember> GetMemberAsync(Guid conversationUid, Guid userUid)
+        public async Task<ConversationMember> GetMemberAsync(string conversationUid, string userUid)
         {
-            var conversationUidString = conversationUid.ToString();
-            var userUidString = userUid.ToString();
             return await _context.ConversationMembers
                 .Include(cm => cm.UserU)
-                .FirstOrDefaultAsync(cm => cm.ConversationUid == conversationUidString && cm.UserUid == userUidString);
+                .FirstOrDefaultAsync(cm => cm.ConversationUid == conversationUid && cm.UserUid == userUid);
         }
 
-        public async Task<bool> IsMemberAsync(Guid conversationUid, Guid userUid)
+        public async Task<bool> IsMemberAsync(string conversationUid, string userUid)
         {
-            var conversationUidString = conversationUid.ToString();
-            var userUidString = userUid.ToString();
             return await _context.ConversationMembers
-                .AnyAsync(cm => cm.ConversationUid == conversationUidString && cm.UserUid == userUidString);
+                .AnyAsync(cm => cm.ConversationUid == conversationUid && cm.UserUid == userUid);
         }
 
-        public async Task RemoveMemberAsync(Guid conversationUid, Guid userUid)
+        public async Task RemoveMemberAsync(string conversationUid, string userUid)
         {
-            var conversationUidString = conversationUid.ToString();
-            var userUidString = userUid.ToString();
             var member = await _context.ConversationMembers
-                .FirstOrDefaultAsync(cm => cm.ConversationUid == conversationUidString && cm.UserUid == userUidString);
+                .FirstOrDefaultAsync(cm => cm.ConversationUid == conversationUid && cm.UserUid == userUid);
             
             if (member != null)
             {
@@ -61,34 +54,31 @@ namespace CyberCity.Infrastructure
             }
         }
 
-        public async Task AddMembersAsync(Guid conversationUid, Guid[] userUids)
+        public async Task AddMembersAsync(string conversationUid, string[] userUids)
         {
-            var conversationUidString = conversationUid.ToString();
-            var userUidStrings = userUids.Select(u => u.ToString()).ToArray();
-            
             // Check if all users exist first
             var existingUsers = await _context.Users
-                .Where(u => userUidStrings.Contains(u.Uid))
+                .Where(u => userUids.Contains(u.Uid))
                 .Select(u => u.Uid)
                 .ToListAsync();
 
-            if (existingUsers.Count != userUidStrings.Length)
+            if (existingUsers.Count != userUids.Length)
             {
-                var missingUsers = userUidStrings.Except(existingUsers).ToList();
+                var missingUsers = userUids.Except(existingUsers).ToList();
                 throw new ArgumentException($"Users not found: {string.Join(", ", missingUsers)}");
             }
 
             var existingMembers = await _context.ConversationMembers
-                .Where(cm => cm.ConversationUid == conversationUidString && userUidStrings.Contains(cm.UserUid))
+                .Where(cm => cm.ConversationUid == conversationUid && userUids.Contains(cm.UserUid))
                 .Select(cm => cm.UserUid)
                 .ToListAsync();
 
-            var newMembers = userUidStrings
+            var newMembers = userUids
                 .Where(uid => !existingMembers.Contains(uid))
                 .Select(uid => new ConversationMember
                 {
                     Uid = Guid.NewGuid().ToString(),
-                    ConversationUid = conversationUidString,
+                    ConversationUid = conversationUid,
                     UserUid = uid,
                     JoinedAt = DateTime.Now
                 })

@@ -47,11 +47,11 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<Organization> GetOrganizationByIdAsync(Guid id)
+        public async Task<Organization> GetOrganizationByIdAsync(string id)
         {
             return await _organizationRepo.GetAllAsync()
                 .Include(o => o.OrgMembers)
-                .FirstOrDefaultAsync(o => o.Uid == id.ToString());
+                .FirstOrDefaultAsync(o => o.Uid == id);
         }
 
         public async Task<Organization> CreateOrganizationAsync(CreateOrganizationRequestDto request)
@@ -68,11 +68,11 @@ namespace CyberCity.Application.Implement
                 .FirstOrDefaultAsync(o => o.Uid == organization.Uid);
         }
 
-        public async Task<Organization> UpdateOrganizationAsync(Guid id, UpdateOrganizationRequestDto request)
+        public async Task<Organization> UpdateOrganizationAsync(string id, UpdateOrganizationRequestDto request)
         {
             var organization = await _organizationRepo.GetAllAsync()
                 .Include(o => o.OrgMembers)
-                .FirstOrDefaultAsync(o => o.Uid == id.ToString());
+                .FirstOrDefaultAsync(o => o.Uid == id);
             if (organization == null)
                 throw new ArgumentException("Tổ chức không tồn tại");
 
@@ -82,10 +82,10 @@ namespace CyberCity.Application.Implement
             // Load lại với OrgMembers để có MemberCount
             return await _organizationRepo.GetAllAsync()
                 .Include(o => o.OrgMembers)
-                .FirstOrDefaultAsync(o => o.Uid == id.ToString());
+                .FirstOrDefaultAsync(o => o.Uid == id);
         }
 
-        public async Task<bool> DeleteOrganizationAsync(Guid id)
+        public async Task<bool> DeleteOrganizationAsync(string id)
         {
             var organization = await _organizationRepo.GetByIdAsync(id);
             if (organization == null)
@@ -95,10 +95,10 @@ namespace CyberCity.Application.Implement
             return true;
         }
 
-        public async Task<PagedResult<OrganizationMemberDTO>> GetOrganizationMembersAsync(Guid organizationId, int pageNumber, int pageSize)
+        public async Task<PagedResult<OrganizationMemberDTO>> GetOrganizationMembersAsync(string organizationId, int pageNumber, int pageSize)
         {
             var query = _orgMemberRepo.GetAllAsync()
-                .Where(om => om.OrgUid == organizationId.ToString())
+                .Where(om => om.OrgUid == organizationId)
                 .Include(om => om.UserU);
 
             var totalCount = await query.CountAsync();
@@ -130,7 +130,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<OrganizationMemberDTO> AddMemberToOrganizationAsync(Guid organizationId, AddMemberRequestDto request)
+        public async Task<OrganizationMemberDTO> AddMemberToOrganizationAsync(string organizationId, AddMemberRequestDto request)
         {
             // Kiểm tra tổ chức có tồn tại không
             var organization = await _organizationRepo.GetByIdAsync(organizationId);
@@ -138,10 +138,8 @@ namespace CyberCity.Application.Implement
                 throw new ArgumentException("Tổ chức không tồn tại");
 
             // Kiểm tra user đã là thành viên chưa
-            var organizationIdString = organizationId.ToString();
-            var userUidString = request.UserUid.ToString();
             var existingMember = await _orgMemberRepo.GetAllAsync()
-                .FirstOrDefaultAsync(om => om.OrgUid == organizationIdString && om.UserUid == userUidString);
+                .FirstOrDefaultAsync(om => om.OrgUid == organizationId && om.UserUid == request.UserUid);
             
             if (existingMember != null)
                 throw new InvalidOperationException("User đã là thành viên của tổ chức này");
@@ -149,8 +147,8 @@ namespace CyberCity.Application.Implement
             var orgMember = new OrgMember
             {
                 Uid = Guid.NewGuid().ToString(),
-                OrgUid = organizationIdString,
-                UserUid = userUidString,
+                OrgUid = organizationId,
+                UserUid = request.UserUid,
                 MemberRole = request.MemberRole,
                 JoinedAt = DateTime.UtcNow
             };
@@ -179,13 +177,11 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<OrganizationMemberDTO> UpdateMemberRoleAsync(Guid organizationId, Guid userId, UpdateMemberRoleRequestDto request)
+        public async Task<OrganizationMemberDTO> UpdateMemberRoleAsync(string organizationId, string userId, UpdateMemberRoleRequestDto request)
         {
-            var organizationIdString = organizationId.ToString();
-            var userIdString = userId.ToString();
             var orgMember = await _orgMemberRepo.GetAllAsync()
                 .Include(om => om.UserU)
-                .FirstOrDefaultAsync(om => om.OrgUid == organizationIdString && om.UserUid == userIdString);
+                .FirstOrDefaultAsync(om => om.OrgUid == organizationId && om.UserUid == userId);
 
             if (orgMember == null)
                 throw new ArgumentException("Thành viên không tồn tại trong tổ chức");
@@ -207,12 +203,10 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<bool> RemoveMemberFromOrganizationAsync(Guid organizationId, Guid userId)
+        public async Task<bool> RemoveMemberFromOrganizationAsync(string organizationId, string userId)
         {
-            var organizationIdString = organizationId.ToString();
-            var userIdString = userId.ToString();
             var orgMember = await _orgMemberRepo.GetAllAsync()
-                .FirstOrDefaultAsync(om => om.OrgUid == organizationIdString && om.UserUid == userIdString);
+                .FirstOrDefaultAsync(om => om.OrgUid == organizationId && om.UserUid == userId);
 
             if (orgMember == null)
                 return false;
@@ -221,26 +215,24 @@ namespace CyberCity.Application.Implement
             return true;
         }
 
-        public async Task<bool> IsUserMemberOfOrganizationAsync(Guid organizationId, Guid userId)
+        public async Task<bool> IsUserMemberOfOrganizationAsync(string organizationId, string userId)
         {
             return await _orgMemberRepo.GetAllAsync()
-                .AnyAsync(om => om.OrgUid == organizationId.ToString() && om.UserUid == userId.ToString());
+                .AnyAsync(om => om.OrgUid == organizationId && om.UserUid == userId);
         }
 
-        public async Task<string> GetUserRoleInOrganizationAsync(Guid organizationId, Guid userId)
+        public async Task<string> GetUserRoleInOrganizationAsync(string organizationId, string userId)
         {
-            var organizationIdString = organizationId.ToString();
-            var userIdString = userId.ToString();
             var orgMember = await _orgMemberRepo.GetAllAsync()
-                .FirstOrDefaultAsync(om => om.OrgUid == organizationIdString && om.UserUid == userIdString);
+                .FirstOrDefaultAsync(om => om.OrgUid == organizationId && om.UserUid == userId);
 
             return orgMember?.MemberRole ?? string.Empty;
         }
 
-        public async Task<int> GetOrganizationMemberCountAsync(Guid organizationId)
+        public async Task<int> GetOrganizationMemberCountAsync(string organizationId)
         {
             return await _orgMemberRepo.GetAllAsync()
-                .CountAsync(om => om.OrgUid == organizationId.ToString());
+                .CountAsync(om => om.OrgUid == organizationId);
         }
     }
 }

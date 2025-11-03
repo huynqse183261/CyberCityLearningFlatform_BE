@@ -53,13 +53,13 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<List<CourseDto>> GetAllCoursesAsync(Guid? studentId = null)
+        public async Task<List<CourseDto>> GetAllCoursesAsync(string? studentId = null)
         {
             var courses = await _courseRepo.GetAllAsync().ToListAsync();
             return _mapper.Map<List<CourseDto>>(courses);
         }
 
-        public async Task<CourseDetailDto> GetCourseDetailAsync(Guid courseId, Guid studentId)
+        public async Task<CourseDetailDto> GetCourseDetailAsync(string courseId, string studentId)
         {
             var course = await _courseRepo.GetByIdAsync(courseId);
             if (course == null)
@@ -111,7 +111,7 @@ namespace CyberCity.Application.Implement
 
                         foreach (var subtopic in subtopics)
                         {
-                            var progress = await _answerRepo.GetUserProgressAsync(studentId, Guid.Parse(subtopic.Uid));
+                            var progress = await _answerRepo.GetUserProgressAsync(studentId, subtopic.Uid);
                             if (progress != null && progress.IsCompleted == true)
                             {
                                 completedSubtopicCount++;
@@ -142,7 +142,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<ModuleDetailResponseDto> GetModuleDetailAsync(Guid moduleId, Guid studentId)
+        public async Task<ModuleDetailResponseDto> GetModuleDetailAsync(string moduleId, string studentId)
         {
             var module = await _moduleRepo.GetByIdAsync(moduleId);
             if (module == null)
@@ -151,7 +151,7 @@ namespace CyberCity.Application.Implement
             }
 
             var lessons = await _lessonRepo.GetAllAsync()
-                .Where(l => l.ModuleUid == moduleId.ToString())
+                .Where(l => l.ModuleUid == moduleId)
                 .OrderBy(l => l.OrderIndex)
                 .ToListAsync();
 
@@ -183,7 +183,7 @@ namespace CyberCity.Application.Implement
 
                     foreach (var subtopic in subtopics)
                     {
-                        var progress = await _answerRepo.GetUserProgressAsync(studentId, Guid.Parse(subtopic.Uid));
+                        var progress = await _answerRepo.GetUserProgressAsync(studentId, subtopic.Uid);
                         if (progress != null && progress.IsCompleted == true)
                         {
                             completedSubtopicCount++;
@@ -213,7 +213,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<LearningContentDto> GetLessonContentAsync(Guid lessonId, Guid studentId)
+        public async Task<LearningContentDto> GetLessonContentAsync(string lessonId, string studentId)
         {
             var lesson = await _lessonRepo.GetByIdAsync(lessonId);
             if (lesson == null)
@@ -222,7 +222,7 @@ namespace CyberCity.Application.Implement
             }
 
             var topics = await _topicRepo.GetAllAsync()
-                .Where(t => t.LessonUid == lessonId.ToString())
+                .Where(t => t.LessonUid == lessonId)
                 .OrderBy(t => t.OrderIndex)
                 .ToListAsync();
 
@@ -240,8 +240,8 @@ namespace CyberCity.Application.Implement
 
                 foreach (var subtopic in subtopics)
                 {
-                    var progress = await _answerRepo.GetUserProgressAsync(studentId, Guid.Parse(subtopic.Uid));
-                    var answer = await _answerRepo.GetAnswerBySubtopicIdAsync(Guid.Parse(subtopic.Uid));
+                    var progress = await _answerRepo.GetUserProgressAsync(studentId, subtopic.Uid);
+                    var answer = await _answerRepo.GetAnswerBySubtopicIdAsync(subtopic.Uid);
 
                     subtopicsWithProgress.Add(new SubtopicWithProgressDto
                     {
@@ -297,7 +297,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<SubmitAnswerResponseDto> SubmitSubtopicAnswerAsync(Guid subtopicId, Guid studentId, SubmitAnswerDto submitDto)
+        public async Task<SubmitAnswerResponseDto> SubmitSubtopicAnswerAsync(string subtopicId, string studentId, SubmitAnswerDto submitDto)
         {
             var subtopic = await _subtopicRepo.GetByIdAsync(subtopicId);
             if (subtopic == null)
@@ -357,7 +357,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<SubtopicProgressDto> CompleteSubtopicAsync(Guid subtopicId, Guid studentId)
+        public async Task<SubtopicProgressDto> CompleteSubtopicAsync(string subtopicId, string studentId)
         {
             var subtopic = await _subtopicRepo.GetByIdAsync(subtopicId);
             if (subtopic == null)
@@ -391,11 +391,11 @@ namespace CyberCity.Application.Implement
             return _mapper.Map<SubtopicProgressDto>(progress);
         }
 
-        public async Task<StudentProgressDto> GetStudentProgressAsync(Guid studentId)
+        public async Task<StudentProgressDto> GetStudentProgressAsync(string studentId)
         {
             var allEnrollments = await _enrollmentRepo.GetAllAsync();
             var enrollments = allEnrollments
-                .Where(e => e.UserUid == studentId.ToString())
+                .Where(e => e.UserUid == studentId)
                 .ToList();
 
             var totalCourses = await _courseRepo.GetAllCourseAsync().CountAsync();
@@ -424,7 +424,7 @@ namespace CyberCity.Application.Implement
 
                     totalLessons += lessons.Count;
 
-                    var labs = await _labRepo.GetLabsByModuleIdAsync(Guid.Parse(module.Uid));
+                    var labs = await _labRepo.GetLabsByModuleIdAsync(module.Uid);
                     totalLabs += labs.Count;
 
                     foreach (var lesson in lessons)
@@ -447,7 +447,7 @@ namespace CyberCity.Application.Implement
 
                             foreach (var subtopic in subtopics)
                             {
-                                var progress = await _answerRepo.GetUserProgressAsync(studentId, Guid.Parse(subtopic.Uid));
+                                var progress = await _answerRepo.GetUserProgressAsync(studentId, subtopic.Uid);
                                 if (progress != null && progress.IsCompleted == true)
                                 {
                                     completedSubtopicCount++;
@@ -461,11 +461,11 @@ namespace CyberCity.Application.Implement
                         }
 
                         // Check quiz completion
-                        var quiz = await _quizRepo.GetQuizByLessonIdAsync(Guid.Parse(lesson.Uid));
+                        var quiz = await _quizRepo.GetQuizByLessonIdAsync(lesson.Uid);
                         if (quiz != null)
                         {
                             totalQuizzes++;
-                            var submission = await _quizRepo.GetUserSubmissionAsync(Guid.Parse(quiz.Uid), studentId);
+                            var submission = await _quizRepo.GetUserSubmissionAsync(quiz.Uid, studentId);
                             if (submission != null)
                             {
                                 completedQuizzes++;
@@ -492,7 +492,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<CourseProgressDetailDto> GetCourseProgressDetailAsync(Guid courseId, Guid studentId)
+        public async Task<CourseProgressDetailDto> GetCourseProgressDetailAsync(string courseId, string studentId)
         {
             var course = await _courseRepo.GetByIdAsync(courseId);
             if (course == null)
@@ -501,7 +501,7 @@ namespace CyberCity.Application.Implement
             }
 
             var modules = await _moduleRepo.GetAllAsync()
-                .Where(m => m.CourseUid == courseId.ToString())
+                .Where(m => m.CourseUid == courseId)
                 .OrderBy(m => m.OrderIndex)
                 .ToListAsync();
 
@@ -519,7 +519,7 @@ namespace CyberCity.Application.Implement
                     .OrderBy(l => l.OrderIndex)
                     .ToList();
 
-                var labs = await _labRepo.GetLabsByModuleIdAsync(Guid.Parse(module.Uid));
+                var labs = await _labRepo.GetLabsByModuleIdAsync(module.Uid);
 
                 var lessonsProgressList = new List<LessonProgressDto>();
 
@@ -542,7 +542,7 @@ namespace CyberCity.Application.Implement
 
                         foreach (var subtopic in subtopics)
                         {
-                            var progress = await _answerRepo.GetUserProgressAsync(studentId, Guid.Parse(subtopic.Uid));
+                            var progress = await _answerRepo.GetUserProgressAsync(studentId, subtopic.Uid);
                             if (progress != null && progress.IsCompleted == true)
                             {
                                 subtopicsCompleted++;
@@ -550,11 +550,11 @@ namespace CyberCity.Application.Implement
                         }
                     }
 
-                    var quiz = await _quizRepo.GetQuizByLessonIdAsync(Guid.Parse(lesson.Uid));
+                    var quiz = await _quizRepo.GetQuizByLessonIdAsync(lesson.Uid);
                     decimal? quizScore = null;
                     if (quiz != null)
                     {
-                        var submission = await _quizRepo.GetUserSubmissionAsync(Guid.Parse(quiz.Uid), studentId);
+                        var submission = await _quizRepo.GetUserSubmissionAsync(quiz.Uid, studentId);
                         quizScore = submission?.Score;
                     }
 
