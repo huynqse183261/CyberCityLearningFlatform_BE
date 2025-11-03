@@ -13,9 +13,9 @@ namespace CyberCity.Application.Interface
     public interface IModuleService
     {
         Task<PagedResult<ModuleDetailDto>> GetModuleAsync(int pageNumber, int pageSize);
-        Task<Module> GetByIdAsync(Guid uid);
-        Task<Guid> CreateAsync(Module module);
+        Task<Module> GetByIdAsync(string uid);
+        Task<string> CreateAsync(Module module);
         Task<bool> UpdateAsync(Module module);
-        Task<bool> DeleteAsync(Guid uid);
+        Task<bool> DeleteAsync(string uid);
     }
 }

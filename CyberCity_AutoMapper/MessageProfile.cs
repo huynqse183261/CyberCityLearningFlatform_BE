@@ -16,7 +16,7 @@ namespace CyberCity_AutoMapper
                 .ForMember(dest => dest.SenderImage, opt => opt.MapFrom(src => src.SenderU.Image));
 
             CreateMap<CreateMessageDto, Message>()
-                .ForMember(dest => dest.Uid, opt => opt.MapFrom(_ => Guid.NewGuid()))
+                .ForMember(dest => dest.Uid, opt => opt.MapFrom(_ => Guid.NewGuid().ToString()))
                 .ForMember(dest => dest.Message1, opt => opt.MapFrom(src => src.Message))
                 .ForMember(dest => dest.SentAt, opt => opt.MapFrom(_ => DateTime.Now));
         }

@@ -1,0 +1,277 @@
+{
+  "info": {
+    "name": "CyberCity API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "b7b9a0d0-0000-4000-8000-cybercity"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"test\",\n  \"password\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth","register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"user@example.com\",\n  \"password\": \"123456\"\n}" }
+          }
+        },
+        { "name": "Google Login", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/auth/google-login", "host": ["{{baseUrl}}"], "path": ["auth","google-login"] }, "body": { "mode": "raw", "raw": "{\n  \"idToken\": \"GOOGLE_ID_TOKEN\"\n}" } } },
+        { "name": "Forgot - Send Code", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/auth/forgot-password/send-code", "host": ["{{baseUrl}}"], "path": ["auth","forgot-password","send-code"] }, "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\"\n}" } } },
+        { "name": "Forgot - Verify Code", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/auth/forgot-password/verify-code", "host": ["{{baseUrl}}"], "path": ["auth","forgot-password","verify-code"] }, "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\"\n}" } } },
+        { "name": "Forgot - Reset Password", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/auth/forgot-password/reset", "host": ["{{baseUrl}}"], "path": ["auth","forgot-password","reset"] }, "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\",\n  \"newPassword\": \"NewPass123!\"\n}" } } },
+        { "name": "Logout", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth","logout"] } } }
+      ]
+    },
+    {
+      "name": "Users",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+      "item": [
+        { "name": "List Users", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/users?pageNumber=1&pageSize=20&descending=true", "host": ["{{baseUrl}}"], "path": ["api","users"], "query": [ {"key":"pageNumber","value":"1"},{"key":"pageSize","value":"20"},{"key":"descending","value":"true"} ] } } },
+        { "name": "Search by username/email", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/users/by-username-or-email?q=test", "host": ["{{baseUrl}}"], "path": ["api","users","by-username-or-email"], "query":[{"key":"q","value":"test"}] } } },
+        { "name": "Me - Get profile", "request": { "method": "GET", "header": [ {"key":"Authorization","value":"Bearer {{token}}"} ], "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api","users","me"] } } },
+        { "name": "Me - Update profile", "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, {"key":"Authorization","value":"Bearer {{token}}"} ], "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api","users","me"] }, "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"User Name\"\n}" } } },
+        { "name": "Me - Change password", "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, {"key":"Authorization","value":"Bearer {{token}}"} ], "url": { "raw": "{{baseUrl}}/api/users/me/password", "host": ["{{baseUrl}}"], "path": ["api","users","me","password"] }, "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"123456\",\n  \"newPassword\": \"NewPass123!\"\n}" } } },
+        { "name": "Create user", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api","users"] }, "body": { "mode": "raw", "raw": "{\n  \"username\": \"student1\",\n  \"email\": \"student1@example.com\",\n  \"password\": \"123456\"\n}" } } },
+        { "name": "Admin - Create user", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/api/users/admin", "host": ["{{baseUrl}}"], "path": ["api","users","admin"] }, "body": { "mode": "raw", "raw": "{\n  \"username\": \"admincreated\",\n  \"email\": \"admincreated@example.com\",\n  \"password\": \"123456\"\n}" } } },
+        { "name": "Update user", "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/api/users/:id", "host": ["{{baseUrl}}"], "path": ["api","users",":id"] }, "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Updated Name\"\n}" } } },
+        { "name": "Update user role", "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/api/users/:id/role", "host": ["{{baseUrl}}"], "path": ["api","users",":id","role"] }, "body": { "mode": "raw", "raw": "{\n  \"role\": \"teacher\"\n}" } } },
+        { "name": "Update user status", "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" } ], "url": { "raw": "{{baseUrl}}/api/users/:id/status", "host": ["{{baseUrl}}"], "path": ["api","users",":id","status"] }, "body": { "mode": "raw", "raw": "{\n  \"status\": \"active\"\n}" } } }
+      ]
+    },
+    {
+      "name": "Courses",
+      "item": [
+        { "name": "List courses", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/courses?pageNumber=1&pageSize=10&descending=true", "host":["{{baseUrl}}"], "path":["api","courses"], "query":[{"key":"pageNumber","value":"1"},{"key":"pageSize","value":"10"},{"key":"descending","value":"true"}] } } },
+        { "name": "List outlines", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/courses/outline?page=1&pageSize=10", "host":["{{baseUrl}}"], "path":["api","courses","outline"], "query":[{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } } },
+        { "name": "Get course by id", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/courses/:id", "host":["{{baseUrl}}"], "path":["api","courses",":id"] } } },
+        { "name": "Create course", "request": { "method": "POST", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/courses", "host":["{{baseUrl}}"], "path":["api","courses"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Course A\",\n  \"level\": \"beginner\"\n}" } } },
+        { "name": "Update course", "request": { "method": "PUT", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/courses/:id", "host":["{{baseUrl}}"], "path":["api","courses",":id"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Course A updated\"\n}" } } },
+        { "name": "Delete course", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/courses/:id", "host":["{{baseUrl}}"], "path":["api","courses",":id"] } } }
+      ]
+    },
+    {
+      "name": "Lessons",
+      "item": [
+        { "name": "List lessons", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/lessons?pageNumber=1&pageSize=10", "host":["{{baseUrl}}"], "path":["api","lessons"], "query":[{"key":"pageNumber","value":"1"},{"key":"pageSize","value":"10"}] } } },
+        { "name": "Get lesson by id", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/lessons/:id", "host":["{{baseUrl}}"], "path":["api","lessons",":id"] } } },
+        { "name": "Create lesson", "request": { "method": "POST", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/lessons", "host":["{{baseUrl}}"], "path":["api","lessons"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Lesson 1\"\n}" } } },
+        { "name": "Update lesson", "request": { "method": "PUT", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/lessons/:id", "host":["{{baseUrl}}"], "path":["api","lessons",":id"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Lesson 1 updated\"\n}" } } },
+        { "name": "Delete lesson", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/lessons/:id", "host":["{{baseUrl}}"], "path":["api","lessons",":id"] } } }
+      ]
+    },
+    {
+      "name": "Modules",
+      "item": [
+        { "name": "List modules", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/modules?pageNumber=1&pageSize=10", "host":["{{baseUrl}}"], "path":["api","modules"], "query":[{"key":"pageNumber","value":"1"},{"key":"pageSize","value":"10"}] } } },
+        { "name": "Get module by id", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/modules/:id", "host":["{{baseUrl}}"], "path":["api","modules",":id"] } } },
+        { "name": "Create module", "request": { "method": "POST", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/modules", "host":["{{baseUrl}}"], "path":["api","modules"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Module 1\"\n}" } } },
+        { "name": "Update module", "request": { "method": "PUT", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/modules/:id", "host":["{{baseUrl}}"], "path":["api","modules",":id"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Module 1 updated\"\n}" } } },
+        { "name": "Delete module", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/modules/:id", "host":["{{baseUrl}}"], "path":["api","modules",":id"] } } }
+      ]
+    },
+    {
+      "name": "Topics",
+      "item": [
+        { "name": "List topics", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/topics?pageNumber=1&pageSize=10", "host":["{{baseUrl}}"], "path":["api","topics"], "query":[{"key":"pageNumber","value":"1"},{"key":"pageSize","value":"10"}] } } },
+        { "name": "Get topic by id", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/topics/:id", "host":["{{baseUrl}}"], "path":["api","topics",":id"] } } },
+        { "name": "Create topic", "request": { "method": "POST", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/topics", "host":["{{baseUrl}}"], "path":["api","topics"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Topic 1\"\n}" } } },
+        { "name": "Update topic", "request": { "method": "PUT", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/topics/:id", "host":["{{baseUrl}}"], "path":["api","topics",":id"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Topic 1 updated\"\n}" } } },
+        { "name": "Delete topic", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/topics/:id", "host":["{{baseUrl}}"], "path":["api","topics",":id"] } } }
+      ]
+    },
+    {
+      "name": "Subtopics",
+      "item": [
+        { "name": "Create subtopic", "request": { "method": "POST", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/subtopics", "host":["{{baseUrl}}"], "path":["api","subtopics"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Subtopic 1\"\n}" } } },
+        { "name": "Get subtopic by id", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/subtopics/:uid", "host":["{{baseUrl}}"], "path":["api","subtopics",":uid"] } } },
+        { "name": "List subtopics", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/subtopics?page=1&pageSize=10", "host":["{{baseUrl}}"], "path":["api","subtopics"], "query":[{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } } },
+        { "name": "Update subtopic", "request": { "method": "PUT", "header": [ {"key":"Content-Type","value":"application/json"} ], "url": { "raw": "{{baseUrl}}/api/subtopics/:uid", "host":["{{baseUrl}}"], "path":["api","subtopics",":uid"] }, "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated\"\n}" } } },
+        { "name": "Delete subtopic", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/subtopics/:uid", "host":["{{baseUrl}}"], "path":["api","subtopics",":uid"] } } }
+      ]
+    },
+    {
+      "name": "Subtopic Progress",
+      "item": [
+        { "name": "List progress", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/SubtopicProgresses?page=1&pageSize=10", "host":["{{baseUrl}}"], "path":["api","SubtopicProgresses"], "query":[{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } } },
+        { "name": "By student", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/SubtopicProgresses/student/:studentId", "host":["{{baseUrl}}"], "path":["api","SubtopicProgresses","student",":studentId"] } } },
+        { "name": "By subtopic & student", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/SubtopicProgresses/subtopic/:subtopicId/student/:studentId", "host":["{{baseUrl}}"], "path":["api","SubtopicProgresses","subtopic",":subtopicId","student",":studentId"] } } },
+        { "name": "Mark complete", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/SubtopicProgresses/subtopic/:subtopicId/complete?studentId=:studentId", "host":["{{baseUrl}}"], "path":["api","SubtopicProgresses","subtopic",":subtopicId","complete"], "query":[{"key":"studentId","value":":studentId"}] } } }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        { "name": "List organizations", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/Organization?pageNumber=1&pageSize=10&descending=true", "host":["{{baseUrl}}"], "path":["api","Organization"], "query":[{"key":"pageNumber","value":"1"},{"key":"pageSize","value":"10"},{"key":"descending","value":"true"}] } } },
+        { "name": "Get organization", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/Organization/:id", "host":["{{baseUrl}}"], "path":["api","Organization",":id"] } } },
+        { "name": "Create organization", "request": { "method": "POST", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/Organization", "host":["{{baseUrl}}"], "path":["api","Organization"] }, "body": { "mode": "raw", "raw": "{\n  \"name\": \"Org A\"\n}" } } },
+        { "name": "Update organization", "request": { "method": "PUT", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/Organization/:id", "host":["{{baseUrl}}"], "path":["api","Organization",":id"] }, "body": { "mode": "raw", "raw": "{\n  \"name\": \"Org A updated\"\n}" } } },
+        { "name": "Delete organization", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/Organization/:id", "host":["{{baseUrl}}"], "path":["api","Organization",":id"] } } },
+        { "name": "List members", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/Organization/:id/members?pageNumber=1&pageSize=10", "host":["{{baseUrl}}"], "path":["api","Organization",":id","members"], "query":[{"key":"pageNumber","value":"1"},{"key":"pageSize","value":"10"}] } } },
+        { "name": "Add member", "request": { "method": "POST", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/Organization/:id/members", "host":["{{baseUrl}}"], "path":["api","Organization",":id","members"] }, "body": { "mode": "raw", "raw": "{\n  \"userId\": \"USER_ID\",\n  \"role\": \"member\"\n}" } } },
+        { "name": "Update member role", "request": { "method": "PUT", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/Organization/:id/members/:userId/role", "host":["{{baseUrl}}"], "path":["api","Organization",":id","members",":userId","role"] }, "body": { "mode": "raw", "raw": "{\n  \"role\": \"manager\"\n}" } } },
+        { "name": "Remove member", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/Organization/:id/members/:userId", "host":["{{baseUrl}}"], "path":["api","Organization",":id","members",":userId"] } } },
+        { "name": "Member count", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/Organization/:id/members/count", "host":["{{baseUrl}}"], "path":["api","Organization",":id","members","count"] } } }
+      ]
+    },
+    {
+      "name": "Pricing Plans",
+      "item": [
+        { "name": "List plans", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/pricing-plans", "host":["{{baseUrl}}"], "path":["api","pricing-plans"] } } },
+        { "name": "Get plan", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/pricing-plans/:id", "host":["{{baseUrl}}"], "path":["api","pricing-plans",":id"] } } },
+        { "name": "Create plan (admin)", "request": { "method": "POST", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/pricing-plans", "host":["{{baseUrl}}"], "path":["api","pricing-plans"] }, "body": { "mode": "raw", "raw": "{\n  \"name\": \"Pro\",\n  \"price\": 100\n}" } } },
+        { "name": "Update plan (admin)", "request": { "method": "PUT", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/pricing-plans/:id", "host":["{{baseUrl}}"], "path":["api","pricing-plans",":id"] }, "body": { "mode": "raw", "raw": "{\n  \"name\": \"Pro+\"\n}" } } },
+        { "name": "Delete plan (admin)", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/pricing-plans/:id", "host":["{{baseUrl}}"], "path":["api","pricing-plans",":id"] } } },
+        { "name": "Plan exists?", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/pricing-plans/:id/exists", "host":["{{baseUrl}}"], "path":["api","pricing-plans",":id","exists"] } } }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        { "name": "Create payment link", "request": { "method": "POST", "header":[{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/payment/create-payment-link", "host":["{{baseUrl}}"], "path":["api","payment","create-payment-link"] }, "body": { "mode": "raw", "raw": "{\n  \"amount\": 10000,\n  \"description\": \"Order #1\"\n}" } } },
+        { "name": "Get payment status", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/payment/status/:orderCode", "host":["{{baseUrl}}"], "path":["api","payment","status",":orderCode"] } } },
+        { "name": "Webhook (PayOS)", "request": { "method": "POST", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/payment/webhook", "host":["{{baseUrl}}"], "path":["api","payment","webhook"] }, "body": { "mode": "raw", "raw": "{\n  \"data\": {}\n}" } } },
+        { "name": "Cancel payment link", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/payment/cancel/:orderCode", "host":["{{baseUrl}}"], "path":["api","payment","cancel",":orderCode"] } } }
+      ]
+    },
+    {
+      "name": "Conversations & Messages",
+      "item": [
+        { "name": "My conversations (by user)", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/conversations/user/:userId", "host":["{{baseUrl}}"], "path":["api","conversations","user",":userId"] } } },
+        { "name": "Create conversation", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/conversations", "host":["{{baseUrl}}"], "path":["api","conversations"] }, "body": { "mode": "raw", "raw": "{\n  \"memberIds\": [\"USER_ID\"]\n}" } } },
+        { "name": "Get conversation by id", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/conversations/:id", "host":["{{baseUrl}}"], "path":["api","conversations",":id"] } } },
+        { "name": "Update conversation members", "request": { "method": "PUT", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/conversations/:id/members", "host":["{{baseUrl}}"], "path":["api","conversations",":id","members"] }, "body": { "mode": "raw", "raw": "{\n  \"addMemberIds\": [],\n  \"removeMemberIds\": []\n}" } } },
+        { "name": "List messages in conversation", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/conversations/:id/messages?pageNumber=1&pageSize=50", "host":["{{baseUrl}}"], "path":["api","conversations",":id","messages"], "query":[{"key":"pageNumber","value":"1"},{"key":"pageSize","value":"50"}] } } },
+        { "name": "Send message", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/conversations/:id/messages", "host":["{{baseUrl}}"], "path":["api","conversations",":id","messages"] }, "body": { "mode": "raw", "raw": "{\n  \"content\": \"Hello\"\n}" } } }
+      ]
+    },
+    {
+      "name": "Admin Messages (admin)",
+      "item": [
+        { "name": "Conversations", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/admin/conversations", "host":["{{baseUrl}}"], "path":["api","admin","conversations"] } } },
+        { "name": "Messages in conversation", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/admin/conversations/:conversationId/messages", "host":["{{baseUrl}}"], "path":["api","admin","conversations",":conversationId","messages"] } } },
+        { "name": "Send message (admin)", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/admin/conversations/:conversationId/messages", "host":["{{baseUrl}}"], "path":["api","admin","conversations",":conversationId","messages"] }, "body": { "mode": "raw", "raw": "{\n  \"content\": \"Hello from admin\"\n}" } } },
+        { "name": "Delete message (admin)", "request": { "method": "DELETE", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/admin/messages/:messageId", "host":["{{baseUrl}}"], "path":["api","admin","messages",":messageId"] } } },
+        { "name": "Messages stats", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/admin/messages/stats", "host":["{{baseUrl}}"], "path":["api","admin","messages","stats"] } } }
+      ]
+    },
+    {
+      "name": "Teacher APIs (role=teacher)",
+      "item": [
+        { "name": "List students", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/students?page=1&limit=10", "host":["{{baseUrl}}"], "path":["api","v1","teacher","students"], "query":[{"key":"page","value":"1"},{"key":"limit","value":"10"}] } } },
+        { "name": "Student detail", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/students/:studentUid", "host":["{{baseUrl}}"], "path":["api","v1","teacher","students",":studentUid"] } } },
+        { "name": "Add student to course", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/students/add", "host":["{{baseUrl}}"], "path":["api","v1","teacher","students","add"] }, "body": { "mode": "raw", "raw": "{\n  \"studentUid\": \"STUDENT_ID\",\n  \"courseUid\": \"COURSE_ID\"\n}" } } },
+        { "name": "Remove student from course", "request": { "method": "DELETE", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/students/:studentUid?courseUid=COURSE_ID", "host":["{{baseUrl}}"], "path":["api","v1","teacher","students",":studentUid"], "query":[{"key":"courseUid","value":"COURSE_ID"}] } } },
+        { "name": "Student progress", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/students/:studentUid/progress", "host":["{{baseUrl}}"], "path":["api","v1","teacher","students",":studentUid","progress"] } } },
+        { "name": "List conversations", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/conversations?page=1&limit=10", "host":["{{baseUrl}}"], "path":["api","v1","teacher","conversations"], "query":[{"key":"page","value":"1"},{"key":"limit","value":"10"}] } } },
+        { "name": "Create conversation", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/conversations", "host":["{{baseUrl}}"], "path":["api","v1","teacher","conversations"] }, "body": { "mode": "raw", "raw": "{\n  \"studentUid\": \"STUDENT_ID\"\n}" } } },
+        { "name": "Get conversation messages", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/conversations/:conversationUid/messages?page=1&limit=20", "host":["{{baseUrl}}"], "path":["api","v1","teacher","conversations",":conversationUid","messages"], "query":[{"key":"page","value":"1"},{"key":"limit","value":"20"}] } } },
+        { "name": "Send message", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/conversations/:conversationUid/messages", "host":["{{baseUrl}}"], "path":["api","v1","teacher","conversations",":conversationUid","messages"] }, "body": { "mode": "raw", "raw": "{\n  \"content\": \"Hi student\"\n}" } } },
+        { "name": "Mark conversation as read", "request": { "method": "PATCH", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/conversations/:conversationUid/read", "host":["{{baseUrl}}"], "path":["api","v1","teacher","conversations",":conversationUid","read"] } } },
+        { "name": "Dashboard stats", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/v1/teacher/dashboard/stats", "host":["{{baseUrl}}"], "path":["api","v1","teacher","dashboard","stats"] } } }
+      ]
+    },
+    {
+      "name": "Teacher-Student",
+      "item": [
+        { "name": "Students by teacher", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/teacher-student/teachers/:teacherId/students", "host":["{{baseUrl}}"], "path":["api","teacher-student","teachers",":teacherId","students"] } } },
+        { "name": "Teachers by student", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/teacher-student/students/:studentId/teachers", "host":["{{baseUrl}}"], "path":["api","teacher-student","students",":studentId","teachers"] } } },
+        { "name": "Assign teacher to student", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/teacher-student/assign", "host":["{{baseUrl}}"], "path":["api","teacher-student","assign"] }, "body": { "mode": "raw", "raw": "{\n  \"teacherId\": \"TEACHER_ID\",\n  \"studentId\": \"STUDENT_ID\",\n  \"courseId\": \"COURSE_ID\"\n}" } } },
+        { "name": "Unassign relationship", "request": { "method": "DELETE", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/teacher-student/:id", "host":["{{baseUrl}}"], "path":["api","teacher-student",":id"] } } },
+        { "name": "List all relationships (admin)", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/teacher-student/relationships", "host":["{{baseUrl}}"], "path":["api","teacher-student","relationships"] } } },
+        { "name": "Check relationship exists", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/teacher-student/check?teacherId=T&studentId=S&courseId=C", "host":["{{baseUrl}}"], "path":["api","teacher-student","check"], "query":[{"key":"teacherId","value":"T"},{"key":"studentId","value":"S"},{"key":"courseId","value":"C"}] } } }
+      ]
+    },
+    {
+      "name": "Course Enrollments",
+      "item": [
+        { "name": "Enroll course (by course id)", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/course-enrollments/courses/:id/enroll", "host":["{{baseUrl}}"], "path":["api","course-enrollments","courses",":id","enroll"] } } },
+        { "name": "My enrollments", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/course-enrollments/enrollments/me", "host":["{{baseUrl}}"], "path":["api","course-enrollments","enrollments","me"] } } },
+        { "name": "Course enrollments", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/course-enrollments/courses/:id/enrollments", "host":["{{baseUrl}}"], "path":["api","course-enrollments","courses",":id","enrollments"] } } }
+      ]
+    },
+    {
+      "name": "Learning (student)",
+      "item": [
+        { "name": "All courses (learning)", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/courses", "host":["{{baseUrl}}"], "path":["api","learning","courses"] } } },
+        { "name": "Course detail (learning)", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/courses/:courseId", "host":["{{baseUrl}}"], "path":["api","learning","courses",":courseId"] } } },
+        { "name": "Enroll course (learning)", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/courses/:courseId/enroll", "host":["{{baseUrl}}"], "path":["api","learning","courses",":courseId","enroll"] } } },
+        { "name": "Modules by course", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/courses/:courseId/modules", "host":["{{baseUrl}}"], "path":["api","learning","courses",":courseId","modules"] } } },
+        { "name": "Module detail", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/modules/:moduleId", "host":["{{baseUrl}}"], "path":["api","learning","modules",":moduleId"] } } },
+        { "name": "Lesson content", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/lessons/:lessonId/content", "host":["{{baseUrl}}"], "path":["api","learning","lessons",":lessonId","content"] } } },
+        { "name": "Submit subtopic answer", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/learning/subtopics/:subtopicId/submit-answer", "host":["{{baseUrl}}"], "path":["api","learning","subtopics",":subtopicId","submit-answer"] }, "body": { "mode": "raw", "raw": "{\n  \"answers\": []\n}" } } },
+        { "name": "Complete subtopic", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/subtopics/:subtopicId/complete", "host":["{{baseUrl}}"], "path":["api","learning","subtopics",":subtopicId","complete"] } } },
+        { "name": "Student progress overview", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/students/progress", "host":["{{baseUrl}}"], "path":["api","learning","students","progress"] } } },
+        { "name": "Course progress detail", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/learning/students/progress/course/:courseId", "host":["{{baseUrl}}"], "path":["api","learning","students","progress","course",":courseId"] } } }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        { "name": "List notifications", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/notifications/:userId", "host":["{{baseUrl}}"], "path":["api","notifications",":userId"] } } },
+        { "name": "Unread count", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/notifications/unreadCount/:userId", "host":["{{baseUrl}}"], "path":["api","notifications","unreadCount",":userId"] } } },
+        { "name": "Mark all read", "request": { "method": "PUT", "url": { "raw": "{{baseUrl}}/api/notifications/mark-all-read?userId=:userId", "host":["{{baseUrl}}"], "path":["api","notifications","mark-all-read"], "query":[{"key":"userId","value":":userId"}] } } },
+        { "name": "Mark one read", "request": { "method": "PUT", "url": { "raw": "{{baseUrl}}/api/notifications/:notificationId/read", "host":["{{baseUrl}}"], "path":["api","notifications",":notificationId","read"] } } },
+        { "name": "Send notification", "request": { "method": "POST", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/notifications/send", "host":["{{baseUrl}}"], "path":["api","notifications","send"] }, "body": { "mode": "raw", "raw": "{\n  \"receiverUid\": \"USER_ID\",\n  \"message\": \"Hello\"\n}" } } },
+        { "name": "Delete all by user", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/notifications/deleteAll/:receiverUid/:deleterUid", "host":["{{baseUrl}}"], "path":["api","notifications","deleteAll",":receiverUid",":deleterUid"] } } },
+        { "name": "Delete by id", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/notifications/delete/:notificationUid/:deleterUid", "host":["{{baseUrl}}"], "path":["api","notifications","delete",":notificationUid",":deleterUid"] } } }
+      ]
+    },
+    {
+      "name": "Certificates",
+      "item": [
+        { "name": "Generate certificate", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/certificates/generate?userId=:userId&courseId=:courseId", "host":["{{baseUrl}}"], "path":["api","certificates","generate"], "query":[{"key":"userId","value":":userId"},{"key":"courseId","value":":courseId"}] } } },
+        { "name": "Student certificates", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/certificates/student/:studentId", "host":["{{baseUrl}}"], "path":["api","certificates","student",":studentId"] } } },
+        { "name": "Get certificate detail", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/certificates/:certificateId", "host":["{{baseUrl}}"], "path":["api","certificates",":certificateId"] } } },
+        { "name": "Download by ids (query)", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/certificates/download?userId=:userId&courseId=:courseId", "host":["{{baseUrl}}"], "path":["api","certificates","download"], "query":[{"key":"userId","value":":userId"},{"key":"courseId","value":":courseId"}] } } },
+        { "name": "Download by certificate id", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/certificates/:certificateId/download", "host":["{{baseUrl}}"], "path":["api","certificates",":certificateId","download"] } } },
+        { "name": "Verify certificate", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/certificates/:certificateId/verify", "host":["{{baseUrl}}"], "path":["api","certificates",":certificateId","verify"] } } }
+      ]
+    },
+    {
+      "name": "Dashboard (admin)",
+      "item": [
+        { "name": "Total users", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/total-users", "host":["{{baseUrl}}"], "path":["api","admin","total-users"] } } },
+        { "name": "Total orders", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/total-orders", "host":["{{baseUrl}}"], "path":["api","admin","total-orders"] } } },
+        { "name": "Total revenue", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/total-revenue", "host":["{{baseUrl}}"], "path":["api","admin","total-revenue"] } } },
+        { "name": "Total approval pending", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/total-approval-pending", "host":["{{baseUrl}}"], "path":["api","admin","total-approval-pending"] } } },
+        { "name": "Orders by month", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/orders-by-month?year=2025", "host":["{{baseUrl}}"], "path":["api","admin","orders-by-month"], "query":[{"key":"year","value":"2025"}] } } },
+        { "name": "Revenue analytics", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/revenue-analytics", "host":["{{baseUrl}}"], "path":["api","admin","revenue-analytics"] } } },
+        { "name": "User analytics", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/user-analytics", "host":["{{baseUrl}}"], "path":["api","admin","user-analytics"] } } },
+        { "name": "Course analytics", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/course-analytics", "host":["{{baseUrl}}"], "path":["api","admin","course-analytics"] } } },
+        { "name": "Learning progress analytics", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/learning-progress-analytics", "host":["{{baseUrl}}"], "path":["api","admin","learning-progress-analytics"] } } },
+        { "name": "Overview", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/overview", "host":["{{baseUrl}}"], "path":["api","admin","overview"] } } },
+        { "name": "List users (admin)", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/users?pageNumber=1&pageSize=20&descending=true", "host":["{{baseUrl}}"], "path":["api","admin","users"], "query":[{"key":"pageNumber","value":"1"},{"key":"pageSize","value":"20"},{"key":"descending","value":"true"}] } } },
+        { "name": "Update user status (admin)", "request": { "method": "PUT", "header":[{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/admin/users/:id/status", "host":["{{baseUrl}}"], "path":["api","admin","users",":id","status"] }, "body": { "mode": "raw", "raw": "{\n  \"status\": \"active\"\n}" } } },
+        { "name": "Recent orders", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/recent-orders?count=10", "host":["{{baseUrl}}"], "path":["api","admin","recent-orders"], "query":[{"key":"count","value":"10"}] } } },
+        { "name": "Recent activities", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/recent-activities?count=20", "host":["{{baseUrl}}"], "path":["api","admin","recent-activities"], "query":[{"key":"count","value":"20"}] } } },
+        { "name": "Quick stats", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/quick-stats", "host":["{{baseUrl}}"], "path":["api","admin","quick-stats"] } } }
+      ]
+    },
+    {
+      "name": "Quiz & Labs",
+      "item": [
+        { "name": "Get quiz by id", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/quizzes/:quizId", "host":["{{baseUrl}}"], "path":["api","quizzes",":quizId"] } } },
+        { "name": "Submit quiz", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}], "url": { "raw": "{{baseUrl}}/api/quizzes/:quizId/submit", "host":["{{baseUrl}}"], "path":["api","quizzes",":quizId","submit"] }, "body": { "mode": "raw", "raw": "{\n  \"answers\": []\n}" } } },
+        { "name": "Labs by module", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/modules/:moduleId/labs", "host":["{{baseUrl}}"], "path":["api","modules",":moduleId","labs"] } } },
+        { "name": "Get lab by id", "request": { "method": "GET", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/labs/:labId", "host":["{{baseUrl}}"], "path":["api","labs",":labId"] } } },
+        { "name": "Start lab", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/labs/:labId/start", "host":["{{baseUrl}}"], "path":["api","labs",":labId","start"] } } },
+        { "name": "Complete lab", "request": { "method": "POST", "header":[{"key":"Authorization","value":"Bearer {{token}}"}], "url": { "raw": "{{baseUrl}}/api/labs/:labId/complete", "host":["{{baseUrl}}"], "path":["api","labs",":labId","complete"] } } }
+      ]
+    }
+  ]
+}

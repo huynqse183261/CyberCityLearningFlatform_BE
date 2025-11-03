@@ -4,10 +4,10 @@ namespace CyberCity.Application.Interface
 {
     public interface ILabService
     {
-        Task<List<LabDto>> GetLabsByModuleIdAsync(Guid moduleId);
-        Task<LabWithComponentsDto> GetLabByIdAsync(Guid labId);
-        Task<StartLabResponseDto> StartLabAsync(Guid labId);
-        Task CompleteLabAsync(Guid labId, Guid studentId);
+        Task<List<LabDto>> GetLabsByModuleIdAsync(string moduleId);
+        Task<LabWithComponentsDto> GetLabByIdAsync(string labId);
+        Task<StartLabResponseDto> StartLabAsync(string labId);
+        Task CompleteLabAsync(string labId, string studentId);
     }
 }
 

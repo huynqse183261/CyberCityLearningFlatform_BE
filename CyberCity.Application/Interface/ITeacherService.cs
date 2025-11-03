@@ -5,22 +5,22 @@ namespace CyberCity.Application.Interface
     public interface ITeacherService
     {
         // Student Management
-        Task<TeacherStudentListResponse> GetStudentsAsync(Guid teacherUid, int page, int limit, string? search, Guid? courseUid);
-        Task<TeacherStudentDetailResponse> GetStudentDetailAsync(Guid teacherUid, Guid studentUid);
-        Task<AddStudentResponse> AddStudentAsync(Guid teacherUid, AddStudentRequest request);
-        Task<RemoveStudentResponse> RemoveStudentAsync(Guid teacherUid, Guid studentUid, Guid courseUid);
+        Task<TeacherStudentListResponse> GetStudentsAsync(string teacherUid, int page, int limit, string? search, string? courseUid);
+        Task<TeacherStudentDetailResponse> GetStudentDetailAsync(string teacherUid, string studentUid);
+        Task<AddStudentResponse> AddStudentAsync(string teacherUid, AddStudentRequest request);
+        Task<RemoveStudentResponse> RemoveStudentAsync(string teacherUid, string studentUid, string courseUid);
 
         // Progress
-        Task<StudentProgressResponse> GetStudentProgressAsync(Guid teacherUid, Guid studentUid, Guid? courseUid);
+        Task<StudentProgressResponse> GetStudentProgressAsync(string teacherUid, string studentUid, string? courseUid);
 
         // Conversations
-        Task<ConversationsListResponse> GetConversationsAsync(Guid teacherUid, int page, int limit);
-        Task<CreateConversationResponse> CreateConversationAsync(Guid teacherUid, CreateConversationRequest request);
-        Task<ConversationMessagesResponse> GetConversationMessagesAsync(Guid teacherUid, Guid conversationUid, int page, int limit, DateTime? before);
-        Task<SendMessageResponse> SendMessageAsync(Guid teacherUid, Guid conversationUid, SendMessageRequest request);
-        Task<MarkAsReadResponse> MarkAsReadAsync(Guid teacherUid, Guid conversationUid);
+        Task<ConversationsListResponse> GetConversationsAsync(string teacherUid, int page, int limit);
+        Task<CreateConversationResponse> CreateConversationAsync(string teacherUid, CreateConversationRequest request);
+        Task<ConversationMessagesResponse> GetConversationMessagesAsync(string teacherUid, string conversationUid, int page, int limit, DateTime? before);
+        Task<SendMessageResponse> SendMessageAsync(string teacherUid, string conversationUid, SendMessageRequest request);
+        Task<MarkAsReadResponse> MarkAsReadAsync(string teacherUid, string conversationUid);
 
         // Dashboard
-        Task<TeacherDashboardStatsResponse> GetDashboardStatsAsync(Guid teacherUid);
+        Task<TeacherDashboardStatsResponse> GetDashboardStatsAsync(string teacherUid);
     }
 }

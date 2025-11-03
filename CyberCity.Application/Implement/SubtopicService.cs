@@ -24,22 +24,22 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<Guid> CreateAsync(Subtopic subtopic)
+        public async Task<string> CreateAsync(Subtopic subtopic)
         {
             subtopic.Uid = Guid.NewGuid().ToString();
             subtopic.CreatedAt = DateTime.Now;
             var result = await _subtopicRepo.CreateAsync(subtopic);
-            return result > 0 ? Guid.Parse(subtopic.Uid) : Guid.Empty;
+            return result > 0 ? subtopic.Uid : string.Empty;
         }
 
-        public async Task<bool> DeleteAsync(Guid uid)
+        public async Task<bool> DeleteAsync(string uid)
         {
             var existing = await _subtopicRepo.GetByIdAsync(uid);
             if (existing == null) return false;
             return await _subtopicRepo.RemoveAsync(existing);
         }
 
-        public async Task<Subtopic> GetByIdAsync(Guid uid)
+        public async Task<Subtopic> GetByIdAsync(string uid)
         {
            var subtopic = await _subtopicRepo.GetByIdAsync(uid);
             return subtopic;

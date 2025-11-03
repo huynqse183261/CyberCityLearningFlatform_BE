@@ -11,9 +11,9 @@ namespace CyberCity.DTOs.Conversations
 
         public bool IsGroup { get; set; } = false;
 
-        public Guid? OrgUid { get; set; }
+        public string? OrgUid { get; set; }
 
         [Required]
-        public Guid[] InitialMemberIds { get; set; }
+        public string[] InitialMemberIds { get; set; }
     }
 }

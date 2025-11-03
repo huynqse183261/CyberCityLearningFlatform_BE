@@ -22,10 +22,10 @@ namespace CyberCity.Controller.Controllers
             _hubContext = hubContext;
         }
 
-        private Guid GetTeacherUid()
+        private string GetTeacherUid()
         {
             var uidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.TryParse(uidClaim, out var uid) ? uid : Guid.Empty;
+            return uidClaim ?? string.Empty;
         }
 
         /// <summary>
@@ -36,10 +36,10 @@ namespace CyberCity.Controller.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
             [FromQuery] string? search = null,
-            [FromQuery] Guid? courseUid = null)
+            [FromQuery] string? courseUid = null)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             var result = await _teacherService.GetStudentsAsync(teacherUid, page, limit, search, courseUid);
@@ -50,10 +50,10 @@ namespace CyberCity.Controller.Controllers
         /// Lấy thông tin chi tiết của một học viên
         /// </summary>
         [HttpGet("students/{studentUid}")]
-        public async Task<IActionResult> GetStudentDetail([FromRoute] Guid studentUid)
+        public async Task<IActionResult> GetStudentDetail([FromRoute] string studentUid)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             var result = await _teacherService.GetStudentDetailAsync(teacherUid, studentUid);
@@ -71,7 +71,7 @@ namespace CyberCity.Controller.Controllers
         public async Task<IActionResult> AddStudent([FromBody] AddStudentRequest request)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             if (string.IsNullOrEmpty(request.StudentUid) || string.IsNullOrEmpty(request.CourseUid))
@@ -85,13 +85,13 @@ namespace CyberCity.Controller.Controllers
         /// Xóa học viên khỏi khóa học
         /// </summary>
         [HttpDelete("students/{studentUid}")]
-        public async Task<IActionResult> RemoveStudent([FromRoute] Guid studentUid, [FromQuery] Guid courseUid)
+        public async Task<IActionResult> RemoveStudent([FromRoute] string studentUid, [FromQuery] string courseUid)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
-            if (courseUid == Guid.Empty)
+            if (string.IsNullOrEmpty(courseUid))
                 return BadRequest(new { success = false, message = "CourseUid là bắt buộc" });
 
             var result = await _teacherService.RemoveStudentAsync(teacherUid, studentUid, courseUid);
@@ -107,11 +107,11 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpGet("students/{studentUid}/progress")]
         public async Task<IActionResult> GetStudentProgress(
-            [FromRoute] Guid studentUid,
-            [FromQuery] Guid? courseUid = null)
+            [FromRoute] string studentUid,
+            [FromQuery] string? courseUid = null)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             var result = await _teacherService.GetStudentProgressAsync(teacherUid, studentUid, courseUid);
@@ -131,7 +131,7 @@ namespace CyberCity.Controller.Controllers
             [FromQuery] int limit = 10)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             var result = await _teacherService.GetConversationsAsync(teacherUid, page, limit);
@@ -145,7 +145,7 @@ namespace CyberCity.Controller.Controllers
         public async Task<IActionResult> CreateConversation([FromBody] CreateConversationRequest request)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             if (string.IsNullOrEmpty(request.StudentUid))
@@ -160,13 +160,13 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpGet("conversations/{conversationUid}/messages")]
         public async Task<IActionResult> GetConversationMessages(
-            [FromRoute] Guid conversationUid,
+            [FromRoute] string conversationUid,
             [FromQuery] int page = 1,
             [FromQuery] int limit = 20,
             [FromQuery] DateTime? before = null)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             var result = await _teacherService.GetConversationMessagesAsync(
@@ -188,11 +188,11 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpPost("conversations/{conversationUid}/messages")]
         public async Task<IActionResult> SendMessage(
-            [FromRoute] Guid conversationUid,
+            [FromRoute] string conversationUid,
             [FromBody] SendMessageRequest request)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             var result = await _teacherService.SendMessageAsync(teacherUid, conversationUid, request);
@@ -210,10 +210,10 @@ namespace CyberCity.Controller.Controllers
         /// Đánh dấu tin nhắn đã đọc
         /// </summary>
         [HttpPatch("conversations/{conversationUid}/read")]
-        public async Task<IActionResult> MarkAsRead([FromRoute] Guid conversationUid)
+        public async Task<IActionResult> MarkAsRead([FromRoute] string conversationUid)
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             var result = await _teacherService.MarkAsReadAsync(teacherUid, conversationUid);
@@ -231,7 +231,7 @@ namespace CyberCity.Controller.Controllers
         public async Task<IActionResult> GetDashboardStats()
         {
             var teacherUid = GetTeacherUid();
-            if (teacherUid == Guid.Empty)
+            if (string.IsNullOrEmpty(teacherUid))
                 return Unauthorized(new { success = false, message = "Không xác định được giáo viên" });
 
             var result = await _teacherService.GetDashboardStatsAsync(teacherUid);

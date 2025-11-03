@@ -23,7 +23,7 @@ namespace CyberCity.Controller.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var userId = GetCurrentUserId().ToString();
+            var userId = GetCurrentUserId();
             ConnectedUsers[Context.ConnectionId] = userId;
             
             // Join user to their conversation groups
@@ -44,10 +44,10 @@ namespace CyberCity.Controller.Hubs
 
         public async Task JoinConversation(string conversationId)
         {
-            if (Guid.TryParse(conversationId, out var convId))
+            if (!string.IsNullOrEmpty(conversationId))
             {
                 // Verify user is member of conversation
-                var isMember = await _conversationService.IsUserMemberOfConversationAsync(convId, GetCurrentUserId());
+                var isMember = await _conversationService.IsUserMemberOfConversationAsync(conversationId, GetCurrentUserId());
                 if (isMember)
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
@@ -70,14 +70,14 @@ namespace CyberCity.Controller.Hubs
         {
             try
             {
-                if (!Guid.TryParse(conversationId, out var convId))
+                if (string.IsNullOrEmpty(conversationId))
                 {
                     await Clients.Caller.SendAsync("Error", "Invalid conversation ID");
                     return;
                 }
 
                 var createDto = new CreateMessageDto { Message = message };
-                var messageDto = await _messageService.SendMessageAsync(convId, createDto, GetCurrentUserId());
+                var messageDto = await _messageService.SendMessageAsync(conversationId, createDto, GetCurrentUserId());
 
                 // Send to all members of the conversation
                 await Clients.Group($"conversation_{conversationId}").SendAsync("ReceiveMessage", messageDto);
@@ -113,7 +113,7 @@ namespace CyberCity.Controller.Hubs
                 .SendAsync("UserTyping", conversationId, userId, false);
         }
 
-        private Guid GetCurrentUserId()
+        private string GetCurrentUserId()
         {
             // Try to get from "sub" claim first (standard JWT)
             var userIdClaim = Context.User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
@@ -130,11 +130,11 @@ namespace CyberCity.Controller.Hubs
                 userIdClaim = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             }
             
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            if (string.IsNullOrEmpty(userIdClaim))
             {
                 throw new UnauthorizedAccessException("Invalid user token");
             }
-            return userId;
+            return userIdClaim;
         }
     }
 }

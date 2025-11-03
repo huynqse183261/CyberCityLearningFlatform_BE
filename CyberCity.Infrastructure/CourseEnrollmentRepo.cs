@@ -18,12 +18,10 @@ namespace CyberCity.Infrastructure
             .OrderByDescending(e => e.EnrolledAt)
             .AsQueryable();
 
-        public async Task<CourseEnrollment?> GetByUserAndCourseAsync(Guid userId, Guid courseId)
+        public async Task<CourseEnrollment?> GetByUserAndCourseAsync(string userId, string courseId)
         {
-            var userIdString = userId.ToString();
-            var courseIdString = courseId.ToString();
             return await _context.CourseEnrollments
-                .FirstOrDefaultAsync(e => e.UserUid == userIdString && e.CourseUid == courseIdString);
+                .FirstOrDefaultAsync(e => e.UserUid == userId && e.CourseUid == courseId);
         }
     }
 }

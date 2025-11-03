@@ -13,9 +13,9 @@ namespace CyberCity.Application.Interface
     public interface ISubtopicService
     {
         Task<PagedResult<SubtopicDetailDto>> GetSubtopicAsync(int page, int pageSize);
-        Task<Subtopic> GetByIdAsync(Guid uid);
-        Task<Guid> CreateAsync(Subtopic subtopic);
+        Task<Subtopic> GetByIdAsync(string uid);
+        Task<string> CreateAsync(Subtopic subtopic);
         Task<bool> UpdateAsync(Subtopic subtopic);
-        Task<bool> DeleteAsync(Guid uid);
+        Task<bool> DeleteAsync(string uid);
     }
 }

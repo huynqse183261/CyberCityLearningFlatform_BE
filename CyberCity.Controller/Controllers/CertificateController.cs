@@ -15,21 +15,21 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpPost("generate")]
-        public async Task<IActionResult> Generate([FromQuery] Guid userId, [FromQuery] Guid courseId, [FromQuery] string certificateType = "completion", [FromQuery] decimal? completionPercentage = null)
+        public async Task<IActionResult> Generate([FromQuery] string userId, [FromQuery] string courseId, [FromQuery] string certificateType = "completion", [FromQuery] decimal? completionPercentage = null)
         {
             var id = await _certificateService.GenerateAsync(userId, courseId, certificateType, completionPercentage);
             return Ok(new { id });
         }
 
         [HttpGet("student/{studentId}")]
-        public async Task<IActionResult> GetByStudent(Guid studentId)
+        public async Task<IActionResult> GetByStudent(string studentId)
         {
             var list = await _certificateService.GetByStudentAsync(studentId);
             return Ok(list);
         }
 
         [HttpGet("{certificateId}")]
-        public async Task<IActionResult> GetDetail(Guid certificateId)
+        public async Task<IActionResult> GetDetail(string certificateId)
         {
             var cert = await _certificateService.GetByIdAsync(certificateId);
             if (cert == null) return NotFound();
@@ -37,7 +37,7 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpGet("download")]
-        public async Task<IActionResult> Download([FromQuery] Guid userId, [FromQuery] Guid courseId, [FromQuery] string studentName = "Student Name", [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? completionDate = null, [FromQuery] int totalHours = 40, [FromQuery] string instructorName = "CyberCity Academy")
+        public async Task<IActionResult> Download([FromQuery] string userId, [FromQuery] string courseId, [FromQuery] string studentName = "Student Name", [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? completionDate = null, [FromQuery] int totalHours = 40, [FromQuery] string instructorName = "CyberCity Academy")
         {
             var start = startDate ?? DateTime.Now.AddDays(-30);
             var completion = completionDate ?? DateTime.Now;
@@ -47,7 +47,7 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpGet("{certificateId}/download")]
-        public async Task<IActionResult> DownloadById(Guid certificateId)
+        public async Task<IActionResult> DownloadById(string certificateId)
         {
             var bytes = await _certificateService.DownloadByIdAsync(certificateId);
             if (bytes == null || bytes.Length == 0) return NotFound();
@@ -56,7 +56,7 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpGet("inline-base64")]
-        public async Task<IActionResult> GetInlineBase64([FromQuery] Guid userId, [FromQuery] Guid courseId, [FromQuery] string studentName = "Student Name", [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? completionDate = null, [FromQuery] int totalHours = 40, [FromQuery] string instructorName = "CyberCity Academy")
+        public async Task<IActionResult> GetInlineBase64([FromQuery] string userId, [FromQuery] string courseId, [FromQuery] string studentName = "Student Name", [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? completionDate = null, [FromQuery] int totalHours = 40, [FromQuery] string instructorName = "CyberCity Academy")
         {
             var start = startDate ?? DateTime.Now.AddDays(-30);
             var completion = completionDate ?? DateTime.Now;
@@ -65,7 +65,7 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpGet("inline")]
-        public async Task<IActionResult> GetInline([FromQuery] Guid userId, [FromQuery] Guid courseId, [FromQuery] string studentName = "Student Name", [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? completionDate = null, [FromQuery] int totalHours = 40, [FromQuery] string instructorName = "CyberCity Academy")
+        public async Task<IActionResult> GetInline([FromQuery] string userId, [FromQuery] string courseId, [FromQuery] string studentName = "Student Name", [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? completionDate = null, [FromQuery] int totalHours = 40, [FromQuery] string instructorName = "CyberCity Academy")
         {
             var start = startDate ?? DateTime.Now.AddDays(-30);
             var completion = completionDate ?? DateTime.Now;
@@ -76,8 +76,8 @@ namespace CyberCity.Controller.Controllers
 
         [HttpGet("linux-certificate")]
         public async Task<IActionResult> GenerateLinuxCertificate(
-            [FromQuery] Guid userId, 
-            [FromQuery] Guid courseId, 
+            [FromQuery] string userId, 
+            [FromQuery] string courseId, 
             [FromQuery] string studentName, 
             [FromQuery] DateTime startDate,
             [FromQuery] DateTime completionDate,
@@ -92,7 +92,7 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpGet("{certificateId}/verify")]
-        public async Task<IActionResult> Verify(Guid certificateId)
+        public async Task<IActionResult> Verify(string certificateId)
         {
             var isValid = await _certificateService.VerifyAsync(certificateId);
             return Ok(new { valid = isValid });

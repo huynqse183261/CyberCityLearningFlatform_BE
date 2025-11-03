@@ -42,7 +42,7 @@ namespace CyberCity_AutoMapper
                 .ForMember(dest => dest.RelationshipUid, opt => opt.MapFrom(src => src.Uid));
 
             CreateMap<AssignTeacherStudentDto, TeacherStudent>()
-                .ForMember(dest => dest.Uid, opt => opt.MapFrom(_ => Guid.NewGuid()));
+                .ForMember(dest => dest.Uid, opt => opt.MapFrom(_ => Guid.NewGuid().ToString()));
         }
     }
 }

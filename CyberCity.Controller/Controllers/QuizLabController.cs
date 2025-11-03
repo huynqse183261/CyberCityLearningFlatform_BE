@@ -19,14 +19,14 @@ namespace CyberCity.Controller.Controllers
             _labService = labService;
         }
 
-        private Guid GetCurrentUserId()
+        private string GetCurrentUserId()
         {
             var uidClaim = User.FindFirst("uid")?.Value;
-            if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out var userId))
+            if (string.IsNullOrEmpty(uidClaim))
             {
                 throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
             }
-            return userId;
+            return uidClaim;
         }
 
         // ============ QUIZ APIS ============
@@ -34,8 +34,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// GET /api/quizzes/:quizId - Lấy thông tin quiz và câu hỏi
         /// </summary>
-        [HttpGet("quizzes/{quizId:guid}")]
-        public async Task<IActionResult> GetQuizById(Guid quizId)
+        [HttpGet("quizzes/{quizId}")]
+        public async Task<IActionResult> GetQuizById(string quizId)
         {
             try
             {
@@ -52,8 +52,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// POST /api/quizzes/:quizId/submit - Nộp bài quiz
         /// </summary>
-        [HttpPost("quizzes/{quizId:guid}/submit")]
-        public async Task<IActionResult> SubmitQuiz(Guid quizId, [FromBody] SubmitQuizDto submitDto)
+        [HttpPost("quizzes/{quizId}/submit")]
+        public async Task<IActionResult> SubmitQuiz(string quizId, [FromBody] SubmitQuizDto submitDto)
         {
             try
             {
@@ -72,8 +72,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// GET /api/modules/:moduleId/labs - Lấy danh sách lab của module
         /// </summary>
-        [HttpGet("modules/{moduleId:guid}/labs")]
-        public async Task<IActionResult> GetLabsByModule(Guid moduleId)
+        [HttpGet("modules/{moduleId}/labs")]
+        public async Task<IActionResult> GetLabsByModule(string moduleId)
         {
             try
             {
@@ -89,8 +89,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// GET /api/labs/:labId - Lấy chi tiết lab và các thành phần
         /// </summary>
-        [HttpGet("labs/{labId:guid}")]
-        public async Task<IActionResult> GetLabById(Guid labId)
+        [HttpGet("labs/{labId}")]
+        public async Task<IActionResult> GetLabById(string labId)
         {
             try
             {
@@ -106,8 +106,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// POST /api/labs/:labId/start - Bắt đầu lab (khởi động VMs)
         /// </summary>
-        [HttpPost("labs/{labId:guid}/start")]
-        public async Task<IActionResult> StartLab(Guid labId)
+        [HttpPost("labs/{labId}/start")]
+        public async Task<IActionResult> StartLab(string labId)
         {
             try
             {
@@ -123,8 +123,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// POST /api/labs/:labId/complete - Hoàn thành lab
         /// </summary>
-        [HttpPost("labs/{labId:guid}/complete")]
-        public async Task<IActionResult> CompleteLab(Guid labId)
+        [HttpPost("labs/{labId}/complete")]
+        public async Task<IActionResult> CompleteLab(string labId)
         {
             try
             {

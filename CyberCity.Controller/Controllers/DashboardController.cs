@@ -120,9 +120,9 @@ namespace CyberCity.Controller.Controllers
             return Ok(dto);
         }
         [HttpPut("users/{id}/status")]
-        public async Task<ActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusDto request)
+        public async Task<ActionResult> UpdateStatus(string id, [FromBody] UpdateStatusDto request)
         {
-            if (id == Guid.Empty) return BadRequest("Invalid id");
+            if (string.IsNullOrEmpty(id)) return BadRequest("Invalid id");
             var user = await _userService.GetByIdAsync(id);
             if (user == null) return NotFound();
             user.Status = request?.Status;

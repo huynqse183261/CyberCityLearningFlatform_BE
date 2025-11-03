@@ -7,10 +7,10 @@ namespace CyberCity.Infrastructure
 {
     public interface ILabRepository
     {
-        Task<Lab> GetByIdAsync(Guid id);
-        Task<List<Lab>> GetLabsByModuleIdAsync(Guid moduleId);
-        Task<Lab> GetLabWithComponentsAsync(Guid labId);
-        Task<List<LabComponent>> GetLabComponentsAsync(Guid labId);
+        Task<Lab> GetByIdAsync(string id);
+        Task<List<Lab>> GetLabsByModuleIdAsync(string moduleId);
+        Task<Lab> GetLabWithComponentsAsync(string labId);
+        Task<List<LabComponent>> GetLabComponentsAsync(string labId);
     }
 
     public class LabRepo : GenericRepository<Lab>, ILabRepository
@@ -22,25 +22,25 @@ namespace CyberCity.Infrastructure
             _dbContext = context;
         }
 
-        public async Task<List<Lab>> GetLabsByModuleIdAsync(Guid moduleId)
+        public async Task<List<Lab>> GetLabsByModuleIdAsync(string moduleId)
         {
             return await _dbContext.Labs
-                .Where(l => l.ModuleUid == moduleId.ToString())
+                .Where(l => l.ModuleUid == moduleId)
                 .OrderBy(l => l.OrderIndex)
                 .ToListAsync();
         }
 
-        public async Task<Lab> GetLabWithComponentsAsync(Guid labId)
+        public async Task<Lab> GetLabWithComponentsAsync(string labId)
         {
             return await _dbContext.Labs
                 .Include(l => l.LabComponents)
-                .FirstOrDefaultAsync(l => l.Uid == labId.ToString());
+                .FirstOrDefaultAsync(l => l.Uid == labId);
         }
 
-        public async Task<List<LabComponent>> GetLabComponentsAsync(Guid labId)
+        public async Task<List<LabComponent>> GetLabComponentsAsync(string labId)
         {
             return await _dbContext.LabComponents
-                .Where(lc => lc.LabUid == labId.ToString())
+                .Where(lc => lc.LabUid == labId)
                 .OrderBy(lc => lc.OrderIndex)
                 .ToListAsync();
         }

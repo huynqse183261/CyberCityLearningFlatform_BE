@@ -68,7 +68,7 @@ namespace CyberCity.Controller.Controllers
         /// Lấy chi tiết tổ chức
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<OrganizationDTO>> GetOrganization(Guid id)
+        public async Task<ActionResult<OrganizationDTO>> GetOrganization(string id)
         {
             try
             {
@@ -115,7 +115,7 @@ namespace CyberCity.Controller.Controllers
         /// Cập nhật tổ chức
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<ActionResult<OrganizationDTO>> UpdateOrganization(Guid id, [FromBody] UpdateOrganizationRequestDto request)
+        public async Task<ActionResult<OrganizationDTO>> UpdateOrganization(string id, [FromBody] UpdateOrganizationRequestDto request)
         {
             try
             {
@@ -143,7 +143,7 @@ namespace CyberCity.Controller.Controllers
         /// Xóa tổ chức
         /// </summary>
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteOrganization(Guid id)
+        public async Task<ActionResult> DeleteOrganization(string id)
         {
             try
             {
@@ -164,7 +164,7 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpGet("{id}/members")]
         public async Task<ActionResult<PagedResult<OrganizationMemberDTO>>> GetOrganizationMembers(
-            Guid id,
+            string id,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
         {
@@ -183,7 +183,7 @@ namespace CyberCity.Controller.Controllers
         /// Thêm thành viên vào tổ chức
         /// </summary>
         [HttpPost("{id}/members")]
-        public async Task<ActionResult<OrganizationMemberDTO>> AddMember(Guid id, [FromBody] AddMemberRequestDto request)
+        public async Task<ActionResult<OrganizationMemberDTO>> AddMember(string id, [FromBody] AddMemberRequestDto request)
         {
             try
             {
@@ -212,8 +212,8 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpPut("{id}/members/{userId}/role")]
         public async Task<ActionResult<OrganizationMemberDTO>> UpdateMemberRole(
-            Guid id, 
-            Guid userId, 
+            string id, 
+            string userId, 
             [FromBody] UpdateMemberRoleRequestDto request)
         {
             try
@@ -238,7 +238,7 @@ namespace CyberCity.Controller.Controllers
         /// Xóa thành viên khỏi tổ chức
         /// </summary>
         [HttpDelete("{id}/members/{userId}")]
-        public async Task<ActionResult> RemoveMember(Guid id, Guid userId)
+        public async Task<ActionResult> RemoveMember(string id, string userId)
         {
             try
             {
@@ -258,7 +258,7 @@ namespace CyberCity.Controller.Controllers
         /// Đếm số thành viên trong tổ chức
         /// </summary>
         [HttpGet("{id}/members/count")]
-        public async Task<ActionResult<int>> GetOrganizationMemberCount(Guid id)
+        public async Task<ActionResult<int>> GetOrganizationMemberCount(string id)
         {
             try
             {

@@ -29,7 +29,7 @@ namespace CyberCity.Controller.Controllers
             _hubContext = hubContext;
         }
 
-        private Guid GetCurrentUserId()
+        private string GetCurrentUserId()
         {
             // Try to get from "sub" claim first (standard JWT)
             var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
@@ -46,11 +46,11 @@ namespace CyberCity.Controller.Controllers
                 userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             }
             
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            if (string.IsNullOrEmpty(userIdClaim))
             {
                 throw new UnauthorizedAccessException("Invalid user token");
             }
-            return userId;
+            return userIdClaim;
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace CyberCity.Controller.Controllers
         /// </summary>
         [HttpGet("{id}/messages")]
         public async Task<ActionResult<PagedResult<MessageDto>>> GetMessages(
-            Guid id, 
+            string id, 
             [FromQuery] int pageNumber = 1, 
             [FromQuery] int pageSize = 50)
         {
@@ -82,7 +82,7 @@ namespace CyberCity.Controller.Controllers
         /// POST /api/conversations/{id}/messages - Gửi tin nhắn (có thể dùng REST API hoặc SignalR)
         /// </summary>
         [HttpPost("{id}/messages")]
-        public async Task<ActionResult<MessageDto>> SendMessage(Guid id, [FromBody] CreateMessageDto createDto)
+        public async Task<ActionResult<MessageDto>> SendMessage(string id, [FromBody] CreateMessageDto createDto)
         {
             try
             {

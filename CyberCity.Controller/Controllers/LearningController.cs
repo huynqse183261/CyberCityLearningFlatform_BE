@@ -21,14 +21,14 @@ namespace CyberCity.Controller.Controllers
             _enrollmentService = enrollmentService;
         }
 
-        private Guid GetCurrentUserId()
+        private string GetCurrentUserId()
         {
             var uidClaim = User.FindFirst("uid")?.Value;
-            if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out var userId))
+            if (string.IsNullOrEmpty(uidClaim))
             {
                 throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
             }
-            return userId;
+            return uidClaim;
         }
 
         // ============ COURSE APIS ============
@@ -54,8 +54,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// GET /api/courses/:courseId - Lấy chi tiết một khóa học
         /// </summary>
-        [HttpGet("courses/{courseId:guid}")]
-        public async Task<IActionResult> GetCourseDetail(Guid courseId)
+        [HttpGet("courses/{courseId}")]
+        public async Task<IActionResult> GetCourseDetail(string courseId)
         {
             try
             {
@@ -72,8 +72,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// POST /api/courses/:courseId/enroll - Đăng ký khóa học
         /// </summary>
-        [HttpPost("courses/{courseId:guid}/enroll")]
-        public async Task<IActionResult> EnrollCourse(Guid courseId)
+        [HttpPost("courses/{courseId}/enroll")]
+        public async Task<IActionResult> EnrollCourse(string courseId)
         {
             try
             {
@@ -92,8 +92,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// GET /api/courses/:courseId/modules - Lấy danh sách module của khóa học
         /// </summary>
-        [HttpGet("courses/{courseId:guid}/modules")]
-        public async Task<IActionResult> GetModulesByCourse(Guid courseId)
+        [HttpGet("courses/{courseId}/modules")]
+        public async Task<IActionResult> GetModulesByCourse(string courseId)
         {
             try
             {
@@ -110,8 +110,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// GET /api/modules/:moduleId - Lấy chi tiết module kèm lessons và labs
         /// </summary>
-        [HttpGet("modules/{moduleId:guid}")]
-        public async Task<IActionResult> GetModuleDetail(Guid moduleId)
+        [HttpGet("modules/{moduleId}")]
+        public async Task<IActionResult> GetModuleDetail(string moduleId)
         {
             try
             {
@@ -130,9 +130,9 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// GET /api/lessons/:lessonId - Lấy chi tiết bài học kèm topics và subtopics
         /// </summary>
-        [HttpGet("lessons/{lessonId:guid}")]
-        [HttpGet("lessons/{lessonId:guid}/content")]
-        public async Task<IActionResult> GetLessonContent(Guid lessonId)
+        [HttpGet("lessons/{lessonId}")]
+        [HttpGet("lessons/{lessonId}/content")]
+        public async Task<IActionResult> GetLessonContent(string lessonId)
         {
             try
             {
@@ -151,8 +151,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// POST /api/subtopics/:subtopicId/submit-answer - Nộp câu trả lời cho subtopic
         /// </summary>
-        [HttpPost("subtopics/{subtopicId:guid}/submit-answer")]
-        public async Task<IActionResult> SubmitSubtopicAnswer(Guid subtopicId, [FromBody] SubmitAnswerDto submitDto)
+        [HttpPost("subtopics/{subtopicId}/submit-answer")]
+        public async Task<IActionResult> SubmitSubtopicAnswer(string subtopicId, [FromBody] SubmitAnswerDto submitDto)
         {
             try
             {
@@ -169,8 +169,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// POST /api/subtopics/:subtopicId/complete - Đánh dấu subtopic đã hoàn thành
         /// </summary>
-        [HttpPost("subtopics/{subtopicId:guid}/complete")]
-        public async Task<IActionResult> CompleteSubtopic(Guid subtopicId)
+        [HttpPost("subtopics/{subtopicId}/complete")]
+        public async Task<IActionResult> CompleteSubtopic(string subtopicId)
         {
             try
             {
@@ -207,8 +207,8 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// GET /api/students/progress/course/:courseId - Lấy tiến độ chi tiết của một khóa học
         /// </summary>
-        [HttpGet("students/progress/course/{courseId:guid}")]
-        public async Task<IActionResult> GetCourseProgress(Guid courseId)
+        [HttpGet("students/progress/course/{courseId}")]
+        public async Task<IActionResult> GetCourseProgress(string courseId)
         {
             try
             {

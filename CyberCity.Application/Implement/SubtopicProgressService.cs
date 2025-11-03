@@ -22,19 +22,19 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<List<SubtopicProgressDto>> GetByStudentAsync(Guid studentId)
+        public async Task<List<SubtopicProgressDto>> GetByStudentAsync(string studentId)
         {
             var list = await _repo.GetByStudentAsync(studentId);
             return _mapper.Map<List<SubtopicProgressDto>>(list);
         }
 
-        public async Task<List<SubtopicProgressDto>> GetBySubtopicAndStudentAsync(Guid courseId, Guid studentId)
+        public async Task<List<SubtopicProgressDto>> GetBySubtopicAndStudentAsync(string courseId, string studentId)
         {
             var list = await _repo.GetBySubtopicAndStudentAsync(courseId, studentId);
             return _mapper.Map<List<SubtopicProgressDto>>(list);
         }
 
-        public async Task<SubtopicProgressDto> MarkCompleteAsync(Guid subtopicId, Guid studentId)
+        public async Task<SubtopicProgressDto> MarkCompleteAsync(string subtopicId, string studentId)
         {
             await _repo.MarkCompleteAsync(subtopicId, studentId);
             var progress = await _repo.GetBySubtopicAndStudentAsync(subtopicId, studentId);

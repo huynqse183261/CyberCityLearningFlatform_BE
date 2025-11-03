@@ -9,11 +9,16 @@ namespace CyberCity.Infrastructure
     public interface IAdminMessageRepository
     {
         Task<(List<AdminConversationDto> conversations, int totalCount)> GetConversationsAsync(GetConversationsQuery query);
-        Task<(List<AdminMessageDto> messages, int totalCount)> GetMessagesAsync(Guid conversationId, GetMessagesQuery query);
-        Task<AdminMessageDto?> SendMessageAsync(Guid conversationId, Guid adminUserId, string message);
-        Task<bool> DeleteMessageAsync(Guid messageId);
+        Task<(List<AdminMessageDto> messages, int totalCount)> GetMessagesAsync(string conversationId, GetMessagesQuery query);
+        Task<AdminMessageDto?> SendMessageAsync(string conversationId, string adminUserId, string message);
+        Task<bool> DeleteMessageAsync(string messageId);
         Task<MessageStatsResponse> GetStatsAsync();
-        Task<List<SimpleUserDto>> GetConversationMembersAsync(Guid conversationId);
+        Task<List<SimpleUserDto>> GetConversationMembersAsync(string conversationId);
+        
+        // User methods
+        Task<bool> HasUserPurchasedPlanAsync(string userUid);
+        Task<string> GetOrCreateUserAdminConversationAsync(string userUid);
+        Task<AdminMessageDto?> SendUserMessageToAdminAsync(string conversationId, string userUid, string message);
     }
 
     public class AdminMessageRepository : GenericRepository<Message>, IAdminMessageRepository
@@ -57,7 +62,7 @@ namespace CyberCity.Infrastructure
             
             foreach (var conv in conversations)
             {
-                var members = await GetConversationMembersAsync(Guid.Parse(conv.Uid));
+                var members = await GetConversationMembersAsync(conv.Uid);
                 
                 conversationDtos.Add(new AdminConversationDto
                 {
@@ -74,11 +79,10 @@ namespace CyberCity.Infrastructure
             return (conversationDtos, totalCount);
         }
 
-        public async Task<List<SimpleUserDto>> GetConversationMembersAsync(Guid conversationId)
+        public async Task<List<SimpleUserDto>> GetConversationMembersAsync(string conversationId)
         {
-            var conversationIdString = conversationId.ToString();
             var members = await _context.ConversationMembers
-                .Where(cm => cm.ConversationUid == conversationIdString)
+                .Where(cm => cm.ConversationUid == conversationId)
                 .Join(_context.Users,
                     cm => cm.UserUid,
                     u => u.Uid,
@@ -95,11 +99,10 @@ namespace CyberCity.Infrastructure
             return members;
         }
 
-        public async Task<(List<AdminMessageDto> messages, int totalCount)> GetMessagesAsync(Guid conversationId, GetMessagesQuery query)
+        public async Task<(List<AdminMessageDto> messages, int totalCount)> GetMessagesAsync(string conversationId, GetMessagesQuery query)
         {
-            var conversationIdString = conversationId.ToString();
             var messagesQuery = _context.Messages
-                .Where(m => m.ConversationUid == conversationIdString);
+                .Where(m => m.ConversationUid == conversationId);
 
             var totalCount = await messagesQuery.CountAsync();
 
@@ -129,13 +132,13 @@ namespace CyberCity.Infrastructure
             return (messages, totalCount);
         }
 
-        public async Task<AdminMessageDto?> SendMessageAsync(Guid conversationId, Guid adminUserId, string message)
+        public async Task<AdminMessageDto?> SendMessageAsync(string conversationId, string adminUserId, string message)
         {
             var newMessage = new Message
             {
                 Uid = Guid.NewGuid().ToString(),
-                ConversationUid = conversationId.ToString(),
-                SenderUid = adminUserId.ToString(),
+                ConversationUid = conversationId,
+                SenderUid = adminUserId,
                 Message1 = message,
                 SentAt = DateTime.Now
             };
@@ -144,9 +147,8 @@ namespace CyberCity.Infrastructure
             await _context.SaveChangesAsync();
 
             // Lấy thông tin sender
-            var adminUserIdString = adminUserId.ToString();
             var sender = await _context.Users
-                .Where(u => u.Uid == adminUserIdString)
+                .Where(u => u.Uid == adminUserId)
                 .Select(u => new SimpleUserDto
                 {
                     Uid = u.Uid,
@@ -171,10 +173,9 @@ namespace CyberCity.Infrastructure
             };
         }
 
-        public async Task<bool> DeleteMessageAsync(Guid messageId)
+        public async Task<bool> DeleteMessageAsync(string messageId)
         {
-            var messageIdString = messageId.ToString();
-            var message = await _context.Messages.FindAsync(messageIdString);
+            var message = await _context.Messages.FindAsync(messageId);
             if (message == null)
                 return false;
 
@@ -206,6 +207,128 @@ namespace CyberCity.Infrastructure
                 TotalMessages = totalMessages,
                 TodayMessages = todayMessages,
                 ThisWeekMessages = thisWeekMessages
+            };
+        }
+
+        /// <summary>
+        /// Kiểm tra user đã mua gói chưa (có Order với PaymentStatus = "completed")
+        /// </summary>
+        public async Task<bool> HasUserPurchasedPlanAsync(string userUid)
+        {
+            return await _context.Orders.AnyAsync(o => 
+                o.UserUid == userUid && 
+                o.PaymentStatus.ToLower() == "completed");
+        }
+
+        /// <summary>
+        /// Lấy hoặc tạo conversation giữa user và admin
+        /// </summary>
+        public async Task<string> GetOrCreateUserAdminConversationAsync(string userUid)
+        {
+            // Tìm admin user (role = "admin")
+            var adminUser = await _context.Users
+                .Where(u => u.Role.ToLower() == "admin")
+                .FirstOrDefaultAsync();
+
+            if (adminUser == null)
+            {
+                throw new Exception("No admin user found in the system");
+            }
+
+            // Tìm conversation hiện có giữa user và admin
+            var existingConversation = await _context.ConversationMembers
+                .Where(cm => cm.UserUid == userUid)
+                .Select(cm => cm.ConversationUid)
+                .Distinct()
+                .Where(convUid => _context.ConversationMembers
+                    .Any(cm2 => cm2.ConversationUid == convUid && cm2.UserUid == adminUser.Uid))
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrEmpty(existingConversation))
+            {
+                return existingConversation;
+            }
+
+            // Tạo conversation mới
+            var user = await _context.Users.FindAsync(userUid);
+            var conversationUid = Guid.NewGuid().ToString();
+            
+            var conversation = new Conversation
+            {
+                Uid = conversationUid,
+                Title = $"Support - {user?.FullName ?? user?.Username ?? "User"}",
+                IsGroup = false,
+                CreatedAt = DateTime.Now
+            };
+
+            await _context.Conversations.AddAsync(conversation);
+
+            // Thêm members
+            var members = new List<ConversationMember>
+            {
+                new ConversationMember
+                {
+                    Uid = Guid.NewGuid().ToString(),
+                    ConversationUid = conversationUid,
+                    UserUid = userUid,
+                    JoinedAt = DateTime.Now
+                },
+                new ConversationMember
+                {
+                    Uid = Guid.NewGuid().ToString(),
+                    ConversationUid = conversationUid,
+                    UserUid = adminUser.Uid,
+                    JoinedAt = DateTime.Now
+                }
+            };
+
+            await _context.ConversationMembers.AddRangeAsync(members);
+            await _context.SaveChangesAsync();
+
+            return conversationUid;
+        }
+
+        /// <summary>
+        /// User gửi tin nhắn cho admin
+        /// </summary>
+        public async Task<AdminMessageDto?> SendUserMessageToAdminAsync(string conversationId, string userUid, string message)
+        {
+            var newMessage = new Message
+            {
+                Uid = Guid.NewGuid().ToString(),
+                ConversationUid = conversationId,
+                SenderUid = userUid,
+                Message1 = message,
+                SentAt = DateTime.Now
+            };
+
+            await _context.Messages.AddAsync(newMessage);
+            await _context.SaveChangesAsync();
+
+            // Lấy thông tin sender
+            var sender = await _context.Users
+                .Where(u => u.Uid == userUid)
+                .Select(u => new SimpleUserDto
+                {
+                    Uid = u.Uid,
+                    Username = u.Username ?? string.Empty,
+                    FullName = u.FullName ?? string.Empty,
+                    Role = u.Role ?? string.Empty,
+                    Image = u.Image
+                })
+                .FirstOrDefaultAsync();
+
+            if (sender == null)
+                return null;
+
+            return new AdminMessageDto
+            {
+                Uid = newMessage.Uid,
+                ConversationUid = newMessage.ConversationUid,
+                SenderUid = newMessage.SenderUid,
+                Message = newMessage.Message1 ?? string.Empty,
+                SentAt = newMessage.SentAt ?? DateTime.Now,
+                Sender = sender
             };
         }
     }

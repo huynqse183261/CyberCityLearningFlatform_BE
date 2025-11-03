@@ -23,7 +23,7 @@ namespace CyberCity.Controller.Controllers
         {
             var subtopic = _mapper.Map<Subtopic>(subtopicCreateDto);
             var result = await _subtopicService.CreateAsync(subtopic);
-            if (result == Guid.Empty)
+            if (string.IsNullOrEmpty(result))
             {
                 return BadRequest("Failed to create subtopic");
             }
@@ -31,7 +31,7 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpGet("{uid}")]
-        public async Task<IActionResult> GetSubtopicById(Guid uid)
+        public async Task<IActionResult> GetSubtopicById(string uid)
         {
             var subtopic = await _subtopicService.GetByIdAsync(uid);
             if (subtopic == null)
@@ -48,7 +48,7 @@ namespace CyberCity.Controller.Controllers
             return Ok(pagedResult);
         }
         [HttpDelete("{uid}")]
-        public async Task<IActionResult> DeleteSubtopic(Guid uid)
+        public async Task<IActionResult> DeleteSubtopic(string uid)
         {
             var result = await _subtopicService.DeleteAsync(uid);
             if (!result)
@@ -58,7 +58,7 @@ namespace CyberCity.Controller.Controllers
             return NoContent();
         }
         [HttpPut("{uid}")]
-        public async Task<IActionResult> UpdateSubtopic(Guid uid, [FromBody] SubtopicUpdateDto subtopicUpdateDto)
+        public async Task<IActionResult> UpdateSubtopic(string uid, [FromBody] SubtopicUpdateDto subtopicUpdateDto)
         {
             var existingSubtopic = await _subtopicService.GetByIdAsync(uid);
             if (existingSubtopic == null)

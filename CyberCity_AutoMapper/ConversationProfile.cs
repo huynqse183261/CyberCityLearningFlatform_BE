@@ -23,7 +23,7 @@ namespace CyberCity_AutoMapper
                 .ForMember(dest => dest.Image, opt => opt.MapFrom(src => src.UserU.Image));
 
             CreateMap<CreateConversationDto, Conversation>()
-                .ForMember(dest => dest.Uid, opt => opt.MapFrom(_ => Guid.NewGuid()))
+                .ForMember(dest => dest.Uid, opt => opt.MapFrom(_ => Guid.NewGuid().ToString()))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now));
         }
     }

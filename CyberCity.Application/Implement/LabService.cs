@@ -16,13 +16,13 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<List<LabDto>> GetLabsByModuleIdAsync(Guid moduleId)
+        public async Task<List<LabDto>> GetLabsByModuleIdAsync(string moduleId)
         {
             var labs = await _labRepo.GetLabsByModuleIdAsync(moduleId);
             return _mapper.Map<List<LabDto>>(labs);
         }
 
-        public async Task<LabWithComponentsDto> GetLabByIdAsync(Guid labId)
+        public async Task<LabWithComponentsDto> GetLabByIdAsync(string labId)
         {
             var lab = await _labRepo.GetLabWithComponentsAsync(labId);
             if (lab == null)
@@ -39,7 +39,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<StartLabResponseDto> StartLabAsync(Guid labId)
+        public async Task<StartLabResponseDto> StartLabAsync(string labId)
         {
             var lab = await _labRepo.GetByIdAsync(labId);
             if (lab == null)
@@ -64,7 +64,7 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task CompleteLabAsync(Guid labId, Guid studentId)
+        public async Task CompleteLabAsync(string labId, string studentId)
         {
             var lab = await _labRepo.GetByIdAsync(labId);
             if (lab == null)

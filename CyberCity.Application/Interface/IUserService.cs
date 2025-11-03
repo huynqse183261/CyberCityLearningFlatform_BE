@@ -15,7 +15,7 @@ namespace CyberCity.Application.Interface
         Task<int> UpdateAccount(User user);
         Task<PagedResult<User>> GetAllAccounts(int pageNumber, int pageSize, bool descending = true);
         Task<User> GetUserAccountByNameOrEmailAsync(string EmailorName);
-        Task<User> GetByIdAsync(Guid id);
-        Task<bool> UpdatePasswordAsync(Guid userId, string currentPassword, string newPassword);
+        Task<User> GetByIdAsync(string id);
+        Task<bool> UpdatePasswordAsync(string userId, string currentPassword, string newPassword);
     }
 }

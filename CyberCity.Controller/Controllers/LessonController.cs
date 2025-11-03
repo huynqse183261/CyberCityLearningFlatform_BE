@@ -28,7 +28,7 @@ namespace CyberCity.Controller.Controllers
         }
         // GET: api/Lesson/{id}
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetLessonById(Guid id)
+        public async Task<IActionResult> GetLessonById(string id)
         {
             var lesson = await _lessonService.GetByIdAsync(id);
             if (lesson == null)
@@ -48,7 +48,7 @@ namespace CyberCity.Controller.Controllers
         }
         // PUT: api/Lesson/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateLesson(Guid id, [FromBody] LessonUpdateDto lessonDto)
+        public async Task<IActionResult> UpdateLesson(string id, [FromBody] LessonUpdateDto lessonDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -63,7 +63,7 @@ namespace CyberCity.Controller.Controllers
         }
         // DELETE: api/Lesson/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteLesson(Guid id)
+        public async Task<IActionResult> DeleteLesson(string id)
         {
             var existingLesson = await _lessonService.GetByIdAsync(id);
             if (existingLesson == null)

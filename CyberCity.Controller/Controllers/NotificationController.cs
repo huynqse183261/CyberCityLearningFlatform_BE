@@ -15,26 +15,26 @@ namespace CyberCity.Controller.Controllers
             _notificationService = notificationService;
         }
         [HttpGet("{userId}")]
-        public async Task<IActionResult> GetNotifications(Guid userId)
+        public async Task<IActionResult> GetNotifications(string userId)
         {
             var notifications = await _notificationService.GetNotificationsAsync(userId);
             return Ok(notifications);
         }
         [HttpGet("unreadCount/{userId}")]
-        public async Task<IActionResult> GetUnreadCount(Guid userId)
+        public async Task<IActionResult> GetUnreadCount(string userId)
         {
             var count = await _notificationService.GetUnreadCountAsync(userId);
             return Ok(count);
         }
         [HttpPut("mark-all-read")]
-        public async Task<IActionResult> MarkAllAsRead([FromQuery] Guid userId)
+        public async Task<IActionResult> MarkAllAsRead([FromQuery] string userId)
         {
             await _notificationService.MarkAllAsReadAsync(userId);
             return Ok();
         }
 
         [HttpPut("{notificationId}/read")]
-        public async Task<IActionResult> MarkNotificationAsRead(Guid notificationId)
+        public async Task<IActionResult> MarkNotificationAsRead(string notificationId)
         {
             // Cần bổ sung hàm MarkNotificationAsReadAsync ở service
             await _notificationService.MarkNotificationAsReadAsync(notificationId);
@@ -48,13 +48,13 @@ namespace CyberCity.Controller.Controllers
             return Ok();
         }
         [HttpDelete("deleteAll/{receiverUid}/{deleterUid}")]
-        public async Task<IActionResult> DeleteAllNotificationsByUser(Guid receiverUid, Guid deleterUid)
+        public async Task<IActionResult> DeleteAllNotificationsByUser(string receiverUid, string deleterUid)
         {
             await _notificationService.DeleteAllNotificationsByUserAsync(receiverUid, deleterUid);
             return Ok();
         }
         [HttpDelete("delete/{notificationUid}/{deleterUid}")]
-        public async Task<IActionResult> DeleteNotificationById(Guid notificationUid, Guid deleterUid)
+        public async Task<IActionResult> DeleteNotificationById(string notificationUid, string deleterUid)
         {
             await _notificationService.DeleteNotificationByIdAsync(notificationUid, deleterUid);
             return Ok();

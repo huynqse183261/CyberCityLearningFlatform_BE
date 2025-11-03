@@ -22,14 +22,14 @@ namespace CyberCity.Controller.Controllers
             return Ok(pagedResult);
         }
         [HttpGet("student/{studentId}")]
-        public async Task<IActionResult> GetByStudent(Guid studentId)
+        public async Task<IActionResult> GetByStudent(string studentId)
         {
             var result = await _service.GetByStudentAsync(studentId);
             return Ok(result);
         }
 
         [HttpGet("subtopic/{subtopicId}/student/{studentId}")]
-        public async Task<IActionResult> GetBySubtopicAndStudent(Guid subtopicId, Guid studentId)
+        public async Task<IActionResult> GetBySubtopicAndStudent(string subtopicId, string studentId)
         {
             var result = await _service.GetBySubtopicAndStudentAsync(subtopicId, studentId);
             return Ok(result);
@@ -37,7 +37,7 @@ namespace CyberCity.Controller.Controllers
 
 
         [HttpPost("subtopic/{subtopicId}/complete")]
-        public async Task<IActionResult> MarkComplete(Guid subtopicId, [FromQuery] Guid studentId)
+        public async Task<IActionResult> MarkComplete(string subtopicId, [FromQuery] string studentId)
         {
             var result = await _service.MarkCompleteAsync(subtopicId, studentId);
             return Ok(result);

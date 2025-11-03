@@ -29,7 +29,7 @@ namespace CyberCity.Application.Implement
             _mapper = mapper;
         }
 
-        public async Task<List<StudentOfTeacherDto>> GetStudentsByTeacherIdAsync(Guid teacherId)
+        public async Task<List<StudentOfTeacherDto>> GetStudentsByTeacherIdAsync(string teacherId)
         {
             // Verify teacher exists and has teacher role
             var teacher = await _userRepo.GetByIdAsync(teacherId);
@@ -40,7 +40,7 @@ namespace CyberCity.Application.Implement
             return relationships.Select(r => _mapper.Map<StudentOfTeacherDto>(r)).ToList();
         }
 
-        public async Task<List<TeacherOfStudentDto>> GetTeachersByStudentIdAsync(Guid studentId)
+        public async Task<List<TeacherOfStudentDto>> GetTeachersByStudentIdAsync(string studentId)
         {
             // Verify student exists and has student role
             var student = await _userRepo.GetByIdAsync(studentId);
@@ -54,23 +54,23 @@ namespace CyberCity.Application.Implement
         public async Task<TeacherStudentDto> AssignTeacherToStudentAsync(AssignTeacherStudentDto assignDto)
         {
             // Verify teacher exists and has teacher role
-            var teacher = await _userRepo.GetByIdAsync(Guid.Parse(assignDto.TeacherUid));
+            var teacher = await _userRepo.GetByIdAsync(assignDto.TeacherUid);
             if (teacher == null || teacher.Role != "teacher")
                 throw new ArgumentException("Teacher not found or user is not a teacher");
 
             // Verify student exists and has student role
-            var student = await _userRepo.GetByIdAsync(Guid.Parse(assignDto.StudentUid));
+            var student = await _userRepo.GetByIdAsync(assignDto.StudentUid);
             if (student == null || student.Role != "student")
                 throw new ArgumentException("Student not found or user is not a student");
 
             // Verify course exists
-            var course = await _courseRepo.GetByIdAsync(Guid.Parse(assignDto.CourseUid));
+            var course = await _courseRepo.GetByIdAsync(assignDto.CourseUid);
             if (course == null)
                 throw new ArgumentException("Course not found");
 
             // Check if relationship already exists
             var existingRelationship = await _teacherStudentRepo.RelationshipExistsAsync(
-                Guid.Parse(assignDto.TeacherUid), Guid.Parse(assignDto.StudentUid), Guid.Parse(assignDto.CourseUid));
+                assignDto.TeacherUid, assignDto.StudentUid, assignDto.CourseUid);
             if (existingRelationship)
                 throw new ArgumentException("Teacher-Student relationship already exists for this course");
 
@@ -78,19 +78,19 @@ namespace CyberCity.Application.Implement
             var teacherStudent = new TeacherStudent
             {
                 Uid = Guid.NewGuid().ToString(),
-                TeacherUid = assignDto.TeacherUid.ToString(),
-                StudentUid = assignDto.StudentUid.ToString(),
-                CourseUid = assignDto.CourseUid.ToString()
+                TeacherUid = assignDto.TeacherUid,
+                StudentUid = assignDto.StudentUid,
+                CourseUid = assignDto.CourseUid
             };
 
             await _teacherStudentRepo.CreateAsync(teacherStudent);
 
             // Get the created relationship with details
-            var createdRelationship = await _teacherStudentRepo.GetByIdWithDetailsAsync(Guid.Parse(teacherStudent.Uid));
+            var createdRelationship = await _teacherStudentRepo.GetByIdWithDetailsAsync(teacherStudent.Uid);
             return _mapper.Map<TeacherStudentDto>(createdRelationship);
         }
 
-        public async Task<bool> UnassignTeacherStudentAsync(Guid relationshipId)
+        public async Task<bool> UnassignTeacherStudentAsync(string relationshipId)
         {
             var relationship = await _teacherStudentRepo.GetByIdAsync(relationshipId);
             if (relationship == null)
@@ -106,7 +106,7 @@ namespace CyberCity.Application.Implement
             return relationships.Select(r => _mapper.Map<TeacherStudentDto>(r)).ToList();
         }
 
-        public async Task<bool> RelationshipExistsAsync(Guid teacherId, Guid studentId, Guid courseId)
+        public async Task<bool> RelationshipExistsAsync(string teacherId, string studentId, string courseId)
         {
             return await _teacherStudentRepo.RelationshipExistsAsync(teacherId, studentId, courseId);
         }

@@ -23,31 +23,28 @@ namespace CyberCity.Infrastructure
                 : query.OrderBy(c => c.SentAt);
         }
 
-        public async Task<List<Message>> GetMessagesByConversationIdAsync(Guid conversationId, int pageNumber = 1, int pageSize = 50)
+        public async Task<List<Message>> GetMessagesByConversationIdAsync(string conversationId, int pageNumber = 1, int pageSize = 50)
         {
-            var conversationIdString = conversationId.ToString();
             return await _context.Messages
                 .Include(m => m.SenderU)
-                .Where(m => m.ConversationUid == conversationIdString)
+                .Where(m => m.ConversationUid == conversationId)
                 .OrderByDescending(m => m.SentAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
         }
 
-        public async Task<int> GetMessageCountByConversationIdAsync(Guid conversationId)
+        public async Task<int> GetMessageCountByConversationIdAsync(string conversationId)
         {
-            var conversationIdString = conversationId.ToString();
             return await _context.Messages
-                .CountAsync(m => m.ConversationUid == conversationIdString);
+                .CountAsync(m => m.ConversationUid == conversationId);
         }
 
-        public async Task<Message> GetLatestMessageByConversationIdAsync(Guid conversationId)
+        public async Task<Message> GetLatestMessageByConversationIdAsync(string conversationId)
         {
-            var conversationIdString = conversationId.ToString();
             return await _context.Messages
                 .Include(m => m.SenderU)
-                .Where(m => m.ConversationUid == conversationIdString)
+                .Where(m => m.ConversationUid == conversationId)
                 .OrderByDescending(m => m.SentAt)
                 .FirstOrDefaultAsync();
         }

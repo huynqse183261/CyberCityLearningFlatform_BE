@@ -19,10 +19,9 @@ namespace CyberCity.Infrastructure
             var query = _context.Certificates.AsQueryable();
             return query.OrderByDescending(c => c.IssuedAt);
         }
-        public async Task<List<Certificate>> GetByUserUidAsync(Guid userUid)
+        public async Task<List<Certificate>> GetByUserUidAsync(string userUid)
         {
-            var userUidString = userUid.ToString();
-            return await _context.Certificates.Where(c => c.UserUid == userUidString).ToListAsync();
+            return await _context.Certificates.Where(c => c.UserUid == userUid).ToListAsync();
         }
     }
 }

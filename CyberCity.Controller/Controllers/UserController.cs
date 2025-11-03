@@ -57,8 +57,8 @@ namespace CyberCity.Controller.Controllers
         [HttpGet("me")]
         public async Task<ActionResult<UserAccountDTO>> GetCurrentUserProfile()
         {
-            var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out var userId))
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { success = false, message = "User not found in token" });
             
             var user = await _userService.GetByIdAsync(userId);
@@ -79,8 +79,8 @@ namespace CyberCity.Controller.Controllers
         [HttpPut("me")]
         public async Task<ActionResult> UpdateCurrentUserProfile([FromBody] UpdateUserRequestDto request)
         {
-            var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out var userId))
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { success = false, message = "User not found in token" });
             
             var existing = await _userService.GetByIdAsync(userId);
@@ -108,8 +108,8 @@ namespace CyberCity.Controller.Controllers
         [HttpPut("me/password")]
         public async Task<ActionResult> ChangeCurrentUserPassword([FromBody] UpdatePasswordDto request)
         {
-            var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out var userId))
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { success = false, message = "User not found in token" });
             
             var ok = await _userService.UpdatePasswordAsync(userId, request?.CurrentPassword, request?.NewPassword);
@@ -134,9 +134,9 @@ namespace CyberCity.Controller.Controllers
 
         //[Authorize(Roles = "admin")]
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, [FromBody] UpdateUserRequestDto request)
+        public async Task<ActionResult> Update(string id, [FromBody] UpdateUserRequestDto request)
         {
-            if (id == Guid.Empty) return BadRequest("Invalid id");
+            if (string.IsNullOrEmpty(id)) return BadRequest("Invalid id");
             var existing = await _userService.GetByIdAsync(id);
             if (existing == null) return NotFound();
             _mapper.Map(request, existing);
@@ -157,9 +157,9 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpPut("{id}/password")]
-        public async Task<ActionResult> UpdatePassword(Guid id, [FromBody] UpdatePasswordDto request)
+        public async Task<ActionResult> UpdatePassword(string id, [FromBody] UpdatePasswordDto request)
         {
-            if (id == Guid.Empty) return BadRequest("Invalid id");
+            if (string.IsNullOrEmpty(id)) return BadRequest("Invalid id");
             var ok = await _userService.UpdatePasswordAsync(id, request?.CurrentPassword, request?.NewPassword);
             if (!ok) return BadRequest("Invalid password or update failed");
             return NoContent();
@@ -167,9 +167,9 @@ namespace CyberCity.Controller.Controllers
 
         //[Authorize(Roles = "admin")]
         [HttpPut("{id}/role")]
-        public async Task<ActionResult> UpdateRole(Guid id, [FromBody] UpdateRoleDto request)
+        public async Task<ActionResult> UpdateRole(string id, [FromBody] UpdateRoleDto request)
         {
-            if (id == Guid.Empty) return BadRequest("Invalid id");
+            if (string.IsNullOrEmpty(id)) return BadRequest("Invalid id");
             var user = await _userService.GetByIdAsync(id);
             if (user == null) return NotFound();
             user.Role = request?.Role;
@@ -180,9 +180,9 @@ namespace CyberCity.Controller.Controllers
 
         //[Authorize(Roles = "admin")]
         [HttpPut("{id}/status")]
-        public async Task<ActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusDto request)
+        public async Task<ActionResult> UpdateStatus(string id, [FromBody] UpdateStatusDto request)
         {
-            if (id == Guid.Empty) return BadRequest("Invalid id");
+            if (string.IsNullOrEmpty(id)) return BadRequest("Invalid id");
             var user = await _userService.GetByIdAsync(id);
             if (user == null) return NotFound();
             user.Status = request?.Status;
@@ -192,9 +192,9 @@ namespace CyberCity.Controller.Controllers
         }
 
         [HttpPut("{id}/avatar")]
-        public async Task<ActionResult> UpdateAvatar(Guid id, [FromForm] UpdateAvatarDto dto)
+        public async Task<ActionResult> UpdateAvatar(string id, [FromForm] UpdateAvatarDto dto)
         {
-            if (id == Guid.Empty)
+            if (string.IsNullOrEmpty(id))
                 return BadRequest("Invalid user id");
 
             if (dto?.Avatar == null || dto.Avatar.Length == 0)

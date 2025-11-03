@@ -49,17 +49,17 @@ namespace CyberCity.Application.Implement
             };
         }
 
-        public async Task<Lesson> GetByIdAsync(Guid uid)
+        public async Task<Lesson> GetByIdAsync(string uid)
         {
             return await _lessonRepo.GetByIdAsync(uid);
         }
 
-        public async Task<Guid> CreateAsync(Lesson lesson)
+        public async Task<string> CreateAsync(Lesson lesson)
         {
             lesson.Uid = Guid.NewGuid().ToString();
             lesson.CreatedAt = DateTime.Now;
             var result = await _lessonRepo.CreateAsync(lesson);
-            return result > 0 ? Guid.Parse(lesson.Uid) : Guid.Empty;
+            return result > 0 ? lesson.Uid : string.Empty;
         }
 
         public async Task<bool> UpdateAsync(Lesson lesson)
@@ -68,7 +68,7 @@ namespace CyberCity.Application.Implement
             return result > 0;
         }
 
-        public async Task<bool> DeleteAsync(Guid uid)
+        public async Task<bool> DeleteAsync(string uid)
         {
             var existing = await _lessonRepo.GetByIdAsync(uid);
             if (existing == null) return false;

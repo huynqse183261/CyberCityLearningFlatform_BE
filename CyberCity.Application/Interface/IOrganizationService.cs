@@ -13,18 +13,18 @@ namespace CyberCity.Application.Interface
     {
         // Organization CRUD operations
         Task<PagedResult<Organization>> GetAllOrganizationsAsync(int pageNumber, int pageSize, bool descending = true);
-        Task<Organization> GetOrganizationByIdAsync(Guid id);
+        Task<Organization> GetOrganizationByIdAsync(string id);
         Task<Organization> CreateOrganizationAsync(CreateOrganizationRequestDto request);
-        Task<Organization> UpdateOrganizationAsync(Guid id, UpdateOrganizationRequestDto request);
-        Task<bool> DeleteOrganizationAsync(Guid id);
+        Task<Organization> UpdateOrganizationAsync(string id, UpdateOrganizationRequestDto request);
+        Task<bool> DeleteOrganizationAsync(string id);
 
         // Organization Members operations
-        Task<PagedResult<OrganizationMemberDTO>> GetOrganizationMembersAsync(Guid organizationId, int pageNumber, int pageSize);
-        Task<OrganizationMemberDTO> AddMemberToOrganizationAsync(Guid organizationId, AddMemberRequestDto request);
-        Task<OrganizationMemberDTO> UpdateMemberRoleAsync(Guid organizationId, Guid userId, UpdateMemberRoleRequestDto request);
-        Task<bool> RemoveMemberFromOrganizationAsync(Guid organizationId, Guid userId);
-        Task<bool> IsUserMemberOfOrganizationAsync(Guid organizationId, Guid userId);
-        Task<string> GetUserRoleInOrganizationAsync(Guid organizationId, Guid userId);
-        Task<int> GetOrganizationMemberCountAsync(Guid organizationId);
+        Task<PagedResult<OrganizationMemberDTO>> GetOrganizationMembersAsync(string organizationId, int pageNumber, int pageSize);
+        Task<OrganizationMemberDTO> AddMemberToOrganizationAsync(string organizationId, AddMemberRequestDto request);
+        Task<OrganizationMemberDTO> UpdateMemberRoleAsync(string organizationId, string userId, UpdateMemberRoleRequestDto request);
+        Task<bool> RemoveMemberFromOrganizationAsync(string organizationId, string userId);
+        Task<bool> IsUserMemberOfOrganizationAsync(string organizationId, string userId);
+        Task<string> GetUserRoleInOrganizationAsync(string organizationId, string userId);
+        Task<int> GetOrganizationMemberCountAsync(string organizationId);
     }
 }
