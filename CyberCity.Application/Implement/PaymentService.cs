@@ -48,6 +48,8 @@ namespace CyberCity.Application.Implement
             var clientId = _configuration["PayOS:ClientId"] ?? Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID");
             var apiKey = _configuration["PayOS:ApiKey"] ?? Environment.GetEnvironmentVariable("PAYOS_API_KEY");
             var checksumKey = _configuration["PayOS:ChecksumKey"] ?? Environment.GetEnvironmentVariable("PAYOS_CHECKSUM_KEY");
+            var baseUrl = _configuration["PayOS:BaseUrl"] ?? Environment.GetEnvironmentVariable("PAYOS_BASEURL") ?? "https://api.payos.vn";
+
 
             if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(checksumKey))
                 throw new Exception("PayOS credentials missing.");
@@ -57,7 +59,7 @@ namespace CyberCity.Application.Implement
                 ClientId = clientId,
                 ApiKey = apiKey,
                 ChecksumKey = checksumKey,
-                BaseUrl = "https://api.payos.vn" // ✅ thêm dòng này
+                BaseUrl = baseUrl
             };
 
             _payOSClient = new PayOSClient(options);
@@ -112,13 +114,14 @@ namespace CyberCity.Application.Implement
                     }
                 };
 
-                // Xử lý empty string thành default cho callback URLs
-                var cancelUrl = string.IsNullOrWhiteSpace(request.CancelUrl)
-                    ? "http://localhost:5173/payment/cancel"
-                    : request.CancelUrl;
-                var returnUrl = string.IsNullOrWhiteSpace(request.ReturnUrl)
-                    ? "http://localhost:5173/payment/success"
-                    : request.ReturnUrl;
+                // Validate callback URLs (bắt buộc phải có từ FE)
+                if (string.IsNullOrWhiteSpace(request.CancelUrl))
+                    throw new Exception("CancelUrl is required");
+                if (string.IsNullOrWhiteSpace(request.ReturnUrl))
+                    throw new Exception("ReturnUrl is required");
+
+                var cancelUrl = request.CancelUrl;
+                var returnUrl = request.ReturnUrl;
 
                 // Tạo payment request (v2 SDK)
                 var client = GetPayOSClient();
