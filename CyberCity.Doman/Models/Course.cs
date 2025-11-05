@@ -19,6 +19,8 @@ public partial class Course
 
     public DateTime? CreatedAt { get; set; }
 
+    public string Slug { get; set; }
+
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
     public virtual ICollection<CourseEnrollment> CourseEnrollments { get; set; } = new List<CourseEnrollment>();

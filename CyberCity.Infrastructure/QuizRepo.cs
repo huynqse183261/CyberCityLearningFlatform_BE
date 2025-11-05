@@ -14,6 +14,8 @@ namespace CyberCity.Infrastructure
         Task<QuizSubmission> GetUserSubmissionAsync(string quizId, string studentId);
         Task<QuizSubmission> CreateSubmissionAsync(QuizSubmission submission);
         Task CreateSubmissionAnswersAsync(List<QuizSubmissionAnswer> answers);
+        Task<QuizSubmission> GetSubmissionByIdAsync(string submissionId);
+        Task<List<QuizSubmissionAnswer>> GetSubmissionAnswersAsync(string submissionId);
     }
 
     public class QuizRepo : GenericRepository<Quiz>, IQuizRepository
@@ -63,6 +65,18 @@ namespace CyberCity.Infrastructure
         {
             await _dbContext.QuizSubmissionAnswers.AddRangeAsync(answers);
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<QuizSubmission> GetSubmissionByIdAsync(string submissionId)
+        {
+            return await _dbContext.QuizSubmissions.FirstOrDefaultAsync(s => s.Uid == submissionId);
+        }
+
+        public async Task<List<QuizSubmissionAnswer>> GetSubmissionAnswersAsync(string submissionId)
+        {
+            return await _dbContext.QuizSubmissionAnswers
+                .Where(sa => sa.SubmissionUid == submissionId)
+                .ToListAsync();
         }
     }
 }

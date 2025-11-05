@@ -158,5 +158,114 @@ namespace CyberCity.Controller.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Lấy thông tin hóa đơn chi tiết
+        /// </summary>
+        /// <param name="paymentUid">UID của payment</param>
+        /// <returns>Thông tin hóa đơn đầy đủ</returns>
+        [HttpGet("invoice/{paymentUid}")]
+        [Authorize]
+        public async Task<IActionResult> GetPaymentInvoice(string paymentUid)
+        {
+            try
+            {
+                var invoice = await _paymentService.GetPaymentInvoiceAsync(paymentUid);
+                return Ok(new
+                {
+                    success = true,
+                    data = invoice
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Lấy lịch sử thanh toán của user
+        /// </summary>
+        /// <param name="userUid">UID của user</param>
+        /// <returns>Danh sách lịch sử thanh toán</returns>
+        [HttpGet("history/{userUid}")]
+        [Authorize]
+        public async Task<IActionResult> GetPaymentHistory(string userUid)
+        {
+            try
+            {
+                var history = await _paymentService.GetPaymentHistoryAsync(userUid);
+                return Ok(new
+                {
+                    success = true,
+                    data = history
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Callback khi user cancel thanh toán trên PayOS
+        /// </summary>
+        /// <param name="orderCode">Mã đơn hàng</param>
+        /// <returns>Thông báo hủy thanh toán</returns>
+        [HttpGet("cancel-callback")]
+        [AllowAnonymous]
+        public async Task<IActionResult> HandleCancelCallback([FromQuery] long orderCode)
+        {
+            try
+            {
+                await _paymentService.HandlePaymentCancelAsync(orderCode);
+                
+                // Redirect về frontend với message
+                return Redirect($"{Request.Scheme}://localhost:5173/payment/cancelled?orderCode={orderCode}");
+            }
+            catch (Exception ex)
+            {
+                return Redirect($"{Request.Scheme}://localhost:5173/payment/error?message={ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Callback khi user quay lại sau thanh toán (success hoặc không thanh toán)
+        /// </summary>
+        /// <param name="orderCode">Mã đơn hàng</param>
+        /// <returns>Redirect về frontend với trạng thái</returns>
+        [HttpGet("return-callback")]
+        [AllowAnonymous]
+        public async Task<IActionResult> HandleReturnCallback([FromQuery] long orderCode)
+        {
+            try
+            {
+                // Kiểm tra trạng thái từ PayOS
+                var status = await _paymentService.GetPaymentStatusAsync(orderCode);
+                
+                if (status.Status == "PAID")
+                {
+                    return Redirect($"{Request.Scheme}://localhost:5173/payment/success?orderCode={orderCode}");
+                }
+                else
+                {
+                    // Nếu chưa thanh toán → Đánh dấu failed
+                    await _paymentService.HandlePaymentCancelAsync(orderCode);
+                    return Redirect($"{Request.Scheme}://localhost:5173/payment/cancelled?orderCode={orderCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                return Redirect($"{Request.Scheme}://localhost:5173/payment/error?message={ex.Message}");
+            }
+        }
     }
 }

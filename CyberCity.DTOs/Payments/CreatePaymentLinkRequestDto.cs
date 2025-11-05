@@ -6,7 +6,7 @@ namespace CyberCity.DTOs.Payments
     {
         public string UserUid { get; set; }
         public string PlanUid { get; set; }
-        public string? OrgUid { get; set; } // Optional - for organization plans
+        // OrgUid removed - chỉ hỗ trợ thanh toán cá nhân
         public string ReturnUrl { get; set; }
         public string CancelUrl { get; set; }
     }
