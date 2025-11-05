@@ -45,31 +45,19 @@ namespace CyberCity.Application.Implement
             if (_payOSClient != null)
                 return _payOSClient;
 
-            // Support both hierarchical keys (PayOS:ClientId) and flat ENV names (PAYOS_CLIENT_ID)
-            var clientId =
-                _configuration["PayOS:ClientId"]
-                ?? _configuration["PAYOS_CLIENT_ID"]
-                ?? Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID");
-
-            var apiKey =
-                _configuration["PayOS:ApiKey"]
-                ?? _configuration["PAYOS_API_KEY"]
-                ?? Environment.GetEnvironmentVariable("PAYOS_API_KEY");
-
-            var checksumKey =
-                _configuration["PayOS:ChecksumKey"]
-                ?? _configuration["PAYOS_CHECKSUM_KEY"]
-                ?? Environment.GetEnvironmentVariable("PAYOS_CHECKSUM_KEY");
+            var clientId = _configuration["PayOS:ClientId"] ?? Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID");
+            var apiKey = _configuration["PayOS:ApiKey"] ?? Environment.GetEnvironmentVariable("PAYOS_API_KEY");
+            var checksumKey = _configuration["PayOS:ChecksumKey"] ?? Environment.GetEnvironmentVariable("PAYOS_CHECKSUM_KEY");
 
             if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(checksumKey))
-                throw new Exception("PayOS credentials are missing in configuration (PayOS:ClientId/ApiKey/ChecksumKey).");
+                throw new Exception("PayOS credentials missing.");
 
             var options = new PayOSOptions
             {
                 ClientId = clientId,
                 ApiKey = apiKey,
                 ChecksumKey = checksumKey,
-                PartnerCode = _configuration["PayOS:PartnerCode"] ?? _configuration["PAYOS_PARTNER_CODE"] ?? Environment.GetEnvironmentVariable("PAYOS_PARTNER_CODE")
+                BaseUrl = "https://api.payos.vn" // ✅ thêm dòng này
             };
 
             _payOSClient = new PayOSClient(options);
@@ -144,6 +132,15 @@ namespace CyberCity.Application.Implement
                     Items = items
                 };
 
+                // 🔍 DEBUG: Log request trước khi gửi PayOS
+                Console.WriteLine($"[PayOS Request Debug]");
+                Console.WriteLine($"  OrderCode: {paymentRequest.OrderCode} (type: {paymentRequest.OrderCode.GetType().Name})");
+                Console.WriteLine($"  Amount: {paymentRequest.Amount} (type: {paymentRequest.Amount.GetType().Name})");
+                Console.WriteLine($"  Description: {paymentRequest.Description}");
+                Console.WriteLine($"  ReturnUrl: {paymentRequest.ReturnUrl}");
+                Console.WriteLine($"  CancelUrl: {paymentRequest.CancelUrl}");
+                Console.WriteLine($"  Items: [{string.Join(", ", paymentRequest.Items.Select(i => $"{{Name:{i.Name}, Qty:{i.Quantity}, Price:{i.Price}}}"))}]");
+
                 CreatePaymentLinkResponse createPaymentResult;
                 try
                 {
@@ -151,6 +148,7 @@ namespace CyberCity.Application.Implement
                 }
                 catch (ApiException apiEx)
                 {
+                    Console.WriteLine($"[PayOS Error] StatusCode={apiEx.StatusCode}, ErrorCode={apiEx.ErrorCode}, Message={apiEx.Message}");
                     throw new Exception($"PayOS API error ({apiEx.StatusCode}/{apiEx.ErrorCode}): {apiEx.Message}");
                 }
 
