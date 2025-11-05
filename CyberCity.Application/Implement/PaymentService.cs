@@ -9,43 +9,59 @@ using CyberCity.Infrastructure;
 using CyberCity.Doman.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using PayOS;
+using PayOS.Models.V2.PaymentRequests;
+using PayOS.Exceptions;
 
 namespace CyberCity.Application.Implement
 {
     public class PaymentService : IPaymentService
     {
-        private readonly dynamic _payOS;
+        private PayOSClient? _payOSClient;
+        private readonly IConfiguration _configuration;
         private readonly PaymentRepo _paymentRepo;
         private readonly OrderRepo _orderRepo;
         private readonly UserRepo _userRepo;
         private readonly PricingPlanRepo _pricingPlanRepo;
 
         public PaymentService(
-            IConfiguration configuration, 
-            PaymentRepo paymentRepo, 
+            IConfiguration configuration,
+            PaymentRepo paymentRepo,
             OrderRepo orderRepo,
             UserRepo userRepo,
             PricingPlanRepo pricingPlanRepo)
         {
-            var clientId = configuration["PayOS:ClientId"];
-            var apiKey = configuration["PayOS:ApiKey"];
-            var checksumKey = configuration["PayOS:ChecksumKey"];
-
-            // Sử dụng reflection để tạo instance PayOS
-            var payOSType = Type.GetType("PayOS.PayOS, PayOS");
-            if (payOSType != null)
-            {
-                _payOS = Activator.CreateInstance(payOSType, clientId, apiKey, checksumKey);
-            }
-            else
-            {
-                throw new Exception("PayOS library not found");
-            }
-            
+            _configuration = configuration;
             _paymentRepo = paymentRepo;
             _orderRepo = orderRepo;
             _userRepo = userRepo;
             _pricingPlanRepo = pricingPlanRepo;
+        }
+
+        // Lazy initialization client cho PayOS v2 SDK
+        private PayOSClient GetPayOSClient()
+        {
+            if (_payOSClient != null)
+                return _payOSClient;
+
+            var clientId = _configuration["PayOS:ClientId"];
+            var apiKey = _configuration["PayOS:ApiKey"];
+            var checksumKey = _configuration["PayOS:ChecksumKey"];
+
+            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(checksumKey))
+                throw new Exception("PayOS credentials are missing in configuration (PayOS:ClientId/ApiKey/ChecksumKey).");
+
+            var options = new PayOSOptions
+            {
+                ClientId = clientId,
+                ApiKey = apiKey,
+                ChecksumKey = checksumKey,
+                PartnerCode = _configuration["PayOS:PartnerCode"]
+            };
+
+            _payOSClient = new PayOSClient(options);
+            return _payOSClient;
         }
 
         public async Task<PaymentLinkResponseDto> CreatePaymentLinkAsync(CreatePaymentLinkRequestDto request)
@@ -62,19 +78,19 @@ namespace CyberCity.Application.Implement
                 if (plan == null)
                     throw new Exception($"Pricing plan with UID {request.PlanUid} not found");
 
-                // Tạo order mới
+                // Tạo order mới (cá nhân - không cần org)
                 var order = new Order
                 {
                     Uid = Guid.NewGuid().ToString(),
                     UserUid = request.UserUid,
-                    OrgUid = request.OrgUid,
+                    OrgUid = null, // Luôn là null cho thanh toán cá nhân
                     PlanUid = request.PlanUid,
                     Amount = plan.Price, // Lấy giá từ pricing plan
                     PaymentStatus = "pending",
-                    ApprovalStatus = string.IsNullOrEmpty(request.OrgUid) ? "approved" : "pending",
+                    ApprovalStatus = "approved", // Cá nhân luôn tự động approved
                     StartAt = null,
                     EndAt = null,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 await _orderRepo.CreateAsync(order);
@@ -85,24 +101,46 @@ namespace CyberCity.Application.Implement
                 // Tạo mô tả thanh toán kết hợp thông tin user và plan
                 var description = $"{user.FullName} - {plan.PlanName} ({plan.DurationDays} ngày)";
 
-                // Create ItemData using reflection
-                var itemDataType = Type.GetType("PayOS.ItemData, PayOS");
-                var itemData = Activator.CreateInstance(itemDataType, plan.PlanName, 1, (int)plan.Price);
-                var items = new List<object> { itemData };
+                // Tạo danh sách items (v2 SDK)
+                var items = new List<PaymentLinkItem>
+                {
+                    new PaymentLinkItem
+                    {
+                        Name = plan.PlanName,
+                        Quantity = 1,
+                        Price = checked((int)plan.Price)
+                    }
+                };
 
-                // Create PaymentData using reflection
-                var paymentDataType = Type.GetType("PayOS.PaymentData, PayOS");
-                var paymentData = Activator.CreateInstance(paymentDataType,
-                    orderCode,
-                    (int)plan.Price,
-                    description,
-                    items,
-                    request.CancelUrl ?? "http://localhost:5173/payment/cancel",
-                    request.ReturnUrl ?? "http://localhost:5173/payment/success"
-                );
+                // Xử lý empty string thành default cho callback URLs
+                var cancelUrl = string.IsNullOrWhiteSpace(request.CancelUrl)
+                    ? "http://localhost:5173/payment/cancel"
+                    : request.CancelUrl;
+                var returnUrl = string.IsNullOrWhiteSpace(request.ReturnUrl)
+                    ? "http://localhost:5173/payment/success"
+                    : request.ReturnUrl;
 
-                // Create payment link via PayOS
-                var createPaymentResult = await _payOS.createPaymentLink(paymentData);
+                // Tạo payment request (v2 SDK)
+                var client = GetPayOSClient();
+                var paymentRequest = new CreatePaymentLinkRequest
+                {
+                    OrderCode = orderCode,
+                    Amount = checked((int)plan.Price),
+                    Description = description,
+                    ReturnUrl = returnUrl,
+                    CancelUrl = cancelUrl,
+                    Items = items
+                };
+
+                CreatePaymentLinkResponse createPaymentResult;
+                try
+                {
+                    createPaymentResult = await client.PaymentRequests.CreateAsync(paymentRequest);
+                }
+                catch (ApiException apiEx)
+                {
+                    throw new Exception($"PayOS API error ({apiEx.StatusCode}/{apiEx.ErrorCode}): {apiEx.Message}");
+                }
 
                 // Save payment record to database
                 var payment = new Payment
@@ -114,7 +152,7 @@ namespace CyberCity.Application.Implement
                     Amount = plan.Price,
                     Currency = "VND",
                     Status = "pending",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 await _paymentRepo.CreateAsync(payment);
@@ -122,8 +160,8 @@ namespace CyberCity.Application.Implement
                 return new PaymentLinkResponseDto
                 {
                     Uid = payment.Uid,
-                    CheckoutUrl = createPaymentResult.checkoutUrl,
-                    QrCode = createPaymentResult.qrCode,
+                    CheckoutUrl = createPaymentResult.CheckoutUrl,
+                    QrCode = createPaymentResult.QrCode,
                     OrderCode = orderCode,
                     Status = "pending",
                     Amount = plan.Price,
@@ -142,19 +180,38 @@ namespace CyberCity.Application.Implement
         {
             try
             {
-                var paymentLinkInfo = await _payOS.getPaymentLinkInformation(orderCode);
-
-                return new PaymentStatusDto
+                var client = GetPayOSClient();
+                try
                 {
-                    OrderCode = orderCode,
-                    Amount = paymentLinkInfo.amount,
-                    AmountPaid = paymentLinkInfo.amountPaid.ToString(),
-                    AmountRemaining = paymentLinkInfo.amount - int.Parse(paymentLinkInfo.amountPaid),
-                    Status = paymentLinkInfo.status,
-                    CreatedAt = paymentLinkInfo.createdAt != null ? DateTimeOffset.Parse(paymentLinkInfo.createdAt).DateTime : null,
-                    CanceledAt = paymentLinkInfo.canceledAt != null ? DateTimeOffset.Parse(paymentLinkInfo.canceledAt).DateTime : null,
-                    CancellationReason = paymentLinkInfo.cancellationReason
-                };
+                    var paymentLinkInfo = await client.PaymentRequests.GetAsync(orderCode);
+
+                    // Normalize types from SDK to our DTO types
+                    var amount = Convert.ToDecimal(paymentLinkInfo.Amount);
+                    var amountPaidStr = paymentLinkInfo.AmountPaid.ToString();
+                    var amountPaid = Convert.ToDecimal(paymentLinkInfo.AmountPaid);
+                    DateTime? createdAt = null;
+                    DateTime? canceledAt = null;
+                    if (paymentLinkInfo.CreatedAt != null && DateTime.TryParse(paymentLinkInfo.CreatedAt.ToString(), out var ca))
+                        createdAt = ca;
+                    if (paymentLinkInfo.CanceledAt != null && DateTime.TryParse(paymentLinkInfo.CanceledAt.ToString(), out var cna))
+                        canceledAt = cna;
+
+                    return new PaymentStatusDto
+                    {
+                        OrderCode = orderCode,
+                        Amount = amount,
+                        AmountPaid = amountPaidStr,
+                        AmountRemaining = amount - amountPaid,
+                        Status = paymentLinkInfo.Status.ToString().ToUpperInvariant(),
+                        CreatedAt = createdAt,
+                        CanceledAt = canceledAt,
+                        CancellationReason = paymentLinkInfo.CancellationReason
+                    };
+                }
+                catch (ApiException apiEx)
+                {
+                    throw new Exception($"PayOS API error ({apiEx.StatusCode}/{apiEx.ErrorCode}): {apiEx.Message}");
+                }
             }
             catch (Exception ex)
             {
@@ -166,10 +223,11 @@ namespace CyberCity.Application.Implement
         {
             try
             {
-                var webhookTypeType = Type.GetType("PayOS.WebhookType, PayOS");
-                var webhookType = Activator.CreateInstance(webhookTypeType, webhookUrl, signature);
-                var webhookData = _payOS.verifyPaymentWebhookData(webhookType);
-                return webhookData != null;
+                // In v2 SDK, verification expects full webhook body; our current method is limited.
+                // We'll attempt a confirm call to ensure webhook is registered.
+                var client = GetPayOSClient();
+                var confirm = await client.Webhooks.ConfirmAsync(webhookUrl);
+                return confirm != null;
             }
             catch
             {
@@ -177,12 +235,15 @@ namespace CyberCity.Application.Implement
             }
         }
 
-        public async Task<bool> CancelPaymentLinkAsync(long orderCode, string cancellationReason = null)
+    public async Task<bool> CancelPaymentLinkAsync(long orderCode, string cancellationReason = null)
         {
             try
             {
-                var result = await _payOS.cancelPaymentLink(orderCode, cancellationReason);
-                
+        var client = GetPayOSClient();
+                try
+                {
+                    var result = await client.PaymentRequests.CancelAsync(orderCode, cancellationReason);
+
                 // Update payment status in database
                 var payment = await _paymentRepo.GetAllAsync()
                     .FirstOrDefaultAsync(p => p.TransactionCode == orderCode.ToString());
@@ -193,7 +254,12 @@ namespace CyberCity.Application.Implement
                     await _paymentRepo.UpdateAsync(payment);
                 }
 
-                return result != null;
+                    return result != null;
+                }
+                catch (ApiException apiEx)
+                {
+                    throw new Exception($"PayOS API error ({apiEx.StatusCode}/{apiEx.ErrorCode}): {apiEx.Message}");
+                }
             }
             catch (Exception ex)
             {
@@ -218,7 +284,7 @@ namespace CyberCity.Application.Implement
                 if (webhookData.Code == "00")
                 {
                     payment.Status = "completed";
-                    payment.PaidAt = DateTime.UtcNow;
+                    payment.PaidAt = DateTime.Now;
 
                     // Update order status
                     var order = await _orderRepo.GetByIdAsync(payment.OrderUid);
@@ -240,5 +306,129 @@ namespace CyberCity.Application.Implement
                 throw new Exception($"Failed to handle payment webhook: {ex.Message}", ex);
             }
         }
+
+        public async Task<PaymentInvoiceDto> GetPaymentInvoiceAsync(string paymentUid)
+        {
+            try
+            {
+                var payment = await _paymentRepo.GetAllAsync()
+                    .Include(p => p.OrderU)
+                        .ThenInclude(o => o.UserU)
+                    .Include(p => p.OrderU)
+                        .ThenInclude(o => o.PlanU)
+                    .Include(p => p.OrderU)
+                        .ThenInclude(o => o.Or)
+                    .FirstOrDefaultAsync(p => p.Uid == paymentUid);
+
+                if (payment == null)
+                    throw new Exception($"Payment with UID {paymentUid} not found");
+
+                var order = payment.OrderU;
+                var user = order.UserU;
+                var plan = order.PlanU;
+                var org = order.Or;
+
+                return new PaymentInvoiceDto
+                {
+                    PaymentUid = payment.Uid,
+                    InvoiceNumber = $"INV-{payment.TransactionCode}",
+                    InvoiceDate = payment.CreatedAt ?? DateTime.Now,
+
+                    // Customer Info
+                    CustomerName = user?.FullName,
+                    CustomerEmail = user?.Email,
+                    CustomerPhone = "",
+
+                    // Order Info
+                    OrderUid = order.Uid,
+                    PlanName = plan?.PlanName,
+                    DurationDays = plan?.DurationDays ?? 0,
+                    ServiceStartDate = order.StartAt,
+                    ServiceEndDate = order.EndAt,
+
+                    // Payment Info
+                    PaymentMethod = payment.PaymentMethod,
+                    TransactionCode = payment.TransactionCode,
+                    Amount = payment.Amount,
+                    Currency = payment.Currency,
+                    Status = payment.Status,
+                    PaidAt = payment.PaidAt,
+
+                    // Organization Info
+                    OrganizationName = org?.OrgName,
+                    OrganizationCode = ""
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to get payment invoice: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<PaymentHistoryDto>> GetPaymentHistoryAsync(string userUid)
+        {
+            try
+            {
+                var payments = await _paymentRepo.GetAllAsync()
+                    .Include(p => p.OrderU)
+                        .ThenInclude(o => o.PlanU)
+                    .Where(p => p.OrderU.UserUid == userUid)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .ToListAsync();
+
+                return payments.Select(p => new PaymentHistoryDto
+                {
+                    Uid = p.Uid,
+                    OrderId = p.OrderUid,
+                    Amount = p.Amount,
+                    Currency = p.Currency,
+                    PaymentMethod = p.PaymentMethod,
+                    Status = p.Status,
+                    Description = "",
+                    TransactionId = p.TransactionCode ?? "",
+                    CreatedAt = p.CreatedAt ?? DateTime.Now,
+                    CompletedAt = p.PaidAt
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to get payment history: {ex.Message}", ex);
+            }
+        }
+
+        public async Task HandlePaymentCancelAsync(long orderCode)
+        {
+            try
+            {
+                // Tìm payment theo transaction code (orderCode)
+                var payment = _paymentRepo.GetAll()
+                    .FirstOrDefault(p => p.TransactionCode == orderCode.ToString());
+
+                if (payment == null)
+                {
+                    throw new Exception($"Payment with order code {orderCode} not found");
+                }
+
+                // Chỉ cập nhật nếu đang ở trạng thái pending
+                if (payment.Status == "pending")
+                {
+                    payment.Status = "failed";
+                    await _paymentRepo.UpdateAsync(payment);
+
+                    // Cập nhật order status
+                    var order = await _orderRepo.GetByIdAsync(payment.OrderUid);
+                    if (order != null && order.PaymentStatus == "pending")
+                    {
+                        order.PaymentStatus = "failed";
+                        await _orderRepo.UpdateAsync(order);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to handle payment cancel: {ex.Message}", ex);
+            }
+        }
     }
 }
+

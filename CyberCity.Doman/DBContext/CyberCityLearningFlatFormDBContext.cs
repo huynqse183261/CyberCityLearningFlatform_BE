@@ -76,9 +76,9 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
     public virtual DbSet<VwCourseOutline> VwCourseOutlines { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Persist Security Info=True;Password=12345;Username=postgres;Database=CyberCityLearningFlatFormDB;Host=localhost");
+//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+//        => optionsBuilder.UseNpgsql("Persist Security Info=True;Password=12345;Username=postgres;Database=CyberCityLearningFlatFormDB;Host=localhost");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -265,6 +265,8 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
 
             entity.ToTable("courses", "cybercity");
 
+            entity.HasIndex(e => e.Slug, "ix_courses_slug");
+
             entity.Property(e => e.Uid)
                 .HasMaxLength(50)
                 .HasColumnName("uid");
@@ -280,6 +282,9 @@ public partial class CyberCityLearningFlatFormDBContext : DbContext
             entity.Property(e => e.Level)
                 .HasMaxLength(50)
                 .HasColumnName("level");
+            entity.Property(e => e.Slug)
+                .HasMaxLength(100)
+                .HasColumnName("slug");
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasMaxLength(255)
