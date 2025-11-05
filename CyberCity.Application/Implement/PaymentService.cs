@@ -48,7 +48,7 @@ namespace CyberCity.Application.Implement
             var clientId = _configuration["PayOS:ClientId"] ?? Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID");
             var apiKey = _configuration["PayOS:ApiKey"] ?? Environment.GetEnvironmentVariable("PAYOS_API_KEY");
             var checksumKey = _configuration["PayOS:ChecksumKey"] ?? Environment.GetEnvironmentVariable("PAYOS_CHECKSUM_KEY");
-            var baseUrl = _configuration["PayOS:BaseUrl"] ?? Environment.GetEnvironmentVariable("PAYOS_BASEURL") ?? "https://api.payos.vn";
+            var baseUrl = _configuration["PayOS:BaseUrl"] ?? Environment.GetEnvironmentVariable("PAYOS_BASEURL") ?? "https://api-merchant.payos.vn";
 
 
             if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(checksumKey))
@@ -64,28 +64,6 @@ namespace CyberCity.Application.Implement
 
             _payOSClient = new PayOSClient(options);
             return _payOSClient;
-        }
-
-        // Helper: Sanitize string to remove problematic Unicode/special chars for PayOS
-        private string SanitizeString(string input)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-                return string.Empty;
-            
-            // Remove or replace problematic Vietnamese chars and special symbols
-            var sanitized = input
-                .Replace("đ", "d").Replace("Đ", "D")
-                .Trim();
-            
-            // Keep only alphanumeric, spaces, hyphens, and basic punctuation
-            return new string(sanitized.Where(c => 
-                char.IsLetterOrDigit(c) || 
-                char.IsWhiteSpace(c) || 
-                c == '-' || 
-                c == '_' || 
-                c == '(' || 
-                c == ')'
-            ).ToArray());
         }
 
         public async Task<PaymentLinkResponseDto> CreatePaymentLinkAsync(CreatePaymentLinkRequestDto request)
@@ -119,17 +97,11 @@ namespace CyberCity.Application.Implement
 
                 await _orderRepo.CreateAsync(order);
 
-                // Generate unique order code (PayOS requires a long integer, add random to avoid collision)
-                var orderCode = DateTimeOffset.Now.ToUnixTimeMilliseconds() + new Random().Next(100, 999);
+                // Generate unique order code (PayOS requires a long integer)
+                var orderCode = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-                // Validate amount (must be integer, >= 1000 VND for PayOS)
-                if (plan.Price < 1000)
-                    throw new Exception($"Plan price must be at least 1000 VND (current: {plan.Price})");
-                if (plan.Price > int.MaxValue)
-                    throw new Exception($"Plan price exceeds maximum allowed value ({int.MaxValue})");
-
-                // Sanitize description (remove special chars that might cause encoding issues)
-                var description = $"{SanitizeString(user.FullName)} - {SanitizeString(plan.PlanName)} ({plan.DurationDays} days)";
+                // Tạo mô tả thanh toán kết hợp thông tin user và plan
+                var description = $"{user.FullName} - {plan.PlanName} ({plan.DurationDays} ngày)";
 
                 // Tạo danh sách items (v2 SDK)
                 var items = new List<PaymentLinkItem>
@@ -142,19 +114,11 @@ namespace CyberCity.Application.Implement
                     }
                 };
 
-                // Validate callback URLs (bắt buộc phải có từ FE và phải là URL hợp lệ)
+                // Validate callback URLs (bắt buộc phải có từ FE)
                 if (string.IsNullOrWhiteSpace(request.CancelUrl))
                     throw new Exception("CancelUrl is required");
                 if (string.IsNullOrWhiteSpace(request.ReturnUrl))
                     throw new Exception("ReturnUrl is required");
-                
-                if (!Uri.TryCreate(request.ReturnUrl, UriKind.Absolute, out var returnUri) || 
-                    (returnUri.Scheme != "http" && returnUri.Scheme != "https"))
-                    throw new Exception("ReturnUrl must be a valid HTTP/HTTPS URL");
-                
-                if (!Uri.TryCreate(request.CancelUrl, UriKind.Absolute, out var cancelUri) || 
-                    (cancelUri.Scheme != "http" && cancelUri.Scheme != "https"))
-                    throw new Exception("CancelUrl must be a valid HTTP/HTTPS URL");
 
                 var cancelUrl = request.CancelUrl;
                 var returnUrl = request.ReturnUrl;
