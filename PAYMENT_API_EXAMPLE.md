@@ -32,7 +32,6 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 {
   "userUid": "550e8400-e29b-41d4-a716-446655440000",
   "planUid": "660e8400-e29b-41d4-a716-446655440001",
-  "orgUid": "770e8400-e29b-41d4-a716-446655440002",  // Optional - chỉ cần khi mua gói cho organization
   "returnUrl": "https://yourapp.com/payment/success",
   "cancelUrl": "https://yourapp.com/payment/cancel"
 }
@@ -101,30 +100,25 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 
 **Authorization:** None (Public endpoint for PayOS)
 
-**Request Body:** (Tự động gửi từ PayOS)
+**Request Body:** (Tự động gửi từ PayOS – định dạng phẳng theo DTO hiện tại)
 ```json
 {
+  "orderCode": 1730678400123,
+  "amount": 299000,
+  "description": "Nguyễn Văn A - Gói Premium (30 ngày)",
+  "accountNumber": "12345678",
+  "reference": "FT12345678",
+  "transactionDateTime": "2024-11-03T10:35:00Z",
+  "currency": "VND",
+  "paymentLinkId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "code": "00",
   "desc": "Thành công",
-  "data": {
-    "orderCode": 1730678400123,
-    "amount": 299000,
-    "description": "Nguyễn Văn A - Gói Premium (30 ngày)",
-    "accountNumber": "12345678",
-    "reference": "FT12345678",
-    "transactionDateTime": "2024-11-03T10:35:00Z",
-    "currency": "VND",
-    "paymentLinkId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    "code": "00",
-    "desc": "Thành công",
-    "counterAccountBankId": "",
-    "counterAccountBankName": "",
-    "counterAccountName": "",
-    "counterAccountNumber": "",
-    "virtualAccountName": "",
-    "virtualAccountNumber": ""
-  },
-  "signature": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  "counterAccountBankId": "",
+  "counterAccountBankName": "",
+  "counterAccountName": "",
+  "counterAccountNumber": "",
+  "virtualAccountName": "",
+  "virtualAccountNumber": ""
 }
 ```
 
@@ -146,13 +140,7 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 
 **Parameters:**
 - `orderCode` (path parameter): Mã đơn hàng PayOS
-
-**Request Body:**
-```json
-{
-  "cancellationReason": "Khách hàng hủy đơn hàng"
-}
-```
+- `reason` (query parameter – optional): Lý do hủy
 
 **Response Success (200 OK):**
 ```json
@@ -213,7 +201,6 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 interface CreatePaymentRequest {
   userUid: string;
   planUid: string;
-  orgUid?: string;
   returnUrl: string;
   cancelUrl: string;
 }
@@ -258,7 +245,7 @@ const createPayment = async (userId: string, planId: string) => {
 ### 1. Tạo Payment Link
 
 ```bash
-POST http://localhost:5000/api/payment/create-payment-link
+POST https://localhost:7168/api/payment/create-payment-link
 Authorization: Bearer YOUR_JWT_TOKEN
 Content-Type: application/json
 
@@ -273,7 +260,7 @@ Content-Type: application/json
 ### 2. Kiểm tra Status
 
 ```bash
-GET http://localhost:5000/api/payment/status/1730678400123
+GET https://localhost:7168/api/payment/status/1730678400123
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 

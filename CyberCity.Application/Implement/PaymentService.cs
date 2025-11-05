@@ -45,9 +45,21 @@ namespace CyberCity.Application.Implement
             if (_payOSClient != null)
                 return _payOSClient;
 
-            var clientId = _configuration["PayOS:ClientId"];
-            var apiKey = _configuration["PayOS:ApiKey"];
-            var checksumKey = _configuration["PayOS:ChecksumKey"];
+            // Support both hierarchical keys (PayOS:ClientId) and flat ENV names (PAYOS_CLIENT_ID)
+            var clientId =
+                _configuration["PayOS:ClientId"]
+                ?? _configuration["PAYOS_CLIENT_ID"]
+                ?? Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID");
+
+            var apiKey =
+                _configuration["PayOS:ApiKey"]
+                ?? _configuration["PAYOS_API_KEY"]
+                ?? Environment.GetEnvironmentVariable("PAYOS_API_KEY");
+
+            var checksumKey =
+                _configuration["PayOS:ChecksumKey"]
+                ?? _configuration["PAYOS_CHECKSUM_KEY"]
+                ?? Environment.GetEnvironmentVariable("PAYOS_CHECKSUM_KEY");
 
             if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(checksumKey))
                 throw new Exception("PayOS credentials are missing in configuration (PayOS:ClientId/ApiKey/ChecksumKey).");
@@ -57,7 +69,7 @@ namespace CyberCity.Application.Implement
                 ClientId = clientId,
                 ApiKey = apiKey,
                 ChecksumKey = checksumKey,
-                PartnerCode = _configuration["PayOS:PartnerCode"]
+                PartnerCode = _configuration["PayOS:PartnerCode"] ?? _configuration["PAYOS_PARTNER_CODE"] ?? Environment.GetEnvironmentVariable("PAYOS_PARTNER_CODE")
             };
 
             _payOSClient = new PayOSClient(options);
