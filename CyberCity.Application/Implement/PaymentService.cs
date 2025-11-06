@@ -2,69 +2,40 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using CyberCity.Application.Interface;
 using CyberCity.DTOs.Payments;
 using CyberCity.Infrastructure;
 using CyberCity.Doman.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
-using PayOS;
-using PayOS.Models.V2.PaymentRequests;
-using PayOS.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace CyberCity.Application.Implement
 {
     public class PaymentService : IPaymentService
     {
-        private PayOSClient? _payOSClient;
         private readonly IConfiguration _configuration;
         private readonly PaymentRepo _paymentRepo;
         private readonly OrderRepo _orderRepo;
         private readonly UserRepo _userRepo;
         private readonly PricingPlanRepo _pricingPlanRepo;
+        private readonly ILogger<PaymentService> _logger;
 
         public PaymentService(
             IConfiguration configuration,
             PaymentRepo paymentRepo,
             OrderRepo orderRepo,
             UserRepo userRepo,
-            PricingPlanRepo pricingPlanRepo)
+            PricingPlanRepo pricingPlanRepo,
+            ILogger<PaymentService> logger)
         {
             _configuration = configuration;
             _paymentRepo = paymentRepo;
             _orderRepo = orderRepo;
             _userRepo = userRepo;
             _pricingPlanRepo = pricingPlanRepo;
-        }
-
-        private PayOSClient GetPayOSClient()
-        {
-            if (_payOSClient != null) return _payOSClient;
-
-            var clientId = _configuration["PayOS:ClientId"] ?? Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID");
-            var apiKey = _configuration["PayOS:ApiKey"] ?? Environment.GetEnvironmentVariable("PAYOS_API_KEY");
-            var checksumKey = _configuration["PayOS:ChecksumKey"] ?? Environment.GetEnvironmentVariable("PAYOS_CHECKSUM_KEY");
-            var baseUrl = _configuration["PayOS:BaseUrl"] ?? Environment.GetEnvironmentVariable("PAYOS_BASEURL") ?? "https://api-merchant.payos.vn";
-
-            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(checksumKey))
-                throw new Exception("PayOS credentials missing.");
-
-            var options = new PayOSOptions
-            {
-                ClientId = clientId,
-                ApiKey = apiKey,
-                ChecksumKey = checksumKey,
-                BaseUrl = baseUrl
-            };
-
-            _payOSClient = new PayOSClient(options);
-            return _payOSClient;
-        }
-
-        private string SanitizeString(string input)
-        {
-            // Chỉ giữ ký tự ASCII từ 32–126
-            return new string(input.Where(c => c >= 32 && c <= 126).ToArray());
+            _logger = logger;
         }
 
         public async Task<PaymentLinkResponseDto> CreatePaymentLinkAsync(CreatePaymentLinkRequestDto request)
@@ -92,54 +63,60 @@ namespace CyberCity.Application.Implement
                 };
                 await _orderRepo.CreateAsync(order);
 
-                // Unique order code
-                var orderCode = DateTimeOffset.Now.ToUnixTimeMilliseconds() + new Random().Next(1, 999);
-
-                var description = SanitizeString($"{user.FullName}_{plan.PlanName}_{plan.DurationDays}days");
-                var items = new List<PaymentLinkItem>
+                // Lấy cấu hình Sepay
+                var bankCode = _configuration["Sepay:BankCode"];
+                var accountNumber = _configuration["Sepay:AccountNumber"];
+                
+                if (string.IsNullOrWhiteSpace(bankCode) || string.IsNullOrWhiteSpace(accountNumber))
                 {
-                    new PaymentLinkItem
+                    throw new Exception("Thiếu cấu hình Sepay:BankCode hoặc Sepay:AccountNumber");
+                }
+
+                // Kiểm tra nếu có QR code PENDING chưa hết hạn cho order này (idempotent)
+                var existingPayments = await _paymentRepo.GetAllAsync()
+                    .Where(p => p.OrderUid == order.Uid && 
+                               p.Status == "pending" && 
+                               p.PaymentMethod == "SEPAY")
+                    .OrderByDescending(p => p.CreatedAt)
+                    .ToListAsync();
+
+                // Tái sử dụng payment còn hiệu lực (nếu có)
+                var existingPayment = existingPayments.FirstOrDefault();
+                if (existingPayment != null && existingPayment.TransactionCode != null)
+                {
+                    // Tạo lại QR URL từ TransactionCode (GatewayOrderCode)
+                    var existingGatewayOrderCode = existingPayment.TransactionCode;
+                    var qrImageUrl = GenerateSepayQrUrl(bankCode, accountNumber, plan.Price, existingGatewayOrderCode);
+
+                    return new PaymentLinkResponseDto
                     {
-                        Name = SanitizeString(plan.PlanName),
-                        Quantity = 1,
-                        Price = checked((int)plan.Price)
-                    }
-                };
-
-                if (string.IsNullOrWhiteSpace(request.CancelUrl)) throw new Exception("CancelUrl is required");
-                if (string.IsNullOrWhiteSpace(request.ReturnUrl)) throw new Exception("ReturnUrl is required");
-
-                var client = GetPayOSClient();
-                var paymentRequest = new CreatePaymentLinkRequest
-                {
-                    OrderCode = orderCode,
-                    Amount = checked((int)plan.Price),
-                    Description = description,
-                    ReturnUrl = request.ReturnUrl,
-                    CancelUrl = request.CancelUrl,
-                    Items = items
-                };
-
-                // Debug log
-                Console.WriteLine($"[PayOS Request Debug] OrderCode={paymentRequest.OrderCode}, Amount={paymentRequest.Amount}, Description={paymentRequest.Description}");
-
-                CreatePaymentLinkResponse createPaymentResult;
-                try
-                {
-                    createPaymentResult = await client.PaymentRequests.CreateAsync(paymentRequest);
-                }
-                catch (ApiException apiEx)
-                {
-                    Console.WriteLine($"[PayOS Error] StatusCode={apiEx.StatusCode}, ErrorCode={apiEx.ErrorCode}, Message={apiEx.Message}");
-                    throw new Exception($"PayOS API error ({apiEx.StatusCode}/{apiEx.ErrorCode}): {apiEx.Message}");
+                        Uid = existingPayment.Uid,
+                        CheckoutUrl = qrImageUrl, // QR URL
+                        QrCode = qrImageUrl, // QR URL
+                        OrderCode = long.Parse(existingGatewayOrderCode.Split('-').LastOrDefault() ?? "0"),
+                        Status = "pending",
+                        Amount = plan.Price,
+                        Description = $"{user.FullName}_{plan.PlanName}_{plan.DurationDays}days",
+                        UserName = user.FullName,
+                        PlanName = plan.PlanName
+                    };
                 }
 
+                // Tạo mới GatewayOrderCode: ORD{OrderUid}-{GUID}
+                var orderUidShort = order.Uid.Substring(0, Math.Min(8, order.Uid.Length));
+                var gatewayOrderCode = $"ORD{orderUidShort}-{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+                var addInfo = $"CYBERCITY-{gatewayOrderCode}";
+
+                // Tạo QR URL theo format Sepay: https://qr.sepay.vn/img?acc={accountNumber}&bank={bankCode}&amount={amount}&des={description}
+                var qrUrl = GenerateSepayQrUrl(bankCode, accountNumber, plan.Price, addInfo);
+
+                // Tạo payment record
                 var payment = new Payment
                 {
                     Uid = Guid.NewGuid().ToString(),
                     OrderUid = order.Uid,
-                    PaymentMethod = "PayOS",
-                    TransactionCode = orderCode.ToString(),
+                    PaymentMethod = "SEPAY",
+                    TransactionCode = gatewayOrderCode, // Lưu GatewayOrderCode vào TransactionCode
                     Amount = plan.Price,
                     Currency = "VND",
                     Status = "pending",
@@ -147,60 +124,65 @@ namespace CyberCity.Application.Implement
                 };
                 await _paymentRepo.CreateAsync(payment);
 
+                _logger.LogInformation("Created Sepay QR payment - PaymentUid: {PaymentUid}, GatewayOrderCode: {GatewayOrderCode}, Amount: {Amount}",
+                    payment.Uid, gatewayOrderCode, plan.Price);
+
                 return new PaymentLinkResponseDto
                 {
                     Uid = payment.Uid,
-                    CheckoutUrl = createPaymentResult.CheckoutUrl,
-                    QrCode = createPaymentResult.QrCode,
-                    OrderCode = orderCode,
+                    CheckoutUrl = qrUrl, // QR URL
+                    QrCode = qrUrl, // QR URL
+                    OrderCode = long.Parse(gatewayOrderCode.Split('-').LastOrDefault() ?? "0"),
                     Status = "pending",
                     Amount = plan.Price,
-                    Description = description,
+                    Description = $"{user.FullName}_{plan.PlanName}_{plan.DurationDays}days",
                     UserName = user.FullName,
                     PlanName = plan.PlanName
                 };
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to create Sepay payment link");
                 throw new Exception($"Failed to create payment link: {ex.Message}", ex);
             }
+        }
+
+        private string GenerateSepayQrUrl(string bankCode, string accountNumber, decimal amount, string description)
+        {
+            // Format QR URL: https://qr.sepay.vn/img?acc={accountNumber}&bank={bankCode}&amount={amount}&des={description}
+            var vndInt = (long)Math.Round(amount, 0, MidpointRounding.AwayFromZero);
+            return $"https://qr.sepay.vn/img?acc={Uri.EscapeDataString(accountNumber)}&bank={Uri.EscapeDataString(bankCode)}&amount={vndInt}&des={Uri.EscapeDataString(description)}";
         }
 
         public async Task<PaymentStatusDto> GetPaymentStatusAsync(long orderCode)
         {
             try
             {
-                var client = GetPayOSClient();
-                var paymentLinkInfo = await client.PaymentRequests.GetAsync(orderCode);
+                // Tìm payment theo orderCode (từ TransactionCode/GatewayOrderCode)
+                var payment = await _paymentRepo.GetAllAsync()
+                    .FirstOrDefaultAsync(p => p.TransactionCode != null && 
+                                             p.TransactionCode.Contains(orderCode.ToString()));
 
-                var amount = Convert.ToDecimal(paymentLinkInfo.Amount);
-                var amountPaid = Convert.ToDecimal(paymentLinkInfo.AmountPaid);
+                if (payment == null)
+                    throw new Exception($"Payment with order code {orderCode} not found");
 
-                DateTime? createdAt = null;
-                DateTime? canceledAt = null;
-                if (paymentLinkInfo.CreatedAt != null && DateTime.TryParse(paymentLinkInfo.CreatedAt.ToString(), out var ca))
-                    createdAt = ca;
-                if (paymentLinkInfo.CanceledAt != null && DateTime.TryParse(paymentLinkInfo.CanceledAt.ToString(), out var cna))
-                    canceledAt = cna;
+                var amountPaid = payment.Status == "completed" || payment.Status == "paid" ? payment.Amount : 0m;
 
                 return new PaymentStatusDto
                 {
                     OrderCode = orderCode,
-                    Amount = amount,
-                    AmountPaid = paymentLinkInfo.AmountPaid.ToString(),
-                    AmountRemaining = amount - amountPaid,
-                    Status = paymentLinkInfo.Status.ToString().ToUpperInvariant(),
-                    CreatedAt = createdAt,
-                    CanceledAt = canceledAt,
-                    CancellationReason = paymentLinkInfo.CancellationReason
+                    Amount = payment.Amount,
+                    AmountPaid = amountPaid.ToString(),
+                    AmountRemaining = payment.Amount - amountPaid,
+                    Status = payment.Status?.ToUpperInvariant() ?? "PENDING",
+                    CreatedAt = payment.CreatedAt,
+                    CanceledAt = payment.Status == "cancelled" || payment.Status == "failed" ? payment.PaidAt : null,
+                    CancellationReason = null
                 };
-            }
-            catch (ApiException apiEx)
-            {
-                throw new Exception($"PayOS API error ({apiEx.StatusCode}/{apiEx.ErrorCode}): {apiEx.Message}");
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to get payment status for orderCode: {OrderCode}", orderCode);
                 throw new Exception($"Failed to get payment status: {ex.Message}", ex);
             }
         }
@@ -209,62 +191,179 @@ namespace CyberCity.Application.Implement
         {
             try
             {
-                var client = GetPayOSClient();
-                var result = await client.PaymentRequests.CancelAsync(orderCode, cancellationReason);
-
+                // Tìm payment theo orderCode
                 var payment = await _paymentRepo.GetAllAsync()
-                    .FirstOrDefaultAsync(p => p.TransactionCode == orderCode.ToString());
+                    .FirstOrDefaultAsync(p => p.TransactionCode != null && 
+                                             p.TransactionCode.Contains(orderCode.ToString()));
 
-                if (payment != null)
+                if (payment == null)
+                    throw new Exception($"Payment with order code {orderCode} not found");
+
+                if (payment.Status == "pending")
                 {
                     payment.Status = "cancelled";
                     await _paymentRepo.UpdateAsync(payment);
+
+                    var order = await _orderRepo.GetByIdAsync(payment.OrderUid);
+                    if (order != null && order.PaymentStatus == "pending")
+                    {
+                        order.PaymentStatus = "failed";
+                        await _orderRepo.UpdateAsync(order);
+                    }
+
+                    return true;
                 }
 
-                return result != null;
-            }
-            catch (ApiException apiEx)
-            {
-                throw new Exception($"PayOS API error ({apiEx.StatusCode}/{apiEx.ErrorCode}): {apiEx.Message}");
+                return false;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to cancel payment link for orderCode: {OrderCode}", orderCode);
                 throw new Exception($"Failed to cancel payment link: {ex.Message}", ex);
             }
         }
 
         public async Task HandlePaymentWebhookAsync(PaymentWebhookDto webhookData)
         {
+            // Method này được giữ lại để tương thích với interface, nhưng sẽ được gọi từ ProcessSepayWebhookAsync
+            // Webhook từ Sepay sẽ được xử lý riêng qua ProcessSepayWebhookAsync
+            await Task.CompletedTask;
+        }
+
+        public async Task<bool> ProcessSepayWebhookAsync(string authorizationHeader, string payloadJson)
+        {
             try
             {
-                var payment = await _paymentRepo.GetAllAsync()
-                    .FirstOrDefaultAsync(p => p.TransactionCode == webhookData.OrderCode.ToString());
-
-                if (payment == null)
-                    throw new Exception($"Payment with order code {webhookData.OrderCode} not found");
-
-                if (webhookData.Code == "00")
+                // Verify webhook token
+                var expectedToken = _configuration["Sepay:WebhookToken"];
+                if (!string.IsNullOrEmpty(expectedToken))
                 {
-                    payment.Status = "completed";
-                    payment.PaidAt = DateTime.Now;
-
-                    var order = await _orderRepo.GetByIdAsync(payment.OrderUid);
-                    if (order != null)
+                    var expectedHeader = $"Apikey {expectedToken}";
+                    if (!string.Equals(authorizationHeader, expectedHeader, StringComparison.Ordinal))
                     {
-                        order.PaymentStatus = "paid";
-                        await _orderRepo.UpdateAsync(order);
+                        _logger.LogWarning("Invalid Sepay webhook authorization header");
+                        return false;
                     }
                 }
-                else
+
+                // Parse webhook payload
+                using var doc = System.Text.Json.JsonDocument.Parse(payloadJson);
+                var root = doc.RootElement;
+
+                var sepayId = root.TryGetProperty("id", out var idProp) ? idProp.GetInt32() : (int?)null;
+                var amount = root.TryGetProperty("amount", out var amountProp) 
+                    ? amountProp.GetDecimal() 
+                    : root.TryGetProperty("transferAmount", out var taProp) 
+                        ? taProp.GetDecimal() 
+                        : 0m;
+                var description = root.TryGetProperty("description", out var descProp) 
+                    ? descProp.GetString() 
+                    : root.TryGetProperty("content", out var cProp) 
+                        ? cProp.GetString() 
+                        : string.Empty;
+                var transactionRef = root.TryGetProperty("transaction_code", out var trProp) 
+                    ? trProp.GetString() 
+                    : root.TryGetProperty("transId", out var tr2) 
+                        ? tr2.GetString() 
+                        : root.TryGetProperty("referenceCode", out var refProp) 
+                            ? refProp.GetString() 
+                            : null;
+
+                _logger.LogInformation("Sepay webhook received - SepayId: {SepayId}, Description: {Description}, TransactionRef: {TransactionRef}, Amount: {Amount}",
+                    sepayId, description, transactionRef, amount);
+
+                // Tìm payment theo GatewayOrderCode từ description
+                string? gatewayOrderCode = null;
+                string? guidPart = null;
+                
+                if (!string.IsNullOrEmpty(description))
                 {
-                    payment.Status = "failed";
+                    // Tìm format: "CYBERCITY-ORD{uid}-{guid}" hoặc biến thể
+                    var fullMatch = Regex.Match(description, @"CYBERCITY[-:\s]?(ORD[A-Za-z0-9]+[-_]?)([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
+                    if (fullMatch.Success)
+                    {
+                        var orderPart = fullMatch.Groups[1].Value.Replace("-", "").Replace("_", "");
+                        var guidPortion = fullMatch.Groups[2].Value;
+                        gatewayOrderCode = $"{orderPart}-{guidPortion.Substring(0, Math.Min(8, guidPortion.Length))}";
+                        guidPart = guidPortion.Substring(0, Math.Min(8, guidPortion.Length));
+                    }
+                    else
+                    {
+                        // Fallback: tìm GUID part
+                        var guidMatch = Regex.Match(description, @"ORD[A-Za-z0-9]+([A-Za-z0-9]{8})", RegexOptions.IgnoreCase);
+                        if (guidMatch.Success)
+                        {
+                            guidPart = guidMatch.Groups[1].Value;
+                        }
+                    }
+                }
+
+                // Tìm payment
+                Payment? payment = null;
+                if (!string.IsNullOrEmpty(gatewayOrderCode))
+                {
+                    payment = await _paymentRepo.GetAllAsync()
+                        .FirstOrDefaultAsync(p => p.TransactionCode == gatewayOrderCode);
+                }
+
+                // Tìm theo GUID suffix
+                if (payment == null && !string.IsNullOrEmpty(guidPart))
+                {
+                    var allPending = await _paymentRepo.GetAllAsync()
+                        .Where(p => p.Status == "pending" && 
+                                   p.PaymentMethod == "SEPAY" &&
+                                   !string.IsNullOrEmpty(p.TransactionCode) &&
+                                   p.TransactionCode.EndsWith(guidPart, StringComparison.OrdinalIgnoreCase))
+                        .ToListAsync();
+                    payment = allPending.FirstOrDefault();
+                }
+
+                // Tìm theo Sepay ID
+                if (payment == null && sepayId.HasValue)
+                {
+                    var sepayIdStr = $"SEPAY-{sepayId.Value}";
+                    payment = await _paymentRepo.GetAllAsync()
+                        .FirstOrDefaultAsync(p => p.TransactionCode == sepayIdStr);
+                }
+
+                if (payment == null)
+                {
+                    _logger.LogWarning("Payment not found - GatewayOrderCode: {GatewayOrderCode}, GuidPart: {GuidPart}, TransactionRef: {TransactionRef}, SepayId: {SepayId}",
+                        gatewayOrderCode, guidPart, transactionRef, sepayId);
+                    return false;
+                }
+
+                _logger.LogInformation("Found payment {PaymentUid} with GatewayOrderCode: {GatewayOrderCode}",
+                    payment.Uid, payment.TransactionCode);
+
+                // Kiểm tra đã xử lý chưa (idempotency)
+                if (payment.Status == "completed" || payment.Status == "paid")
+                {
+                    _logger.LogInformation("Payment {PaymentUid} already processed", payment.Uid);
+                    return true;
+                }
+
+                // Cập nhật payment status
+                payment.Status = "completed";
+                payment.PaidAt = DateTime.Now;
+
+                // Cập nhật order
+                var order = await _orderRepo.GetByIdAsync(payment.OrderUid);
+                if (order != null)
+                {
+                    order.PaymentStatus = "paid";
+                    await _orderRepo.UpdateAsync(order);
                 }
 
                 await _paymentRepo.UpdateAsync(payment);
+
+                _logger.LogInformation("Payment {PaymentUid} processed successfully", payment.Uid);
+                return true;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to handle payment webhook: {ex.Message}", ex);
+                _logger.LogError(ex, "ProcessSepayWebhookAsync error");
+                return false;
             }
         }
 
@@ -379,16 +478,10 @@ namespace CyberCity.Application.Implement
 
         public async Task<bool> VerifyWebhookSignatureAsync(string webhookUrl, string signature)
         {
-            try
-            {
-                var client = GetPayOSClient();
-                var confirm = await client.Webhooks.ConfirmAsync(webhookUrl);
-                return confirm != null;
-            }
-            catch
-            {
-                return false;
-            }
+            // Sepay sử dụng Apikey header để verify, không cần verify signature như PayOS
+            // Method này được giữ lại để tương thích với interface
+            await Task.CompletedTask;
+            return true;
         }
     }
 }

@@ -1,7 +1,7 @@
-# PayOS Payment Integration - API Documentation
+# Sepay Payment Integration - API Documentation
 
 ## Tổng quan
-API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Learning Platform.
+API tích hợp Sepay để xử lý thanh toán qua QR Code cho hệ thống CyberCity Learning Platform.
 
 ## Flow thanh toán
 
@@ -10,20 +10,30 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
    - Lấy thông tin User từ database
    - Lấy thông tin Pricing Plan từ database (bao gồm giá tiền)
    - Tạo Order mới với trạng thái `pending`
-   - Tạo Payment Link trên PayOS
-   - Lưu Payment record vào database
-3. **Server trả về** link thanh toán + QR code
-4. **User thanh toán** qua PayOS
-5. **PayOS gửi webhook** về server
+   - Tạo QR Code URL từ Sepay (format: `https://qr.sepay.vn/img?acc={accountNumber}&bank={bankCode}&amount={amount}&des={description}`)
+   - Tạo GatewayOrderCode: `ORD{orderUid}-{GUID}`
+   - Lưu Payment record vào database với PaymentMethod = "SEPAY"
+3. **Server trả về** QR Code URL
+4. **User quét QR code** và thanh toán qua ứng dụng ngân hàng
+5. **Sepay gửi webhook** về server khi thanh toán thành công
 6. **Server cập nhật** trạng thái Order và Payment
 
 ---
 
 ## API Endpoints
 
-### 1. Tạo Link Thanh Toán
+### 📋 Tóm tắt nhanh:
+
+- **Endpoint 1 - Tạo QR Code**: Client gọi → Server tạo QR Code URL → Trả về cho Client
+- **Endpoint 3 - Webhook/Callback**: Sepay gọi → Server nhận thông báo thanh toán → Tự động cập nhật trạng thái
+
+---
+
+### 1. Tạo QR Code Thanh Toán (Client gọi)
 
 **Endpoint:** `POST /api/payment/create-payment-link`
+
+**Mục đích:** Client gọi endpoint này để tạo QR Code URL cho user quét và thanh toán.
 
 **Authorization:** Bearer Token (Required)
 
@@ -31,11 +41,11 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 ```json
 {
   "userUid": "550e8400-e29b-41d4-a716-446655440000",
-  "planUid": "660e8400-e29b-41d4-a716-446655440001",
-  "returnUrl": "https://yourapp.com/payment/success",
-  "cancelUrl": "https://yourapp.com/payment/cancel"
+  "planUid": "660e8400-e29b-41d4-a716-446655440001"
 }
 ```
+
+**Lưu ý:** Sepay không hỗ trợ redirect flow như PayOS, nên không cần `returnUrl` và `cancelUrl`.
 
 **Response Success (200 OK):**
 ```json
@@ -43,18 +53,24 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
   "success": true,
   "data": {
     "uid": "880e8400-e29b-41d4-a716-446655440003",
-    "checkoutUrl": "https://pay.payos.vn/web/xxxxxxxxxxxx",
-    "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
-    "orderCode": 1730678400123,
+    "checkoutUrl": "https://qr.sepay.vn/img?acc=1234567890&bank=VCB&amount=299000&des=CYBERCITY-ORD550e8400-12345678",
+    "qrCode": "https://qr.sepay.vn/img?acc=1234567890&bank=VCB&amount=299000&des=CYBERCITY-ORD550e8400-12345678",
+    "orderCode": 12345678,
     "status": "pending",
     "amount": 299000,
-    "description": "Nguyễn Văn A - Gói Premium (30 ngày)",
+    "description": "Nguyễn_Văn_A_Gói_Premium_30days",
     "userName": "Nguyễn Văn A",
     "planName": "Gói Premium"
   },
   "message": "Tạo link thanh toán thành công"
 }
 ```
+
+**Lưu ý:**
+- `checkoutUrl` và `qrCode` là cùng một QR Code URL từ Sepay
+- `orderCode` là phần cuối của GatewayOrderCode (sau dấu `-`)
+- `description` trong response: `{userName}_{planName}_{durationDays}days`
+- `description` trong QR URL: `CYBERCITY-{GatewayOrderCode}` (dùng để track payment)
 
 **Response Error (400 Bad Request):**
 ```json
@@ -73,14 +89,14 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 **Authorization:** Bearer Token (Required)
 
 **Parameters:**
-- `orderCode` (path parameter): Mã đơn hàng PayOS (long integer)
+- `orderCode` (path parameter): Mã đơn hàng (phần cuối của GatewayOrderCode, long integer)
 
 **Response Success (200 OK):**
 ```json
 {
   "success": true,
   "data": {
-    "orderCode": 1730678400123,
+    "orderCode": 12345678,
     "amount": 299000,
     "amountPaid": "299000",
     "amountRemaining": 0,
@@ -94,33 +110,44 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 
 ---
 
-### 3. Webhook từ PayOS
+### 3. Webhook/Callback từ Sepay (Sepay gọi về server)
 
-**Endpoint:** `POST /api/payment/webhook`
+**Endpoint:** `POST /api/payment/webhook` hoặc `POST /api/payment/webhook/sepay`
 
-**Authorization:** None (Public endpoint for PayOS)
+**Mục đích:** Sepay tự động gọi endpoint này khi thanh toán thành công để thông báo cho server.
 
-**Request Body:** (Tự động gửi từ PayOS – định dạng phẳng theo DTO hiện tại)
+**Authorization:** Header `Apikey {token}` hoặc `Authorization: Apikey {token}` (Public endpoint nhưng yêu cầu verify token)
+
+**⚠️ Lưu ý quan trọng:**
+- Endpoint này KHÔNG phải do Client gọi, mà là Sepay tự động gọi về server
+- Cần cấu hình webhook URL trong Sepay dashboard để trỏ về endpoint này
+- Server sẽ tự động cập nhật trạng thái payment và order khi nhận được webhook
+
+**Request Headers:**
+```
+Apikey: your-webhook-token-here
+Content-Type: application/json
+```
+
+**Request Body:** (Tự động gửi từ Sepay khi thanh toán thành công)
 ```json
 {
-  "orderCode": 1730678400123,
+  "id": 123456,
   "amount": 299000,
-  "description": "Nguyễn Văn A - Gói Premium (30 ngày)",
-  "accountNumber": "12345678",
-  "reference": "FT12345678",
-  "transactionDateTime": "2024-11-03T10:35:00Z",
-  "currency": "VND",
-  "paymentLinkId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "code": "00",
-  "desc": "Thành công",
-  "counterAccountBankId": "",
-  "counterAccountBankName": "",
-  "counterAccountName": "",
-  "counterAccountNumber": "",
-  "virtualAccountName": "",
-  "virtualAccountNumber": ""
+  "transferAmount": 299000,
+  "description": "CYBERCITY-ORD550e8400-12345678",
+  "content": "CYBERCITY-ORD550e8400-12345678",
+  "transaction_code": "TXN123456789",
+  "transId": "TXN123456789",
+  "referenceCode": "TXN123456789"
 }
 ```
+
+**Lưu ý:**
+- Sepay có thể gửi các trường khác nhau trong payload
+- Server sẽ tìm kiếm: `amount` hoặc `transferAmount`, `description` hoặc `content`, `transaction_code` hoặc `transId` hoặc `referenceCode`
+- Server sẽ tìm payment dựa trên `description` chứa format: `CYBERCITY-ORD{orderUid}-{guid}`
+- GatewayOrderCode format: `ORD{orderUid}-{guid}` (8 ký tự cuối là orderCode)
 
 **Response:**
 ```json
@@ -139,7 +166,7 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 **Authorization:** Bearer Token (Required)
 
 **Parameters:**
-- `orderCode` (path parameter): Mã đơn hàng PayOS
+- `orderCode` (path parameter): Mã đơn hàng (phần cuối của GatewayOrderCode)
 - `reason` (query parameter – optional): Lý do hủy
 
 **Response Success (200 OK):**
@@ -172,8 +199,8 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 ```sql
 - uid: string (PK)
 - order_uid: string (FK -> Order)
-- payment_method: string (PayOS)
-- transaction_code: string (PayOS order code)
+- payment_method: string (SEPAY)
+- transaction_code: string (GatewayOrderCode: ORD{orderUid}-{GUID})
 - amount: decimal
 - currency: string (VND)
 - status: string (pending/completed/failed/cancelled)
@@ -201,16 +228,12 @@ API tích hợp PayOS để xử lý thanh toán cho hệ thống CyberCity Lear
 interface CreatePaymentRequest {
   userUid: string;
   planUid: string;
-  returnUrl: string;
-  cancelUrl: string;
 }
 
 const createPayment = async (userId: string, planId: string) => {
   const request: CreatePaymentRequest = {
     userUid: userId,
-    planUid: planId,
-    returnUrl: `${window.location.origin}/payment/success`,
-    cancelUrl: `${window.location.origin}/payment/cancel`
+    planUid: planId
   };
 
   try {
@@ -226,11 +249,12 @@ const createPayment = async (userId: string, planId: string) => {
     const result = await response.json();
     
     if (result.success) {
-      // Redirect to payment page
-      window.location.href = result.data.checkoutUrl;
+      // Hiển thị QR code để user quét
+      // QR URL từ Sepay: result.data.qrCode
+      setQrCodeUrl(result.data.qrCode);
       
-      // Or show QR code
-      // setQrCode(result.data.qrCode);
+      // Hoặc redirect đến trang hiển thị QR code
+      // window.location.href = `/payment/qr?url=${encodeURIComponent(result.data.qrCode)}`;
     }
   } catch (error) {
     console.error('Payment error:', error);
@@ -251,18 +275,37 @@ Content-Type: application/json
 
 {
   "userUid": "YOUR_USER_UID",
-  "planUid": "YOUR_PLAN_UID",
-  "returnUrl": "http://localhost:5173/payment/success",
-  "cancelUrl": "http://localhost:5173/payment/cancel"
+  "planUid": "YOUR_PLAN_UID"
 }
 ```
 
 ### 2. Kiểm tra Status
 
 ```bash
-GET https://localhost:7168/api/payment/status/1730678400123
+GET https://localhost:7168/api/payment/status/12345678
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
+
+### 3. Test Webhook (Sepay)
+
+**⚠️ Lưu ý:** Endpoint này thường được Sepay tự động gọi, nhưng bạn có thể test thủ công bằng Postman:
+
+```bash
+POST https://localhost:7168/api/payment/webhook/sepay
+Apikey: YOUR_WEBHOOK_TOKEN
+Content-Type: application/json
+
+{
+  "id": 123456,
+  "amount": 299000,
+  "description": "CYBERCITY-ORD550e8400-12345678",
+  "transaction_code": "TXN123456789"
+}
+```
+
+**Cấu hình Webhook trong Sepay Dashboard:**
+- Webhook URL: `https://your-domain.com/api/payment/webhook/sepay`
+- Webhook Token: Giá trị từ `appsettings.json` → `Sepay:WebhookToken`
 
 ---
 
@@ -280,31 +323,58 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 - User không tồn tại → `User with UID xxx not found`
 - Plan không tồn tại → `Pricing plan with UID xxx not found`
-- PayOS API error → `Failed to create payment link: [error message]`
+- Thiếu cấu hình Sepay → `Thiếu cấu hình Sepay:BankCode hoặc Sepay:AccountNumber`
+- Sepay error → `Failed to create payment link: [error message]`
 
 ### 🔒 Security:
 
 - Tất cả endpoints (trừ webhook) yêu cầu JWT token
 - Amount được lấy từ database, không cho phép client tự set
-- Webhook cần verify signature từ PayOS
+- Webhook cần verify Apikey header từ Sepay (config: `Sepay:WebhookToken`)
 
 ---
 
-## PayOS Configuration
+## Sepay Configuration
 
 Trong `appsettings.json`:
 
 ```json
 {
-  "PayOS": {
-    "ClientId": "db541eb3-2b5b-4892-8344-8bd115f7f8f4",
-    "ApiKey": "your-api-key-here",
-    "ChecksumKey": "your-checksum-key-here"
+  "Sepay": {
+    "BankCode": "VCB",
+    "AccountNumber": "1234567890",
+    "WebhookToken": "your-webhook-token-here"
   }
 }
 ```
 
+**Giải thích các trường:**
+- `BankCode`: Mã ngân hàng (VD: VCB, TCB, ACB, etc.) - dùng để tạo QR Code
+- `AccountNumber`: Số tài khoản ngân hàng nhận tiền - dùng để tạo QR Code
+- `WebhookToken`: Token để verify webhook từ Sepay (gửi trong header `Apikey`) - dùng để xác thực callback từ Sepay
+
+**Cách hoạt động:**
+1. **Tạo QR Code**: Server sử dụng `BankCode` và `AccountNumber` để tạo QR Code URL
+2. **Nhận Callback**: Server sử dụng `WebhookToken` để verify request từ Sepay khi thanh toán thành công
+
+**Format QR Code URL:**
+```
+https://qr.sepay.vn/img?acc={accountNumber}&bank={bankCode}&amount={amount}&des={description}
+```
+
+**Format GatewayOrderCode:**
+```
+ORD{orderUid}-{GUID}
+```
+- `orderUid`: 8 ký tự đầu của Order UID
+- `GUID`: 8 ký tự từ GUID mới
+
+**Format AddInfo trong QR:**
+```
+CYBERCITY-{GatewayOrderCode}
+```
+
 ## Support
 
-- PayOS Documentation: https://payos.vn/docs/api/
-- PayOS Test Environment: https://payos.vn/
+- Sepay QR Code Generator: https://qr.sepay.vn/
+- Sepay Documentation: Liên hệ Sepay để được hỗ trợ

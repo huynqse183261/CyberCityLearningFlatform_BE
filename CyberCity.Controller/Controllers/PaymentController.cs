@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using CyberCity.Application.Interface;
 using CyberCity.DTOs.Payments;
 using System;
+using System.IO;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace CyberCity.Controller.Controllers
 {
@@ -19,7 +21,7 @@ namespace CyberCity.Controller.Controllers
         }
 
         /// <summary>
-        /// Tạo link thanh toán PayOS
+        /// Tạo link thanh toán Sepay (QR Code)
         /// </summary>
         /// <param name="request">Thông tin yêu cầu thanh toán</param>
         /// <returns>Link thanh toán và QR code</returns>
@@ -53,7 +55,7 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// Lấy trạng thái thanh toán
         /// </summary>
-        /// <param name="orderCode">Mã đơn hàng PayOS</param>
+        /// <param name="orderCode">Mã đơn hàng</param>
         /// <returns>Thông tin trạng thái thanh toán</returns>
         [HttpGet("status/{orderCode}")]
         [Authorize]
@@ -79,36 +81,50 @@ namespace CyberCity.Controller.Controllers
         }
 
         /// <summary>
-        /// Webhook endpoint để nhận thông báo từ PayOS khi thanh toán thành công
+        /// Webhook endpoint để nhận thông báo từ Sepay khi thanh toán thành công
         /// </summary>
-        /// <param name="webhookData">Dữ liệu webhook từ PayOS</param>
         /// <returns>Xác nhận đã nhận webhook</returns>
         [HttpPost("webhook")]
-        public async Task<IActionResult> PaymentWebhook([FromBody] PaymentWebhookDto webhookData)
+        [HttpPost("webhook/sepay")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SepayWebhook()
         {
             try
             {
-                // Verify webhook signature if needed
-                var signature = Request.Headers["X-PayOS-Signature"].ToString();
+                // Đọc raw body từ request
+                using var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
+                var payloadJson = await reader.ReadToEndAsync();
                 
-                if (!string.IsNullOrEmpty(signature))
+                // Lấy Authorization header
+                var authorizationHeader = Request.Headers["Authorization"].ToString();
+                if (string.IsNullOrEmpty(authorizationHeader))
                 {
-                    var webhookUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
-                    var isValid = await _paymentService.VerifyWebhookSignatureAsync(webhookUrl, signature);
-                    
-                    if (!isValid)
+                    // Thử lấy từ Apikey header (Sepay format)
+                    authorizationHeader = Request.Headers["Apikey"].ToString();
+                    if (!string.IsNullOrEmpty(authorizationHeader))
                     {
-                        return Unauthorized(new { message = "Invalid webhook signature" });
+                        authorizationHeader = $"Apikey {authorizationHeader}";
                     }
                 }
 
-                await _paymentService.HandlePaymentWebhookAsync(webhookData);
+                var result = await _paymentService.ProcessSepayWebhookAsync(authorizationHeader, payloadJson);
 
-                return Ok(new
+                if (result)
                 {
-                    success = true,
-                    message = "Webhook processed successfully"
-                });
+                    return Ok(new
+                    {
+                        success = true,
+                        message = "Webhook processed successfully"
+                    });
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Failed to process webhook"
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -123,7 +139,7 @@ namespace CyberCity.Controller.Controllers
         /// <summary>
         /// Hủy link thanh toán
         /// </summary>
-        /// <param name="orderCode">Mã đơn hàng PayOS</param>
+        /// <param name="orderCode">Mã đơn hàng</param>
         /// <param name="reason">Lý do hủy</param>
         /// <returns>Kết quả hủy thanh toán</returns>
         [HttpPost("cancel/{orderCode}")]
@@ -212,59 +228,6 @@ namespace CyberCity.Controller.Controllers
                     success = false,
                     message = ex.Message
                 });
-            }
-        }
-
-        /// <summary>
-        /// Callback khi user cancel thanh toán trên PayOS
-        /// </summary>
-        /// <param name="orderCode">Mã đơn hàng</param>
-        /// <returns>Thông báo hủy thanh toán</returns>
-        [HttpGet("cancel-callback")]
-        [AllowAnonymous]
-        public async Task<IActionResult> HandleCancelCallback([FromQuery] long orderCode)
-        {
-            try
-            {
-                await _paymentService.HandlePaymentCancelAsync(orderCode);
-                
-                // Redirect về frontend với message
-                return Redirect($"{Request.Scheme}://localhost:5173/payment/cancelled?orderCode={orderCode}");
-            }
-            catch (Exception ex)
-            {
-                return Redirect($"{Request.Scheme}://localhost:5173/payment/error?message={ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Callback khi user quay lại sau thanh toán (success hoặc không thanh toán)
-        /// </summary>
-        /// <param name="orderCode">Mã đơn hàng</param>
-        /// <returns>Redirect về frontend với trạng thái</returns>
-        [HttpGet("return-callback")]
-        [AllowAnonymous]
-        public async Task<IActionResult> HandleReturnCallback([FromQuery] long orderCode)
-        {
-            try
-            {
-                // Kiểm tra trạng thái từ PayOS
-                var status = await _paymentService.GetPaymentStatusAsync(orderCode);
-                
-                if (status.Status == "PAID")
-                {
-                    return Redirect($"{Request.Scheme}://localhost:5173/payment/success?orderCode={orderCode}");
-                }
-                else
-                {
-                    // Nếu chưa thanh toán → Đánh dấu failed
-                    await _paymentService.HandlePaymentCancelAsync(orderCode);
-                    return Redirect($"{Request.Scheme}://localhost:5173/payment/cancelled?orderCode={orderCode}");
-                }
-            }
-            catch (Exception ex)
-            {
-                return Redirect($"{Request.Scheme}://localhost:5173/payment/error?message={ex.Message}");
             }
         }
     }

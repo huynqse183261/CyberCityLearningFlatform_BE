@@ -14,6 +14,7 @@ namespace CyberCity.Application.Interface
         Task<bool> VerifyWebhookSignatureAsync(string webhookUrl, string signature);
         Task<bool> CancelPaymentLinkAsync(long orderCode, string cancellationReason = null);
         Task HandlePaymentWebhookAsync(PaymentWebhookDto webhookData);
+        Task<bool> ProcessSepayWebhookAsync(string authorizationHeader, string payloadJson);
         Task<PaymentInvoiceDto> GetPaymentInvoiceAsync(string paymentUid);
         Task<List<PaymentHistoryDto>> GetPaymentHistoryAsync(string userUid);
         Task HandlePaymentCancelAsync(long orderCode);

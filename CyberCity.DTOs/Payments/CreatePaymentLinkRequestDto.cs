@@ -7,7 +7,6 @@ namespace CyberCity.DTOs.Payments
         public string UserUid { get; set; }
         public string PlanUid { get; set; }
         // OrgUid removed - chỉ hỗ trợ thanh toán cá nhân
-        public string ReturnUrl { get; set; }
-        public string CancelUrl { get; set; }
+        // ReturnUrl và CancelUrl removed - Sepay không có redirect flow như PayOS
     }
 }
