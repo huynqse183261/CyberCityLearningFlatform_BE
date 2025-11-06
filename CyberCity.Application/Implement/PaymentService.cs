@@ -86,14 +86,33 @@ namespace CyberCity.Application.Implement
                 {
                     // Tạo lại QR URL từ TransactionCode (GatewayOrderCode)
                     var existingGatewayOrderCode = existingPayment.TransactionCode;
-                    var qrImageUrl = GenerateSepayQrUrl(bankCode, accountNumber, plan.Price, existingGatewayOrderCode);
+                    var addInfo = $"CYBERCITY-{existingGatewayOrderCode}";
+                    var qrImageUrl = GenerateSepayQrUrl(bankCode, accountNumber, plan.Price, addInfo);
+
+                    // Parse hex string (GUID part) thành long
+                    var guidPart = existingGatewayOrderCode.Split('-').LastOrDefault() ?? "0";
+                    long orderCode = 0;
+                    try
+                    {
+                        // Thử parse hex string trước
+                        orderCode = Convert.ToInt64(guidPart, 16);
+                    }
+                    catch
+                    {
+                        // Nếu không phải hex, thử parse như số thập phân
+                        if (!long.TryParse(guidPart, out orderCode))
+                        {
+                            // Fallback: dùng hash code
+                            orderCode = Math.Abs(guidPart.GetHashCode());
+                        }
+                    }
 
                     return new PaymentLinkResponseDto
                     {
                         Uid = existingPayment.Uid,
                         CheckoutUrl = qrImageUrl, // QR URL
                         QrCode = qrImageUrl, // QR URL
-                        OrderCode = long.Parse(existingGatewayOrderCode.Split('-').LastOrDefault() ?? "0"),
+                        OrderCode = orderCode,
                         Status = "pending",
                         Amount = plan.Price,
                         Description = $"{user.FullName}_{plan.PlanName}_{plan.DurationDays}days",
@@ -127,12 +146,30 @@ namespace CyberCity.Application.Implement
                 _logger.LogInformation("Created Sepay QR payment - PaymentUid: {PaymentUid}, GatewayOrderCode: {GatewayOrderCode}, Amount: {Amount}",
                     payment.Uid, gatewayOrderCode, plan.Price);
 
+                // Parse hex string (GUID part) thành long
+                var guidPart = gatewayOrderCode.Split('-').LastOrDefault() ?? "0";
+                long orderCode = 0;
+                try
+                {
+                    // Parse hex string (GUID là hex) thành long
+                    orderCode = Convert.ToInt64(guidPart, 16);
+                }
+                catch
+                {
+                    // Nếu không phải hex, thử parse như số thập phân
+                    if (!long.TryParse(guidPart, out orderCode))
+                    {
+                        // Fallback: dùng hash code
+                        orderCode = Math.Abs(guidPart.GetHashCode());
+                    }
+                }
+
                 return new PaymentLinkResponseDto
                 {
                     Uid = payment.Uid,
                     CheckoutUrl = qrUrl, // QR URL
                     QrCode = qrUrl, // QR URL
-                    OrderCode = long.Parse(gatewayOrderCode.Split('-').LastOrDefault() ?? "0"),
+                    OrderCode = orderCode,
                     Status = "pending",
                     Amount = plan.Price,
                     Description = $"{user.FullName}_{plan.PlanName}_{plan.DurationDays}days",
