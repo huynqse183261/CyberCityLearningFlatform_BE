@@ -23,6 +23,7 @@ namespace CyberCity.Controller.Controllers
         private readonly IAnswerRepository _answerRepo;
         private readonly IQuizRepository _quizRepo;
         private readonly ICourseEnrollmentService _enrollmentService;
+        private readonly ISubscriptionService _subscriptionService;
 
         public StudentApiController(
             CourseRepo courseRepo,
@@ -32,7 +33,8 @@ namespace CyberCity.Controller.Controllers
             SubtopicRepo subtopicRepo,
             IAnswerRepository answerRepo,
             IQuizRepository quizRepo,
-            ICourseEnrollmentService enrollmentService)
+            ICourseEnrollmentService enrollmentService,
+            ISubscriptionService subscriptionService)
         {
             _courseRepo = courseRepo;
             _moduleRepo = moduleRepo;
@@ -42,6 +44,7 @@ namespace CyberCity.Controller.Controllers
             _answerRepo = answerRepo;
             _quizRepo = quizRepo;
             _enrollmentService = enrollmentService;
+            _subscriptionService = subscriptionService;
         }
 
         private string CurrentUserId => User.FindFirst("uid")?.Value
@@ -669,6 +672,44 @@ namespace CyberCity.Controller.Controllers
             }).Where(x => categories == null || categories.Contains(x.courseSlug ?? string.Empty)).ToList();
 
             return Ok(new { data });
+        }
+
+        // 15) GET /api/student/subscription/access
+        [HttpGet("subscription/access")]
+        public async Task<IActionResult> GetSubscriptionAccess()
+        {
+            try
+            {
+                var userId = CurrentUserId;
+                var subscriptionAccess = await _subscriptionService.CheckUserSubscriptionAccessAsync(userId);
+
+                var message = subscriptionAccess.HasAccess 
+                    ? "User has active subscription" 
+                    : "User has no active subscription";
+
+                return Ok(new { success = true, data = subscriptionAccess, message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // 16) GET /api/student/courses/{courseUid}/modules/{moduleIndex}/access
+        [HttpGet("courses/{courseUid}/modules/{moduleIndex}/access")]
+        public async Task<IActionResult> CheckModuleAccess(string courseUid, int moduleIndex)
+        {
+            try
+            {
+                var userId = CurrentUserId;
+                var moduleAccess = await _subscriptionService.CheckModuleAccessAsync(userId, courseUid, moduleIndex);
+
+                return Ok(new { success = true, data = moduleAccess });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
 
         public class UpdateProgressRequest
