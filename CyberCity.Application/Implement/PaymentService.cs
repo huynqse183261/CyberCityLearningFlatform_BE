@@ -86,24 +86,24 @@ namespace CyberCity.Application.Implement
                 {
                     // Tạo lại QR URL từ TransactionCode (GatewayOrderCode)
                     var existingGatewayOrderCode = existingPayment.TransactionCode;
-                    var addInfo = $"CYBERCITY-{existingGatewayOrderCode}";
-                    var qrImageUrl = GenerateSepayQrUrl(bankCode, accountNumber, plan.Price, addInfo);
+                    var existingAddInfo = $"CYBERCITY-{existingGatewayOrderCode}";
+                    var qrImageUrl = GenerateSepayQrUrl(bankCode, accountNumber, plan.Price, existingAddInfo);
 
                     // Parse hex string (GUID part) thành long
-                    var guidPart = existingGatewayOrderCode.Split('-').LastOrDefault() ?? "0";
-                    long orderCode = 0;
+                    var existingGuidPart = existingGatewayOrderCode.Split('-').LastOrDefault() ?? "0";
+                    long existingOrderCode = 0;
                     try
                     {
                         // Thử parse hex string trước
-                        orderCode = Convert.ToInt64(guidPart, 16);
+                        existingOrderCode = Convert.ToInt64(existingGuidPart, 16);
                     }
                     catch
                     {
                         // Nếu không phải hex, thử parse như số thập phân
-                        if (!long.TryParse(guidPart, out orderCode))
+                        if (!long.TryParse(existingGuidPart, out existingOrderCode))
                         {
                             // Fallback: dùng hash code
-                            orderCode = Math.Abs(guidPart.GetHashCode());
+                            existingOrderCode = Math.Abs(existingGuidPart.GetHashCode());
                         }
                     }
 
@@ -112,7 +112,7 @@ namespace CyberCity.Application.Implement
                         Uid = existingPayment.Uid,
                         CheckoutUrl = qrImageUrl, // QR URL
                         QrCode = qrImageUrl, // QR URL
-                        OrderCode = orderCode,
+                        OrderCode = existingOrderCode,
                         Status = "pending",
                         Amount = plan.Price,
                         Description = $"{user.FullName}_{plan.PlanName}_{plan.DurationDays}days",
