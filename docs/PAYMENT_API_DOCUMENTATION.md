@@ -1,8 +1,8 @@
 # Payment API Documentation
 
-> **Tài liệu API tích hợp thanh toán PayOS**  
-> Version: 1.0  
-> Last Updated: November 5, 2025
+> **Tài liệu API thanh toán Sepay (QR Bank Transfer)**  
+> Version: 2.0  
+> Last Updated: November 10, 2025
 
 ## Mục lục
 - [Tổng quan](#tổng-quan)
@@ -17,8 +17,8 @@
 ## Tổng quan
 
 ### Công nghệ sử dụng
-- **Payment Gateway**: PayOS
-- **Authentication**: JWT Bearer Token
+- **Payment Gateway**: Sepay (QR động với tham số acc/bank/amount/des)
+- **Authentication**: JWT Bearer Token (trừ webhook)
 - **Response Format**: JSON
 
 ### Base URL
@@ -39,45 +39,45 @@ Authorization: Bearer {your_jwt_token}
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant FE as Frontend
-    participant BE as Backend
-    participant PayOS
-    participant Webhook
+  participant User
+  participant FE as Frontend
+  participant BE as Backend
+  participant Sepay as Sepay QR
+  participant Webhook
 
-    User->>FE: Chọn pricing plan
-    FE->>BE: POST /api/payment/create-payment-link
-    BE->>PayOS: Tạo payment link
-    PayOS-->>BE: Return checkout URL + QR
-    BE-->>FE: Return payment info
-    FE->>User: Hiển thị QR code/Link thanh toán
-    User->>PayOS: Thanh toán qua QR/Link
-    PayOS->>Webhook: Gửi webhook khi hoàn tất
-    Webhook->>BE: POST /api/payment/webhook
-    BE-->>Webhook: 200 OK
-    User->>FE: Quay lại trang
-    FE->>BE: GET /api/payment/invoice/{paymentUid}
-    BE-->>FE: Thông tin hóa đơn
-    FE->>User: Hiển thị invoice
+  User->>FE: Chọn pricing plan
+  FE->>BE: POST /api/payment/create-payment-link
+  BE->>BE: Tạo Order + Payment (pending)
+  BE->>Sepay: Sinh QR URL (client dùng trực tiếp)
+  BE-->>FE: Trả về QR URL + orderCode
+  FE->>User: Hiển thị QR code
+  User->>Sepay: Quét QR, chuyển khoản
+  Sepay->>Webhook: Gửi webhook (Apikey header)
+  Webhook->>BE: POST /api/payment/webhook
+  BE-->>Webhook: 200 OK
+  FE->>BE: GET /api/payment/status/{orderCode}
+  BE-->>FE: Status = COMPLETED
+  FE->>BE: GET /api/payment/invoice/{paymentUid}
+  BE-->>FE: Thông tin hóa đơn
 ```
 
 ---
 
 ## API Endpoints
 
-### 1. Tạo Payment Link
+### 1. Tạo Payment Link (QR Sepay)
 
 **Endpoint**: `POST /api/payment/create-payment-link`
 
-**Description**: Tạo link thanh toán cho user mua pricing plan
+**Description**: Tạo Order + Payment (Status=pending) và sinh QR URL Sepay cho user mua pricing plan.
+
+Sepay không hỗ trợ redirect nên không cần `returnUrl`, `cancelUrl`.
 
 **Request Body**:
 ```json
 {
   "userUid": "U001",
-  "planUid": "PLAN001",
-  "returnUrl": "https://yoursite.com/payment/success",
-  "cancelUrl": "https://yoursite.com/payment/cancel"
+  "planUid": "PLAN001"
 }
 ```
 
@@ -86,22 +86,20 @@ sequenceDiagram
 |-------|------|----------|-------------|
 | userUid | string | ✅ | UID của user mua gói |
 | planUid | string | ✅ | UID của pricing plan |
-| returnUrl | string | ✅ | URL redirect khi thanh toán thành công |
-| cancelUrl | string | ✅ | URL redirect khi user hủy thanh toán |
 
 **Response Success** (200):
 ```json
 {
   "success": true,
-  "message": "Payment link created successfully",
+  "message": "Tạo link thanh toán thành công",
   "data": {
-    "uid": "PAY-20241105-001",
-    "checkoutUrl": "https://pay.payos.vn/web/...",
-    "qrCode": "https://api.payos.vn/qr/...",
-    "orderCode": 202411050001,
-    "status": "PENDING",
+    "uid": "PAYMENT_UID",
+    "checkoutUrl": "https://qr.sepay.vn/img?acc=...&bank=MB&amount=299000&des=CYBERCITY-ORDxxxx-xxxxxxxx",
+    "qrCode": "https://qr.sepay.vn/img?acc=...&bank=MB&amount=299000&des=CYBERCITY-ORDxxxx-xxxxxxxx",
+    "orderCode": 559870123, 
+    "status": "pending",
     "amount": 299000,
-    "description": "Thanh toán gói Premium Plan",
+    "description": "Nguyen Van A_Premium Plan_365days",
     "userName": "Nguyen Van A",
     "planName": "Premium Plan"
   }
@@ -112,10 +110,10 @@ sequenceDiagram
 | Field | Type | Description |
 |-------|------|-------------|
 | uid | string | Payment UID để tracking |
-| checkoutUrl | string | URL trang thanh toán PayOS |
-| qrCode | string | URL QR code để quét thanh toán |
-| orderCode | long | Mã đơn hàng (unique) |
-| status | string | Trạng thái: PENDING, PAID, CANCELLED |
+| checkoutUrl | string | QR URL Sepay (trùng qrCode) |
+| qrCode | string | QR URL Sepay |
+| orderCode | long | Mã đơn hàng (suy ra từ GUID, phục vụ tra cứu) |
+| status | string | Trạng thái: pending/completed/cancelled/failed |
 | amount | decimal | Số tiền cần thanh toán |
 | description | string | Mô tả giao dịch |
 | userName | string | Tên user |
@@ -139,35 +137,42 @@ sequenceDiagram
 
 ---
 
-### 2. Webhook từ PayOS
+### 2. Webhook từ Sepay
 
-**Endpoint**: `POST /api/payment/webhook`
+**Endpoint**: `POST /api/payment/webhook` (cũng chấp nhận `/api/payment/webhook/sepay`)
 
-**Description**: Endpoint nhận webhook từ PayOS khi thanh toán hoàn tất (Backend tự xử lý, FE không cần gọi)
+**Description**: Sepay gửi webhook khi người dùng chuyển khoản thành công. FE không gọi endpoint này.
 
-**Request Body** (từ PayOS):
+**Authorization Header**:
+```
+Apikey {WebhookToken}
+```
+Hoặc `Authorization: Apikey {WebhookToken}`.
+
+**Payload mẫu** (thực tế Sepay có thể thay đổi field; service chỉ cần `description`, `amount`, mã giao dịch):
 ```json
 {
-  "orderCode": 202411050001,
+  "id": 123456,
   "amount": 299000,
-  "description": "Thanh toán gói Premium Plan",
-  "accountNumber": "12345678",
-  "reference": "FT123456789",
-  "transactionDateTime": "2024-11-05T10:30:00",
-  "currency": "VND",
-  "paymentLinkId": "abc123",
-  "code": "00",
-  "desc": "Thành công",
-  "counterAccountBankId": "970422",
-  "counterAccountBankName": "MB Bank",
-  "counterAccountName": "NGUYEN VAN A",
-  "counterAccountNumber": "0123456789",
-  "virtualAccountName": "PAYOS",
-  "virtualAccountNumber": "9876543210"
+  "description": "CYBERCITY-ORDabc12345-5f7e9d2a Premium Plan",
+  "transaction_code": "TX123456789",
+  "transferAmount": 299000,
+  "content": "CYBERCITY-ORDabc12345-5f7e9d2a",
+  "referenceCode": "TX123456789"
 }
 ```
 
-**Response**: `200 OK`
+**Xử lý**:
+1. Verify header Apikey token.
+2. Trích `gatewayOrderCode` từ `description` theo pattern `CYBERCITY-ORD{...}-{GUID8}`.
+3. Tìm `Payment` theo `TransactionCode` hoặc GUID suffix.
+4. Nếu chưa completed → cập nhật `Status=completed`, `PaidAt=now` và `Order.PaymentStatus=paid`.
+
+**Response**:
+```json
+{ "success": true, "message": "Webhook processed successfully" }
+```
+Hoặc 400 với `{ "success": false }`.
 
 ---
 
@@ -332,60 +337,42 @@ sequenceDiagram
 
 ### 5. Kiểm tra trạng thái thanh toán
 
-**Endpoint**: `GET /api/payment/status/{paymentUid}`
+**Endpoint**: `GET /api/payment/status/{orderCode}`
 
-**Description**: Kiểm tra trạng thái thanh toán hiện tại
-
-**Path Parameters**:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| paymentUid | string | ✅ | Payment UID |
+**Description**: Kiểm tra trạng thái Payment bằng `orderCode` (số long suy từ GUID suffix).
 
 **Response Success** (200):
 ```json
 {
   "success": true,
   "data": {
-    "uid": "PAY-20241105-001",
-    "orderCode": 202411050001,
+    "orderCode": 559870123,
+    "amount": 299000,
     "amountPaid": "299000",
-    "status": "PAID",
-    "paidAt": "2024-11-05T10:30:15",
-    "cancellationReason": ""
+    "amountRemaining": 0,
+    "status": "COMPLETED",
+    "createdAt": "2025-11-10T09:15:20",
+    "canceledAt": null,
+    "cancellationReason": null
   }
 }
 ```
 
-**Response Fields**:
-| Field | Type | Description |
-|-------|------|-------------|
-| uid | string | Payment UID |
-| orderCode | long | Mã đơn hàng |
-| amountPaid | string | Số tiền đã thanh toán |
-| status | string | PENDING / PAID / CANCELLED |
-| paidAt | datetime? | Thời gian thanh toán |
-| cancellationReason | string | Lý do hủy (nếu có) |
+Lưu ý: `status` trả về từ service hiện dùng lowercase nội bộ (`pending`, `completed`, `cancelled`, `failed`) nhưng có thể được FE map sang hiển thị cho người dùng.
 
 ---
 
 ## Data Models
 
-### Payment Status
+### Payment Status (Hiện tại trong DB)
 ```typescript
-enum PaymentStatus {
-  PENDING = "PENDING",      // Chờ thanh toán
-  PAID = "PAID",           // Đã thanh toán
-  CANCELLED = "CANCELLED"  // Đã hủy
-}
+type PaymentStatus = "pending" | "completed" | "cancelled" | "failed";
+// FE có thể map: completed -> PAID
 ```
 
 ### Payment Method
 ```typescript
-enum PaymentMethod {
-  QR = "QR",                    // Quét QR
-  BANK_TRANSFER = "BANK_TRANSFER", // Chuyển khoản
-  EWALLET = "EWALLET"          // Ví điện tử
-}
+type PaymentMethod = "SEPAY"; // Các phương thức khác chưa implement
 ```
 
 ---
@@ -410,6 +397,7 @@ enum PaymentMethod {
 | 404 | Payment not found | Không tìm thấy payment |
 | 500 | Failed to create payment link | Lỗi tạo payment link |
 | 500 | Failed to process webhook | Lỗi xử lý webhook |
+| 500 | Failed to cancel payment link | Lỗi hủy thanh toán |
 | 500 | Failed to get payment invoice | Lỗi lấy hóa đơn |
 | 500 | Failed to get payment history | Lỗi lấy lịch sử |
 
@@ -417,7 +405,7 @@ enum PaymentMethod {
 
 ## Testing
 
-### 1. Test Create Payment Link
+### 1. Test Create Payment Link (Sepay)
 
 **Request**:
 ```bash
@@ -426,9 +414,7 @@ curl -X POST https://localhost:7168/api/payment/create-payment-link \
   -H "Content-Type: application/json" \
   -d '{
     "userUid": "U001",
-    "planUid": "PLAN001",
-    "returnUrl": "https://yoursite.com/payment/success",
-    "cancelUrl": "https://yoursite.com/payment/cancel"
+    "planUid": "PLAN001"
   }'
 ```
 
@@ -436,13 +422,14 @@ curl -X POST https://localhost:7168/api/payment/create-payment-link \
 
 ---
 
-### 2. Test Payment Flow
+### 2. Test Payment Flow (Sepay)
 
-1. **Tạo payment link** → Nhận `paymentUid` và `checkoutUrl`
-2. **Mở checkout URL** → Thanh toán qua PayOS
-3. **Webhook tự động** → Backend nhận webhook và cập nhật status
-4. **Kiểm tra status** → GET `/api/payment/status/{paymentUid}` → Status = "PAID"
-5. **Lấy invoice** → GET `/api/payment/invoice/{paymentUid}` → Xem chi tiết hóa đơn
+1. FE gọi create-payment-link → nhận `qrCode`, `orderCode`, `uid`.
+2. Hiển thị QR cho user quét.
+3. User chuyển khoản theo QR (nội dung mô tả chứa `CYBERCITY-ORD...`).
+4. Sepay gửi webhook → backend cập nhật Payment + Order.
+5. FE polling `GET /api/payment/status/{orderCode}` mỗi 3s tới khi `status=COMPLETED`.
+6. Lấy invoice: `GET /api/payment/invoice/{paymentUid}`.
 
 ---
 
@@ -469,19 +456,12 @@ async function createPaymentLink(userUid: string, planUid: string) {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      userUid,
-      planUid,
-      returnUrl: window.location.origin + '/payment/success',
-      cancelUrl: window.location.origin + '/payment/cancel'
-    })
+    body: JSON.stringify({ userUid, planUid })
   });
-  
   const result = await response.json();
   if (result.success) {
-    // Hiển thị QR code hoặc redirect đến checkout URL
-    showPaymentModal(result.data.qrCode, result.data.checkoutUrl);
-    return result.data.uid; // Lưu paymentUid để check sau
+    showPaymentModal(result.data.qrCode); // checkoutUrl == qrCode
+    return { paymentUid: result.data.uid, orderCode: result.data.orderCode };
   }
 }
 ```
@@ -490,17 +470,11 @@ async function createPaymentLink(userUid: string, planUid: string) {
 
 ### 2. Hiển thị QR Code
 ```typescript
-function showPaymentModal(qrCodeUrl: string, checkoutUrl: string) {
-  // Option 1: Hiển thị QR code
+function showPaymentModal(qrCodeUrl: string) {
   const qrImage = document.createElement('img');
   qrImage.src = qrCodeUrl;
-  qrImage.alt = 'QR Code thanh toán';
-  
-  // Option 2: Link đến trang thanh toán
-  const paymentLink = document.createElement('a');
-  paymentLink.href = checkoutUrl;
-  paymentLink.target = '_blank';
-  paymentLink.textContent = 'Thanh toán ngay';
+  qrImage.alt = 'QR Code thanh toán Sepay';
+  document.getElementById('qr-container')?.appendChild(qrImage);
 }
 ```
 
@@ -508,26 +482,21 @@ function showPaymentModal(qrCodeUrl: string, checkoutUrl: string) {
 
 ### 3. Polling Status (Kiểm tra định kỳ)
 ```typescript
-async function pollPaymentStatus(paymentUid: string) {
+async function pollPaymentStatus(orderCode: number, paymentUid: string) {
   const interval = setInterval(async () => {
-    const response = await fetch(`/api/payment/status/${paymentUid}`, {
+    const response = await fetch(`/api/payment/status/${orderCode}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    
     const result = await response.json();
-    if (result.success && result.data.status === 'PAID') {
+    if (result.success && result.data.status === 'COMPLETED') {
       clearInterval(interval);
-      // Thanh toán thành công
       showSuccessMessage();
       redirectToInvoice(paymentUid);
-    } else if (result.data.status === 'CANCELLED') {
+    } else if (result.data.status === 'CANCELLED' || result.data.status === 'FAILED') {
       clearInterval(interval);
-      // Thanh toán bị hủy
       showCancelMessage();
     }
-  }, 3000); // Check mỗi 3 giây
-  
-  // Timeout sau 5 phút
+  }, 3000);
   setTimeout(() => clearInterval(interval), 300000);
 }
 ```
@@ -634,12 +603,12 @@ Sau khi thanh toán thành công, hiển thị:
 ## Notes
 
 ### Quan trọng
-1. **Webhook URL**: Backend cần expose endpoint `/api/payment/webhook` cho PayOS callback (cấu hình trong PayOS dashboard)
+1. **Webhook URL**: Backend cần expose endpoint `/api/payment/webhook` cho Sepay (cấu hình WebhookToken)
 2. **CORS**: Đảm bảo backend cho phép origin của frontend
 3. **Security**: 
-   - JWT token phải được bảo mật
-   - Validate user có quyền xem invoice/history
-   - Webhook cần verify signature từ PayOS
+  - JWT token bảo mật
+  - Kiểm tra quyền truy cập invoice/history
+  - Webhook kiểm tra đúng Apikey token
 4. **Testing**: Dùng PayOS test environment trước khi go live
 
 ### Limitations hiện tại
@@ -660,9 +629,9 @@ Sau khi thanh toán thành công, hiển thị:
 
 Nếu có vấn đề hoặc câu hỏi:
 - Backend Team: [Your contact]
-- PayOS Documentation: https://payos.vn/docs
+- Sepay Site: https://sepay.vn
 - Repository: CyberCityLearningFlatform_BE
 
 ---
 
-**End of Documentation**
+**End of Documentation (Sepay Version)**
