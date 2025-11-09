@@ -159,6 +159,10 @@ namespace CyberCity.Controller.Controllers
             {
                 Console.WriteLine($"[Webhook] EXCEPTION: {ex.Message}");
                 Console.WriteLine($"[Webhook] StackTrace: {ex.StackTrace}");
+                var inner1 = ex.InnerException?.Message;
+                var inner2 = ex.InnerException?.InnerException?.Message;
+                if (!string.IsNullOrEmpty(inner1)) Console.WriteLine($"[Webhook] InnerException: {inner1}");
+                if (!string.IsNullOrEmpty(inner2)) Console.WriteLine($"[Webhook] InnerMost: {inner2}");
                 
                 return BadRequest(new
                 {
@@ -168,7 +172,9 @@ namespace CyberCity.Controller.Controllers
                     details = new
                     {
                         exceptionType = ex.GetType().Name,
-                        stackTrace = ex.StackTrace?.Split('\n').FirstOrDefault()
+                        stackTrace = ex.StackTrace?.Split('\n').FirstOrDefault(),
+                        innerException = inner1,
+                        innerMost = inner2
                     }
                 });
             }

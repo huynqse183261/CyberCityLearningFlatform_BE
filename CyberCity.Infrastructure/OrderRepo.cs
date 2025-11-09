@@ -59,5 +59,15 @@ namespace CyberCity.Infrastructure
                 .Take(count)
                 .ToListAsync();
         }
+
+		// Partial update: only update payment_status to minimize risk of DbUpdateException
+		public async Task<int> UpdatePaymentStatusAsync(string orderUid, string paymentStatus)
+		{
+			var entity = new Order { Uid = orderUid };
+			_context.Attach(entity);
+			entity.PaymentStatus = paymentStatus;
+			_context.Entry(entity).Property(x => x.PaymentStatus).IsModified = true;
+			return await _context.SaveChangesAsync();
+		}
     }
 }
