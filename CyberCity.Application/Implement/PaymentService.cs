@@ -402,10 +402,10 @@ namespace CyberCity.Application.Implement
                 }
 
                 // Tìm theo Sepay ID
-                if (payment == null && sepayId.HasValue)
+                if (payment == null && sepayId > 0)
                 {
-                    _logger.LogInformation("[ProcessSepayWebhook] Strategy 3: Searching by Sepay ID: {SepayId}", sepayId.Value);
-                    var sepayIdStr = $"SEPAY-{sepayId.Value}";
+                    _logger.LogInformation("[ProcessSepayWebhook] Strategy 3: Searching by Sepay ID: {SepayId}", sepayId);
+                    var sepayIdStr = $"SEPAY-{sepayId}";
                     payment = await _paymentRepo.GetAllAsync()
                         .FirstOrDefaultAsync(p => p.TransactionCode == sepayIdStr);
                     if (payment != null)
