@@ -82,35 +82,61 @@ namespace CyberCity.Controller.Controllers
 
         /// <summary>
         /// Webhook endpoint để nhận thông báo từ Sepay khi thanh toán thành công
+        /// Endpoint này hỗ trợ cả model binding và raw JSON parsing
         /// </summary>
+        /// <param name="webhookData">Dữ liệu webhook từ Sepay (auto-bind từ JSON)</param>
         /// <returns>Xác nhận đã nhận webhook</returns>
         [HttpPost("webhook")]
         [HttpPost("webhook/sepay")]
         [AllowAnonymous]
-        public async Task<IActionResult> SepayWebhook()
+        public async Task<IActionResult> SepayWebhook([FromBody] SepayWebhookDto webhookData)
         {
             try
             {
-                // Đọc raw body từ request
-                using var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
-                var payloadJson = await reader.ReadToEndAsync();
+                // Log headers để debug
+                var allHeaders = string.Join(", ", Request.Headers.Select(h => $"{h.Key}: {h.Value}"));
+                Console.WriteLine($"[Webhook] Headers: {allHeaders}");
                 
-                // Lấy Authorization header
+                // Lấy Authorization/Token header
                 var authorizationHeader = Request.Headers["Authorization"].ToString();
                 if (string.IsNullOrEmpty(authorizationHeader))
                 {
                     // Thử lấy từ Apikey header (Sepay format)
                     authorizationHeader = Request.Headers["Apikey"].ToString();
-                    if (!string.IsNullOrEmpty(authorizationHeader))
+                    if (string.IsNullOrEmpty(authorizationHeader))
+                    {
+                        // Thử lấy từ token header
+                        authorizationHeader = Request.Headers["token"].ToString();
+                    }
+                    
+                    if (!string.IsNullOrEmpty(authorizationHeader) && !authorizationHeader.StartsWith("Apikey "))
                     {
                         authorizationHeader = $"Apikey {authorizationHeader}";
                     }
                 }
 
-                var result = await _paymentService.ProcessSepayWebhookAsync(authorizationHeader, payloadJson);
+                Console.WriteLine($"[Webhook] Authorization: {authorizationHeader}");
+                
+                // Validate webhook data
+                if (webhookData == null)
+                {
+                    Console.WriteLine("[Webhook] ERROR: Webhook data is null (model binding failed)");
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid webhook payload - model binding failed",
+                        error = "NULL_DATA",
+                        hint = "Check if JSON keys match the DTO properties (case-sensitive)"
+                    });
+                }
+
+                Console.WriteLine($"[Webhook] Received - Id: {webhookData.Id}, Amount: {webhookData.Amount}, Description: {webhookData.Description ?? webhookData.Content}");
+
+                var result = await _paymentService.ProcessSepayWebhookAsync(authorizationHeader, webhookData);
 
                 if (result)
                 {
+                    Console.WriteLine("[Webhook] SUCCESS");
                     return Ok(new
                     {
                         success = true,
@@ -119,19 +145,30 @@ namespace CyberCity.Controller.Controllers
                 }
                 else
                 {
+                    Console.WriteLine("[Webhook] FAILED: Payment not found or already processed");
                     return BadRequest(new
                     {
                         success = false,
-                        message = "Failed to process webhook"
+                        message = "Failed to process webhook - payment not found or invalid",
+                        error = "PROCESSING_FAILED"
                     });
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Webhook] EXCEPTION: {ex.Message}");
+                Console.WriteLine($"[Webhook] StackTrace: {ex.StackTrace}");
+                
                 return BadRequest(new
                 {
                     success = false,
-                    message = ex.Message
+                    message = ex.Message,
+                    error = "EXCEPTION",
+                    details = new
+                    {
+                        exceptionType = ex.GetType().Name,
+                        stackTrace = ex.StackTrace?.Split('\n').FirstOrDefault()
+                    }
                 });
             }
         }

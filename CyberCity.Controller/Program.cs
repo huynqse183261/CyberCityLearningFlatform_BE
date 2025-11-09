@@ -17,8 +17,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+// Configure JSON serialization options
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Allow case-insensitive property name matching (hỗ trợ snake_case, camelCase, PascalCase)
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        // Preserve property names as-is (không convert sang camelCase)
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        // Allow trailing commas in JSON
+        options.JsonSerializerOptions.AllowTrailingCommas = true;
+        // Handle number strings
+        options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
+    });
 
-builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 // Caching (for subscription status, etc.)

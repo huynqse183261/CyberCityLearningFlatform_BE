@@ -282,51 +282,59 @@ namespace CyberCity.Application.Implement
             await Task.CompletedTask;
         }
 
-        public async Task<bool> ProcessSepayWebhookAsync(string authorizationHeader, string payloadJson)
+        public async Task<bool> ProcessSepayWebhookAsync(string authorizationHeader, SepayWebhookDto webhookData)
         {
             try
             {
+                _logger.LogInformation("[ProcessSepayWebhook] Starting - AuthHeader: {AuthHeader}, SepayId: {SepayId}", 
+                    authorizationHeader, webhookData?.Id);
+
+                if (webhookData == null)
+                {
+                    _logger.LogError("[ProcessSepayWebhook] Webhook data is null");
+                    return false;
+                }
+
                 // Verify webhook token
                 var expectedToken = _configuration["Sepay:WebhookToken"];
+                _logger.LogInformation("[ProcessSepayWebhook] Expected token configured: {HasToken}", !string.IsNullOrEmpty(expectedToken));
+                
                 if (!string.IsNullOrEmpty(expectedToken))
                 {
                     var expectedHeader = $"Apikey {expectedToken}";
                     if (!string.Equals(authorizationHeader, expectedHeader, StringComparison.Ordinal))
                     {
-                        _logger.LogWarning("Invalid Sepay webhook authorization header");
+                        _logger.LogWarning("[ProcessSepayWebhook] Invalid authorization - Expected: {Expected}, Received: {Received}", 
+                            expectedHeader, authorizationHeader);
                         return false;
                     }
+                    _logger.LogInformation("[ProcessSepayWebhook] Token verification passed");
+                }
+                else
+                {
+                    _logger.LogWarning("[ProcessSepayWebhook] No webhook token configured - skipping verification");
                 }
 
-                // Parse webhook payload
-                using var doc = System.Text.Json.JsonDocument.Parse(payloadJson);
-                var root = doc.RootElement;
+                // Extract data from webhook
+                var sepayId = webhookData.Id;
+                var amount = webhookData.Amount > 0 ? webhookData.Amount : webhookData.TransferAmount ?? 0m;
+                var description = !string.IsNullOrEmpty(webhookData.Description) 
+                    ? webhookData.Description 
+                    : webhookData.Content ?? string.Empty;
+                var transactionRef = !string.IsNullOrEmpty(webhookData.TransactionCode) 
+                    ? webhookData.TransactionCode 
+                    : !string.IsNullOrEmpty(webhookData.TransId) 
+                        ? webhookData.TransId 
+                        : webhookData.ReferenceCode;
 
-                var sepayId = root.TryGetProperty("id", out var idProp) ? idProp.GetInt32() : (int?)null;
-                var amount = root.TryGetProperty("amount", out var amountProp) 
-                    ? amountProp.GetDecimal() 
-                    : root.TryGetProperty("transferAmount", out var taProp) 
-                        ? taProp.GetDecimal() 
-                        : 0m;
-                var description = root.TryGetProperty("description", out var descProp) 
-                    ? descProp.GetString() 
-                    : root.TryGetProperty("content", out var cProp) 
-                        ? cProp.GetString() 
-                        : string.Empty;
-                var transactionRef = root.TryGetProperty("transaction_code", out var trProp) 
-                    ? trProp.GetString() 
-                    : root.TryGetProperty("transId", out var tr2) 
-                        ? tr2.GetString() 
-                        : root.TryGetProperty("referenceCode", out var refProp) 
-                            ? refProp.GetString() 
-                            : null;
-
-                _logger.LogInformation("Sepay webhook received - SepayId: {SepayId}, Description: {Description}, TransactionRef: {TransactionRef}, Amount: {Amount}",
+                _logger.LogInformation("[ProcessSepayWebhook] Parsed data - SepayId: {SepayId}, Description: {Description}, TransactionRef: {TransactionRef}, Amount: {Amount}",
                     sepayId, description, transactionRef, amount);
 
                 // Tìm payment theo GatewayOrderCode từ description
                 string? gatewayOrderCode = null;
                 string? guidPart = null;
+                
+                _logger.LogInformation("[ProcessSepayWebhook] Extracting gatewayOrderCode from description");
                 
                 if (!string.IsNullOrEmpty(description))
                 {
@@ -338,6 +346,7 @@ namespace CyberCity.Application.Implement
                         var guidPortion = fullMatch.Groups[2].Value;
                         gatewayOrderCode = $"{orderPart}-{guidPortion.Substring(0, Math.Min(8, guidPortion.Length))}";
                         guidPart = guidPortion.Substring(0, Math.Min(8, guidPortion.Length));
+                        _logger.LogInformation("[ProcessSepayWebhook] Extracted gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
                     }
                     else
                     {
@@ -346,76 +355,111 @@ namespace CyberCity.Application.Implement
                         if (guidMatch.Success)
                         {
                             guidPart = guidMatch.Groups[1].Value;
+                            _logger.LogInformation("[ProcessSepayWebhook] Extracted guidPart (fallback): {GuidPart}", guidPart);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("[ProcessSepayWebhook] Could not extract gatewayOrderCode or guidPart from description");
                         }
                     }
+                }
+                else
+                {
+                    _logger.LogWarning("[ProcessSepayWebhook] Description is empty");
                 }
 
                 // Tìm payment
                 Payment? payment = null;
+                
+                _logger.LogInformation("[ProcessSepayWebhook] Searching for payment - Strategy 1: By gatewayOrderCode");
                 if (!string.IsNullOrEmpty(gatewayOrderCode))
                 {
                     payment = await _paymentRepo.GetAllAsync()
                         .FirstOrDefaultAsync(p => p.TransactionCode == gatewayOrderCode);
+                    if (payment != null)
+                    {
+                        _logger.LogInformation("[ProcessSepayWebhook] Found payment by gatewayOrderCode: {PaymentUid}", payment.Uid);
+                    }
                 }
 
                 // Tìm theo GUID suffix
                 if (payment == null && !string.IsNullOrEmpty(guidPart))
                 {
+                    _logger.LogInformation("[ProcessSepayWebhook] Strategy 2: Searching by GUID suffix: {GuidPart}", guidPart);
                     var allPending = await _paymentRepo.GetAllAsync()
                         .Where(p => p.Status == "pending" && 
                                    p.PaymentMethod == "SEPAY" &&
                                    !string.IsNullOrEmpty(p.TransactionCode) &&
                                    p.TransactionCode.EndsWith(guidPart, StringComparison.OrdinalIgnoreCase))
                         .ToListAsync();
+                    
+                    _logger.LogInformation("[ProcessSepayWebhook] Found {Count} pending payments with matching GUID suffix", allPending.Count);
                     payment = allPending.FirstOrDefault();
+                    if (payment != null)
+                    {
+                        _logger.LogInformation("[ProcessSepayWebhook] Selected payment: {PaymentUid}", payment.Uid);
+                    }
                 }
 
                 // Tìm theo Sepay ID
                 if (payment == null && sepayId.HasValue)
                 {
+                    _logger.LogInformation("[ProcessSepayWebhook] Strategy 3: Searching by Sepay ID: {SepayId}", sepayId.Value);
                     var sepayIdStr = $"SEPAY-{sepayId.Value}";
                     payment = await _paymentRepo.GetAllAsync()
                         .FirstOrDefaultAsync(p => p.TransactionCode == sepayIdStr);
+                    if (payment != null)
+                    {
+                        _logger.LogInformation("[ProcessSepayWebhook] Found payment by Sepay ID: {PaymentUid}", payment.Uid);
+                    }
                 }
 
                 if (payment == null)
                 {
-                    _logger.LogWarning("Payment not found - GatewayOrderCode: {GatewayOrderCode}, GuidPart: {GuidPart}, TransactionRef: {TransactionRef}, SepayId: {SepayId}",
+                    _logger.LogWarning("[ProcessSepayWebhook] Payment NOT FOUND - GatewayOrderCode: {GatewayOrderCode}, GuidPart: {GuidPart}, TransactionRef: {TransactionRef}, SepayId: {SepayId}",
                         gatewayOrderCode, guidPart, transactionRef, sepayId);
                     return false;
                 }
 
-                _logger.LogInformation("Found payment {PaymentUid} with GatewayOrderCode: {GatewayOrderCode}",
+                _logger.LogInformation("[ProcessSepayWebhook] Found payment {PaymentUid} with GatewayOrderCode: {GatewayOrderCode}",
                     payment.Uid, payment.TransactionCode);
 
                 // Kiểm tra đã xử lý chưa (idempotency)
                 if (payment.Status == "completed" || payment.Status == "paid")
                 {
-                    _logger.LogInformation("Payment {PaymentUid} already processed", payment.Uid);
+                    _logger.LogInformation("[ProcessSepayWebhook] Payment {PaymentUid} already processed - Status: {Status}", payment.Uid, payment.Status);
                     return true;
                 }
+
+                _logger.LogInformation("[ProcessSepayWebhook] Updating payment {PaymentUid} to completed", payment.Uid);
 
                 // Cập nhật payment status
                 payment.Status = "completed";
                 payment.PaidAt = DateTime.Now;
 
                 // Cập nhật order
+                _logger.LogInformation("[ProcessSepayWebhook] Updating order {OrderUid}", payment.OrderUid);
                 var order = await _orderRepo.GetByIdAsync(payment.OrderUid);
                 if (order != null)
                 {
                     order.PaymentStatus = "paid";
                     await _orderRepo.UpdateAsync(order);
+                    _logger.LogInformation("[ProcessSepayWebhook] Order {OrderUid} updated to paid", order.Uid);
+                }
+                else
+                {
+                    _logger.LogWarning("[ProcessSepayWebhook] Order {OrderUid} not found", payment.OrderUid);
                 }
 
                 await _paymentRepo.UpdateAsync(payment);
 
-                _logger.LogInformation("Payment {PaymentUid} processed successfully", payment.Uid);
+                _logger.LogInformation("[ProcessSepayWebhook] Payment {PaymentUid} processed successfully", payment.Uid);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ProcessSepayWebhookAsync error");
-                return false;
+                _logger.LogError(ex, "[ProcessSepayWebhook] EXCEPTION: {Message}", ex.Message);
+                throw; // Re-throw để controller bắt và log
             }
         }
 
