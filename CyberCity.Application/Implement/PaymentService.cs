@@ -336,32 +336,20 @@ namespace CyberCity.Application.Implement
                     // Format thực tế: "MB 77000386190312 CYBERCITYORD56603b131470db2f- Ma GD ACSP/ 1H065781"
                     // Hoặc: "CYBERCITY-ORD{uid}-{guid}"
                     
-                    // Thử match: CYBERCITYORD{...} (không có dấu gạch ngang)
-                    var match1 = Regex.Match(description, @"CYBERCITYORD([A-Za-z0-9]+)[-_]?([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
-                    if (match1.Success)
+                    // Thử match: CYBERCITY[-\s]?ORD{8chars}[-_]?{8chars}
+                    // Pattern linh hoạt để match cả có và không có dấu gạch ngang
+                    var match = Regex.Match(description, @"CYBERCITY[-:\s]?ORD([A-Za-z0-9]{8,})[-_\s]?([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
+                    if (match.Success)
                     {
-                        var orderPart = match1.Groups[1].Value;
-                        var guidPortion = match1.Groups[2].Value;
-                        gatewayOrderCode = $"ORD{orderPart}-{guidPortion.Substring(0, Math.Min(8, guidPortion.Length))}";
-                        guidPart = guidPortion.Substring(0, Math.Min(8, guidPortion.Length));
-                        _logger.LogInformation("[ProcessSepayWebhook] Extracted (format1) gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
+                        var orderPart = match.Groups[1].Value.Substring(0, Math.Min(8, match.Groups[1].Value.Length));
+                        var guidPortion = match.Groups[2].Value.Substring(0, Math.Min(8, match.Groups[2].Value.Length));
+                        gatewayOrderCode = $"ORD{orderPart}-{guidPortion}";
+                        guidPart = guidPortion;
+                        _logger.LogInformation("[ProcessSepayWebhook] Extracted gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
                     }
                     else
                     {
-                        // Thử match: CYBERCITY-ORD{uid}-{guid}
-                        var match2 = Regex.Match(description, @"CYBERCITY[-:\s]?(ORD[A-Za-z0-9]+[-_]?)([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
-                        if (match2.Success)
-                        {
-                            var orderPart = match2.Groups[1].Value.Replace("-", "").Replace("_", "");
-                            var guidPortion = match2.Groups[2].Value;
-                            gatewayOrderCode = $"{orderPart}-{guidPortion.Substring(0, Math.Min(8, guidPortion.Length))}";
-                            guidPart = guidPortion.Substring(0, Math.Min(8, guidPortion.Length));
-                            _logger.LogInformation("[ProcessSepayWebhook] Extracted (format2) gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
-                        }
-                        else
-                        {
-                            _logger.LogWarning("[ProcessSepayWebhook] Could not extract gatewayOrderCode from description: {Description}", description);
-                        }
+                        _logger.LogWarning("[ProcessSepayWebhook] Could not extract gatewayOrderCode from description: {Description}", description);
                     }
                 }
                 else
@@ -438,7 +426,7 @@ namespace CyberCity.Application.Implement
                 payment.Status = "completed";
                 payment.PaidAt = DateTime.Now;
 
-                // Cập nhật order
+                // Cập nhật order trước
                 _logger.LogInformation("[ProcessSepayWebhook] Updating order {OrderUid}", payment.OrderUid);
                 var order = await _orderRepo.GetByIdAsync(payment.OrderUid);
                 if (order != null)
@@ -450,9 +438,23 @@ namespace CyberCity.Application.Implement
                 else
                 {
                     _logger.LogWarning("[ProcessSepayWebhook] Order {OrderUid} not found", payment.OrderUid);
+                    // Nếu order không tồn tại, không nên update payment
+                    return false;
                 }
 
-                await _paymentRepo.UpdateAsync(payment);
+                // Load lại payment từ DB để đảm bảo có OrderUid hợp lệ
+                var paymentToUpdate = await _paymentRepo.GetByIdAsync(payment.Uid);
+                if (paymentToUpdate != null)
+                {
+                    paymentToUpdate.Status = "completed";
+                    paymentToUpdate.PaidAt = DateTime.Now;
+                    await _paymentRepo.UpdateAsync(paymentToUpdate);
+                }
+                else
+                {
+                    _logger.LogError("[ProcessSepayWebhook] Failed to reload payment {PaymentUid} for update", payment.Uid);
+                    return false;
+                }
 
                 _logger.LogInformation("[ProcessSepayWebhook] Payment {PaymentUid} processed successfully", payment.Uid);
                 return true;
