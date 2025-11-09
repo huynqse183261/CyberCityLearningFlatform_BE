@@ -195,15 +195,30 @@ namespace CyberCity.Application.Implement
         {
             try
             {
-                // Tìm payment theo orderCode (từ TransactionCode/GatewayOrderCode)
-                var payment = await _paymentRepo.GetAllAsync()
-                    .FirstOrDefaultAsync(p => p.TransactionCode != null && 
-                                             p.TransactionCode.Contains(orderCode.ToString()));
+                // Map numeric orderCode back to hex GUID suffix (8 chars), case-insensitive
+                // Ensure we pad with leading zeros to maintain 8-character match
+                var hexSuffix = orderCode.ToString("x"); // lower-case hex
+                if (hexSuffix.Length < 8) hexSuffix = hexSuffix.PadLeft(8, '0');
+
+                // Try find by TransactionCode ending with the hex suffix (case-insensitive)
+                // Use ToLower().EndsWith() to ensure EF can translate to SQL
+                var query = _paymentRepo.GetAllAsync();
+                var hexSuffixLower = hexSuffix.ToLowerInvariant();
+                var payment = await query
+                    .FirstOrDefaultAsync(p => p.TransactionCode != null &&
+                                              p.TransactionCode.ToLower().EndsWith(hexSuffixLower));
+
+                // Fallback: sometimes TransactionCode may store decimal or different formats
+                if (payment == null)
+                {
+                    var decStr = orderCode.ToString();
+                    payment = await query.FirstOrDefaultAsync(p => p.TransactionCode != null && p.TransactionCode.Contains(decStr));
+                }
 
                 if (payment == null)
                     throw new Exception($"Payment with order code {orderCode} not found");
 
-                var amountPaid = payment.Status == "completed" || payment.Status == "paid" ? payment.Amount : 0m;
+                var amountPaid = (payment.Status == "completed" || payment.Status == "paid") ? payment.Amount : 0m;
 
                 return new PaymentStatusDto
                 {
@@ -213,7 +228,7 @@ namespace CyberCity.Application.Implement
                     AmountRemaining = payment.Amount - amountPaid,
                     Status = payment.Status?.ToUpperInvariant() ?? "PENDING",
                     CreatedAt = payment.CreatedAt,
-                    CanceledAt = payment.Status == "cancelled" || payment.Status == "failed" ? payment.PaidAt : null,
+                    CanceledAt = (payment.Status == "cancelled" || payment.Status == "failed") ? payment.PaidAt : null,
                     CancellationReason = null
                 };
             }
