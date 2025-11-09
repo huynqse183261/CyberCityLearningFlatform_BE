@@ -317,18 +317,13 @@ namespace CyberCity.Application.Implement
 
                 // Extract data from webhook
                 var sepayId = webhookData.Id;
-                var amount = webhookData.Amount > 0 ? webhookData.Amount : webhookData.TransferAmount ?? 0m;
-                var description = !string.IsNullOrEmpty(webhookData.Description) 
-                    ? webhookData.Description 
-                    : webhookData.Content ?? string.Empty;
-                var transactionRef = !string.IsNullOrEmpty(webhookData.TransactionCode) 
-                    ? webhookData.TransactionCode 
-                    : !string.IsNullOrEmpty(webhookData.TransId) 
-                        ? webhookData.TransId 
-                        : webhookData.ReferenceCode;
+                var amount = webhookData.TransferAmount;
+                var description = webhookData.Content ?? webhookData.Description ?? string.Empty;
+                var transactionRef = webhookData.ReferenceCode;
+                var gateway = webhookData.Gateway ?? "Unknown";
 
-                _logger.LogInformation("[ProcessSepayWebhook] Parsed data - SepayId: {SepayId}, Description: {Description}, TransactionRef: {TransactionRef}, Amount: {Amount}",
-                    sepayId, description, transactionRef, amount);
+                _logger.LogInformation("[ProcessSepayWebhook] Parsed data - SepayId: {SepayId}, Gateway: {Gateway}, Description: {Description}, TransactionRef: {TransactionRef}, Amount: {Amount}",
+                    sepayId, gateway, description, transactionRef, amount);
 
                 // Tìm payment theo GatewayOrderCode từ description
                 string? gatewayOrderCode = null;
@@ -338,28 +333,34 @@ namespace CyberCity.Application.Implement
                 
                 if (!string.IsNullOrEmpty(description))
                 {
-                    // Tìm format: "CYBERCITY-ORD{uid}-{guid}" hoặc biến thể
-                    var fullMatch = Regex.Match(description, @"CYBERCITY[-:\s]?(ORD[A-Za-z0-9]+[-_]?)([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
-                    if (fullMatch.Success)
+                    // Format thực tế: "MB 77000386190312 CYBERCITYORD56603b131470db2f- Ma GD ACSP/ 1H065781"
+                    // Hoặc: "CYBERCITY-ORD{uid}-{guid}"
+                    
+                    // Thử match: CYBERCITYORD{...} (không có dấu gạch ngang)
+                    var match1 = Regex.Match(description, @"CYBERCITYORD([A-Za-z0-9]+)[-_]?([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
+                    if (match1.Success)
                     {
-                        var orderPart = fullMatch.Groups[1].Value.Replace("-", "").Replace("_", "");
-                        var guidPortion = fullMatch.Groups[2].Value;
-                        gatewayOrderCode = $"{orderPart}-{guidPortion.Substring(0, Math.Min(8, guidPortion.Length))}";
+                        var orderPart = match1.Groups[1].Value;
+                        var guidPortion = match1.Groups[2].Value;
+                        gatewayOrderCode = $"ORD{orderPart}-{guidPortion.Substring(0, Math.Min(8, guidPortion.Length))}";
                         guidPart = guidPortion.Substring(0, Math.Min(8, guidPortion.Length));
-                        _logger.LogInformation("[ProcessSepayWebhook] Extracted gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
+                        _logger.LogInformation("[ProcessSepayWebhook] Extracted (format1) gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
                     }
                     else
                     {
-                        // Fallback: tìm GUID part
-                        var guidMatch = Regex.Match(description, @"ORD[A-Za-z0-9]+([A-Za-z0-9]{8})", RegexOptions.IgnoreCase);
-                        if (guidMatch.Success)
+                        // Thử match: CYBERCITY-ORD{uid}-{guid}
+                        var match2 = Regex.Match(description, @"CYBERCITY[-:\s]?(ORD[A-Za-z0-9]+[-_]?)([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
+                        if (match2.Success)
                         {
-                            guidPart = guidMatch.Groups[1].Value;
-                            _logger.LogInformation("[ProcessSepayWebhook] Extracted guidPart (fallback): {GuidPart}", guidPart);
+                            var orderPart = match2.Groups[1].Value.Replace("-", "").Replace("_", "");
+                            var guidPortion = match2.Groups[2].Value;
+                            gatewayOrderCode = $"{orderPart}-{guidPortion.Substring(0, Math.Min(8, guidPortion.Length))}";
+                            guidPart = guidPortion.Substring(0, Math.Min(8, guidPortion.Length));
+                            _logger.LogInformation("[ProcessSepayWebhook] Extracted (format2) gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
                         }
                         else
                         {
-                            _logger.LogWarning("[ProcessSepayWebhook] Could not extract gatewayOrderCode or guidPart from description");
+                            _logger.LogWarning("[ProcessSepayWebhook] Could not extract gatewayOrderCode from description: {Description}", description);
                         }
                     }
                 }

@@ -131,7 +131,7 @@ namespace CyberCity.Controller.Controllers
                     });
                 }
 
-                Console.WriteLine($"[Webhook] Received - Id: {webhookData.Id}, Amount: {webhookData.Amount}, Description: {webhookData.Description ?? webhookData.Content}");
+                Console.WriteLine($"[Webhook] Received - Id: {webhookData.Id}, Amount: {webhookData.TransferAmount}, Gateway: {webhookData.Gateway}, Content: {webhookData.Content}");
 
                 var result = await _paymentService.ProcessSepayWebhookAsync(authorizationHeader, webhookData);
 
