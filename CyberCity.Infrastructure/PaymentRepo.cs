@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CyberCity.Doman.DBContext;
 using CyberCity.Doman.Models;
 using CyberCity.Infrastructure.Basic;
+using Microsoft.EntityFrameworkCore;
 
 namespace CyberCity.Infrastructure
 {
@@ -15,9 +16,10 @@ namespace CyberCity.Infrastructure
         public PaymentRepo(CyberCityLearningFlatFormDBContext context) => _context = context;
         public IQueryable<Payment> GetAllAsync(bool descending = true)
         {
-            var query = _context.Payments
-                .OrderByDescending(t => t.CreatedAt)
-                .AsQueryable();
+			var query = _context.Payments
+				.AsNoTracking()
+				.OrderByDescending(t => t.CreatedAt)
+				.AsQueryable();
             return descending
                 ? query.OrderByDescending(c => c.CreatedAt)
                 : query.OrderBy(c => c.CreatedAt);

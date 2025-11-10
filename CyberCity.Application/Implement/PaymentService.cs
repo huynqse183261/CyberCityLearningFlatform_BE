@@ -444,15 +444,10 @@ namespace CyberCity.Application.Implement
 
                 // Cập nhật order trước (partial update)
                 _logger.LogInformation("[ProcessSepayWebhook] Updating order {OrderUid}", payment.OrderUid);
-                var order = await _orderRepo.GetByIdAsync(payment.OrderUid);
-                if (order != null)
+                var affected = await _orderRepo.UpdatePaymentStatusAsync(payment.OrderUid, "paid");
+                if (affected <= 0)
                 {
-                    await _orderRepo.UpdatePaymentStatusAsync(order.Uid, "paid");
-                    _logger.LogInformation("[ProcessSepayWebhook] Order {OrderUid} updated to paid", order.Uid);
-                }
-                else
-                {
-                    _logger.LogWarning("[ProcessSepayWebhook] Order {OrderUid} not found", payment.OrderUid);
+                    _logger.LogWarning("[ProcessSepayWebhook] Order {OrderUid} not found or not updated", payment.OrderUid);
                     // Nếu order không tồn tại, không nên update payment
                     return false;
                 }
