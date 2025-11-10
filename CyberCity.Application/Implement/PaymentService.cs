@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using CyberCity.Application.Interface;
 using CyberCity.DTOs.Payments;
+using CyberCity.DTOs.Order;
 using CyberCity.Infrastructure;
 using CyberCity.Doman.Models;
 using Microsoft.Extensions.Configuration;
@@ -580,6 +581,124 @@ namespace CyberCity.Application.Implement
             // Method này được giữ lại để tương thích với interface
             await Task.CompletedTask;
             return true;
+        }
+
+        // ==================== ORDER MANAGEMENT ====================
+
+        public async Task<List<OrderListDto>> GetAllOrdersAsync()
+        {
+            try
+            {
+                var orders = await _orderRepo.GetAllAsync()
+                    .Include(o => o.UserU)
+                    .Include(o => o.PlanU)
+                    .Include(o => o.Payments)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .ToListAsync();
+
+                return orders.Select(o => new OrderListDto
+                {
+                    Uid = o.Uid,
+                    UserName = o.UserU?.FullName ?? "N/A",
+                    UserEmail = o.UserU?.Email ?? "N/A",
+                    PlanName = o.PlanU?.PlanName ?? "N/A",
+                    Amount = o.Amount,
+                    PaymentStatus = o.PaymentStatus,
+                    ApprovalStatus = o.ApprovalStatus,
+                    CreatedAt = o.CreatedAt,
+                    PaidAt = o.Payments?.FirstOrDefault(p => p.Status == "paid" || p.Status == "completed")?.PaidAt,
+                    PaymentCount = o.Payments?.Count ?? 0
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get all orders");
+                throw new Exception($"Failed to get orders: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<OrderListDto>> GetOrdersByUserAsync(string userUid)
+        {
+            try
+            {
+                var orders = await _orderRepo.GetAllAsync()
+                    .Include(o => o.UserU)
+                    .Include(o => o.PlanU)
+                    .Include(o => o.Payments)
+                    .Where(o => o.UserUid == userUid)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .ToListAsync();
+
+                return orders.Select(o => new OrderListDto
+                {
+                    Uid = o.Uid,
+                    UserName = o.UserU?.FullName ?? "N/A",
+                    UserEmail = o.UserU?.Email ?? "N/A",
+                    PlanName = o.PlanU?.PlanName ?? "N/A",
+                    Amount = o.Amount,
+                    PaymentStatus = o.PaymentStatus,
+                    ApprovalStatus = o.ApprovalStatus,
+                    CreatedAt = o.CreatedAt,
+                    PaidAt = o.Payments?.FirstOrDefault(p => p.Status == "paid" || p.Status == "completed")?.PaidAt,
+                    PaymentCount = o.Payments?.Count ?? 0
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get orders for user: {UserUid}", userUid);
+                throw new Exception($"Failed to get orders: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<OrderDetailDto> GetOrderDetailAsync(string orderUid)
+        {
+            try
+            {
+                var order = await _orderRepo.GetAllAsync()
+                    .Include(o => o.UserU)
+                    .Include(o => o.Or)
+                    .Include(o => o.PlanU)
+                    .Include(o => o.Payments)
+                    .FirstOrDefaultAsync(o => o.Uid == orderUid);
+
+                if (order == null)
+                    throw new Exception($"Order with UID {orderUid} not found");
+
+                return new OrderDetailDto
+                {
+                    Uid = order.Uid,
+                    UserUid = order.UserUid,
+                    UserName = order.UserU?.FullName ?? "N/A",
+                    UserEmail = order.UserU?.Email ?? "N/A",
+                    OrgUid = order.OrgUid,
+                    OrgName = order.Or?.OrgName,
+                    PlanUid = order.PlanUid,
+                    PlanName = order.PlanU?.PlanName ?? "N/A",
+                    DurationDays = order.PlanU?.DurationDays ?? 0,
+                    Amount = order.Amount,
+                    PaymentStatus = order.PaymentStatus,
+                    ApprovalStatus = order.ApprovalStatus,
+                    StartAt = order.StartAt,
+                    EndAt = order.EndAt,
+                    CreatedAt = order.CreatedAt,
+                    Payments = order.Payments?.Select(p => new OrderPaymentDto
+                    {
+                        Uid = p.Uid,
+                        PaymentMethod = p.PaymentMethod,
+                        TransactionCode = p.TransactionCode,
+                        Amount = p.Amount,
+                        Currency = p.Currency,
+                        Status = p.Status,
+                        PaidAt = p.PaidAt,
+                        CreatedAt = p.CreatedAt
+                    }).ToList() ?? new List<OrderPaymentDto>()
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get order detail for: {OrderUid}", orderUid);
+                throw new Exception($"Failed to get order detail: {ex.Message}", ex);
+            }
         }
     }
 }
