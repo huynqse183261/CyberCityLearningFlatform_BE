@@ -452,8 +452,8 @@ namespace CyberCity.Application.Implement
                     return false;
                 }
 
-                // Cập nhật payment (partial update)
-                await _paymentRepo.UpdateStatusAsync(payment.Uid, "completed", DateTime.Now);
+                // Cập nhật payment (partial update) - dùng trạng thái hợp lệ theo DB (paid)
+                await _paymentRepo.UpdateStatusAsync(payment.Uid, "paid", DateTime.Now);
 
                 _logger.LogInformation("[ProcessSepayWebhook] Payment {PaymentUid} processed successfully", payment.Uid);
                 return true;
