@@ -14,6 +14,7 @@ namespace CyberCity.DTOs.Courses
         public string Title { get; set; }
 
         public string Description { get; set; }
+        public string Slug { get; set; } = string.Empty;
 
         [StringLength(50)]
         public string Level { get; set; }

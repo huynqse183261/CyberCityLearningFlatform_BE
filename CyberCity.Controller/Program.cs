@@ -21,7 +21,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+
         // Allow case-insensitive property name matching (hỗ trợ snake_case, camelCase, PascalCase)
+
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         // Preserve property names as-is (không convert sang camelCase)
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
@@ -29,6 +31,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.AllowTrailingCommas = true;
         // Handle number strings
         options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+
+        // Cho phép case-insensitive khi deserialize
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CyberCity.DTOs.Payments;
+using CyberCity.DTOs.Order;
 
 namespace CyberCity.Application.Interface
 {
@@ -23,5 +24,10 @@ namespace CyberCity.Application.Interface
         Task<PaymentInvoiceDto> GetPaymentInvoiceAsync(string paymentUid);
         Task<List<PaymentHistoryDto>> GetPaymentHistoryAsync(string userUid);
         Task HandlePaymentCancelAsync(long orderCode);
+        
+        // Order management
+        Task<List<OrderListDto>> GetAllOrdersAsync();
+        Task<List<OrderListDto>> GetOrdersByUserAsync(string userUid);
+        Task<OrderDetailDto> GetOrderDetailAsync(string orderUid);
     }
 }

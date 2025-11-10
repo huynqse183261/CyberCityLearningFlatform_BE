@@ -13,6 +13,7 @@ namespace CyberCity.DTOs.Courses
         public string Description { get; set; }
         public string Level { get; set; }
         public string CreatedBy { get; set; }
+        public string Slug { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
 }

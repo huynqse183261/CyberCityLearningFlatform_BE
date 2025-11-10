@@ -274,5 +274,92 @@ namespace CyberCity.Controller.Controllers
                 });
             }
         }
+
+        // ==================== ORDER MANAGEMENT ====================
+
+        /// <summary>
+        /// Lấy danh sách tất cả đơn hàng (Admin only)
+        /// </summary>
+        /// <returns>Danh sách tất cả đơn hàng</returns>
+        [HttpGet("orders")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetAllOrders()
+        {
+            try
+            {
+                var orders = await _paymentService.GetAllOrdersAsync();
+                return Ok(new
+                {
+                    success = true,
+                    data = orders,
+                    total = orders.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách đơn hàng của user
+        /// </summary>
+        /// <param name="userUid">UID của user</param>
+        /// <returns>Danh sách đơn hàng của user</returns>
+        [HttpGet("orders/user/{userUid}")]
+        [Authorize]
+        public async Task<IActionResult> GetOrdersByUser(string userUid)
+        {
+            try
+            {
+                var orders = await _paymentService.GetOrdersByUserAsync(userUid);
+                return Ok(new
+                {
+                    success = true,
+                    data = orders,
+                    total = orders.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Lấy chi tiết đơn hàng
+        /// </summary>
+        /// <param name="orderUid">UID của order</param>
+        /// <returns>Thông tin chi tiết đơn hàng bao gồm payments</returns>
+        [HttpGet("order/{orderUid}")]
+        [Authorize]
+        public async Task<IActionResult> GetOrderDetail(string orderUid)
+        {
+            try
+            {
+                var order = await _paymentService.GetOrderDetailAsync(orderUid);
+                return Ok(new
+                {
+                    success = true,
+                    data = order
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
     }
 }
