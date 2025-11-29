@@ -426,10 +426,40 @@ namespace CyberCity.Application.Implement
                     }
                 }
 
+                // Strategy 4: Fallback - Match theo số tiền và thời gian gần đây (khi không có mã đơn hàng)
+                if (payment == null && amount > 0)
+                {
+                    _logger.LogInformation("[ProcessSepayWebhook] Strategy 4: Fallback - Searching by amount and recent time. Amount: {Amount}", amount);
+                    var recentDate = DateTime.Now.AddDays(-7); // Chỉ tìm trong 7 ngày gần đây để tránh match nhầm
+                    var candidates = await _paymentRepo.GetAllAsync()
+                        .Where(p => p.Status == "pending" && 
+                                   p.PaymentMethod == "SEPAY" &&
+                                   p.Amount == amount &&
+                                   p.CreatedAt >= recentDate)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .ToListAsync();
+                    
+                    _logger.LogInformation("[ProcessSepayWebhook] Found {Count} pending payments with matching amount in last 7 days", candidates.Count);
+                    
+                    if (candidates.Count == 1)
+                    {
+                        // Chỉ match nếu có đúng 1 payment để tránh match nhầm
+                        payment = candidates.First();
+                        _logger.LogInformation("[ProcessSepayWebhook] Fallback match - Selected payment: {PaymentUid}, Amount: {Amount}, CreatedAt: {CreatedAt}", 
+                            payment.Uid, payment.Amount, payment.CreatedAt);
+                    }
+                    else if (candidates.Count > 1)
+                    {
+                        _logger.LogWarning("[ProcessSepayWebhook] Multiple payments found with same amount ({Amount}) - Cannot auto-match. Count: {Count}", 
+                            amount, candidates.Count);
+                    }
+                }
+
                 if (payment == null)
                 {
-                    _logger.LogWarning("[ProcessSepayWebhook] Payment NOT FOUND - GatewayOrderCode: {GatewayOrderCode}, GuidPart: {GuidPart}, TransactionRef: {TransactionRef}, SepayId: {SepayId}",
-                        gatewayOrderCode, guidPart, transactionRef, sepayId);
+                    _logger.LogWarning("[ProcessSepayWebhook] Payment NOT FOUND - GatewayOrderCode: {GatewayOrderCode}, GuidPart: {GuidPart}, TransactionRef: {TransactionRef}, SepayId: {SepayId}, Amount: {Amount}, Description: {Description}",
+                        gatewayOrderCode, guidPart, transactionRef, sepayId, amount, description);
+                    _logger.LogWarning("[ProcessSepayWebhook] This webhook may be for a transaction not related to our system, or the order code was not included in the transfer content.");
                     return false;
                 }
 
