@@ -335,27 +335,28 @@ namespace CyberCity.Application.Implement
                 if (!string.IsNullOrEmpty(description))
                 {
                     // Format thực tế từ bank có thể là:
-                    // - "CYBERCITY-ORD{8}-{8}"
+                    // - "CYBERCITY-ORD{8}-{8}" (format chuẩn)
                     // - "CYBERCITY ORD{8}{8}" (không dấu gạch, gộp 16 ký tự sau ORD)
-                    // - "... CYBERCITYORD{16}- Ma GD ..."
+                    // - "CYBERCITYORD{16}" (viết liền, 16 ký tự sau ORD)
+                    // - "... CYBERCITYORD{16}- Ma GD ..." (có thêm ký tự sau)
 
-                    // 1) Thử pattern chuẩn có 2 nhóm 8+ ký tự
-                    var match = Regex.Match(description, @"CYBERCITY[-:\s]?ORD([A-Za-z0-9]{8,})[-_\s]?([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
+                    // 1) Thử pattern chuẩn có 2 nhóm 8+ ký tự với dấu gạch ngang
+                    var match = Regex.Match(description, @"CYBERCITY[-:\s]?ORD([A-Za-z0-9]{8,})[-_\s]([A-Za-z0-9]{8,})", RegexOptions.IgnoreCase);
                     if (match.Success)
                     {
                         var orderPart = match.Groups[1].Value.Substring(0, Math.Min(8, match.Groups[1].Value.Length));
                         var guidPortion = match.Groups[2].Value.Substring(0, Math.Min(8, match.Groups[2].Value.Length));
                         gatewayOrderCode = $"ORD{orderPart}-{guidPortion}";
                         guidPart = guidPortion;
-                        _logger.LogInformation("[ProcessSepayWebhook] Extracted (2-part) gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
+                        _logger.LogInformation("[ProcessSepayWebhook] Extracted (2-part with dash) gatewayOrderCode: {GatewayOrderCode}, guidPart: {GuidPart}", gatewayOrderCode, guidPart);
                     }
                     else
                     {
-                        // 2) Thử pattern gộp: CYBERCITYORD{16}
+                        // 2) Thử pattern gộp: CYBERCITYORD{16} (viết liền, không dấu gạch)
                         var matchMerged = Regex.Match(description, @"CYBERCITY\s*ORD([A-Za-z0-9]{16,})", RegexOptions.IgnoreCase);
                         if (!matchMerged.Success)
                         {
-                            // cũng có thể viết liền "CYBERCITYORD{16}"
+                            // cũng có thể viết liền "CYBERCITYORD{16}" không có khoảng trắng
                             matchMerged = Regex.Match(description, @"CYBERCITYORD([A-Za-z0-9]{16,})", RegexOptions.IgnoreCase);
                         }
                         if (matchMerged.Success)
@@ -392,15 +393,16 @@ namespace CyberCity.Application.Implement
                     }
                 }
 
-                // Tìm theo GUID suffix
+                // Tìm theo GUID suffix - FIX: Dùng ToLower().EndsWith() thay vì EndsWith(..., StringComparison)
                 if (payment == null && !string.IsNullOrEmpty(guidPart))
                 {
                     _logger.LogInformation("[ProcessSepayWebhook] Strategy 2: Searching by GUID suffix: {GuidPart}", guidPart);
+                    var guidPartLower = guidPart.ToLowerInvariant();
                     var allPending = await _paymentRepo.GetAllAsync()
                         .Where(p => p.Status == "pending" && 
                                    p.PaymentMethod == "SEPAY" &&
                                    !string.IsNullOrEmpty(p.TransactionCode) &&
-                                   p.TransactionCode.EndsWith(guidPart, StringComparison.OrdinalIgnoreCase))
+                                   p.TransactionCode.ToLower().EndsWith(guidPartLower))
                         .ToListAsync();
                     
                     _logger.LogInformation("[ProcessSepayWebhook] Found {Count} pending payments with matching GUID suffix", allPending.Count);
