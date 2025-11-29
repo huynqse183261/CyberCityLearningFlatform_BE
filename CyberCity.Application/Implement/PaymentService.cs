@@ -430,28 +430,60 @@ namespace CyberCity.Application.Implement
                 if (payment == null && amount > 0)
                 {
                     _logger.LogInformation("[ProcessSepayWebhook] Strategy 4: Fallback - Searching by amount and recent time. Amount: {Amount}", amount);
-                    var recentDate = DateTime.Now.AddDays(-7); // Chỉ tìm trong 7 ngày gần đây để tránh match nhầm
-                    var candidates = await _paymentRepo.GetAllAsync()
+                    
+                    // Thử tìm trong vòng 2 giờ gần đây trước (webhook thường đến ngay sau khi chuyển khoản)
+                    var recentDate2Hours = DateTime.Now.AddHours(-2);
+                    var candidates2Hours = await _paymentRepo.GetAllAsync()
                         .Where(p => p.Status == "pending" && 
                                    p.PaymentMethod == "SEPAY" &&
                                    p.Amount == amount &&
-                                   p.CreatedAt >= recentDate)
+                                   p.CreatedAt >= recentDate2Hours)
                         .OrderByDescending(p => p.CreatedAt)
                         .ToListAsync();
                     
-                    _logger.LogInformation("[ProcessSepayWebhook] Found {Count} pending payments with matching amount in last 7 days", candidates.Count);
+                    _logger.LogInformation("[ProcessSepayWebhook] Found {Count} pending payments with matching amount in last 2 hours", candidates2Hours.Count);
                     
-                    if (candidates.Count == 1)
+                    if (candidates2Hours.Count == 1)
                     {
-                        // Chỉ match nếu có đúng 1 payment để tránh match nhầm
-                        payment = candidates.First();
-                        _logger.LogInformation("[ProcessSepayWebhook] Fallback match - Selected payment: {PaymentUid}, Amount: {Amount}, CreatedAt: {CreatedAt}", 
+                        // Chỉ match nếu có đúng 1 payment trong 2 giờ gần đây
+                        payment = candidates2Hours.First();
+                        _logger.LogInformation("[ProcessSepayWebhook] Fallback match (2 hours) - Selected payment: {PaymentUid}, Amount: {Amount}, CreatedAt: {CreatedAt}", 
                             payment.Uid, payment.Amount, payment.CreatedAt);
                     }
-                    else if (candidates.Count > 1)
+                    else if (candidates2Hours.Count > 1)
                     {
-                        _logger.LogWarning("[ProcessSepayWebhook] Multiple payments found with same amount ({Amount}) - Cannot auto-match. Count: {Count}", 
-                            amount, candidates.Count);
+                        // Nếu có nhiều payment trong 2 giờ, chọn payment mới nhất
+                        payment = candidates2Hours.First();
+                        _logger.LogWarning("[ProcessSepayWebhook] Multiple payments found in last 2 hours ({Count}) - Selecting most recent: {PaymentUid}, CreatedAt: {CreatedAt}", 
+                            candidates2Hours.Count, payment.Uid, payment.CreatedAt);
+                    }
+                    else
+                    {
+                        // Nếu không tìm thấy trong 2 giờ, thử tìm trong 24 giờ
+                        var recentDate24Hours = DateTime.Now.AddHours(-24);
+                        var candidates24Hours = await _paymentRepo.GetAllAsync()
+                            .Where(p => p.Status == "pending" && 
+                                       p.PaymentMethod == "SEPAY" &&
+                                       p.Amount == amount &&
+                                       p.CreatedAt >= recentDate24Hours)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .ToListAsync();
+                        
+                        _logger.LogInformation("[ProcessSepayWebhook] Found {Count} pending payments with matching amount in last 24 hours", candidates24Hours.Count);
+                        
+                        if (candidates24Hours.Count == 1)
+                        {
+                            payment = candidates24Hours.First();
+                            _logger.LogInformation("[ProcessSepayWebhook] Fallback match (24 hours) - Selected payment: {PaymentUid}, Amount: {Amount}, CreatedAt: {CreatedAt}", 
+                                payment.Uid, payment.Amount, payment.CreatedAt);
+                        }
+                        else if (candidates24Hours.Count > 1)
+                        {
+                            // Nếu vẫn có nhiều, chọn payment mới nhất
+                            payment = candidates24Hours.First();
+                            _logger.LogWarning("[ProcessSepayWebhook] Multiple payments found in last 24 hours ({Count}) - Selecting most recent: {PaymentUid}, CreatedAt: {CreatedAt}", 
+                                candidates24Hours.Count, payment.Uid, payment.CreatedAt);
+                        }
                     }
                 }
 
